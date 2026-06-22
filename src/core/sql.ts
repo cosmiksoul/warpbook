@@ -29,3 +29,28 @@ export function uniqueTableName(desired: string, taken: string[]): string {
   while (taken.includes(`${desired}_${i}`)) i++
   return `${desired}_${i}`
 }
+
+/** `SELECT * FROM <table>` (unbounded) — the seed query for a dataset tab. */
+export function buildSelectStar(table: string): string {
+  return `SELECT * FROM ${quoteIdent(table)}`
+}
+
+/** DDL: materialize a registered CSV as an all-VARCHAR baseline table. */
+export function buildLoadCsv(virtualFile: string, table: string): string {
+  return `CREATE OR REPLACE TABLE ${quoteIdent(table)} AS SELECT * FROM read_csv_auto(${quoteLiteral(virtualFile)}, all_varchar = true)`
+}
+
+/** DDL: materialize a registered Parquet file as a typed table. */
+export function buildLoadParquet(virtualFile: string, table: string): string {
+  return `CREATE OR REPLACE TABLE ${quoteIdent(table)} AS SELECT * FROM read_parquet(${quoteLiteral(virtualFile)})`
+}
+
+/** Introspection: DuckDB DESCRIBE gives DuckDB type names (VARCHAR, DATE, ...). */
+export function buildDescribe(table: string): string {
+  return `DESCRIBE ${quoteIdent(table)}`
+}
+
+/** Reset helper: drop a table if present. */
+export function buildDropTable(table: string): string {
+  return `DROP TABLE IF EXISTS ${quoteIdent(table)}`
+}

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { buildSelectAll, quoteIdent, quoteLiteral, tableNameFromFilename, uniqueTableName } from './sql'
+import { buildDescribe, buildDropTable, buildLoadCsv, buildLoadParquet, buildSelectAll, buildSelectStar, quoteIdent, quoteLiteral, tableNameFromFilename, uniqueTableName } from './sql'
 
 describe('quoteIdent', () => {
   it('double-quotes an identifier', () => {
@@ -59,5 +59,40 @@ describe('uniqueTableName', () => {
   it('suffixes on collision', () => {
     expect(uniqueTableName('events', ['events'])).toBe('events_1')
     expect(uniqueTableName('events', ['events', 'events_1'])).toBe('events_2')
+  })
+})
+
+describe('buildSelectStar', () => {
+  it('builds an unbounded select-star with a quoted ident', () => {
+    expect(buildSelectStar('events')).toBe('SELECT * FROM "events"')
+    expect(buildSelectStar('we"ird')).toBe('SELECT * FROM "we""ird"')
+  })
+})
+
+describe('buildLoadCsv', () => {
+  it('creates an all-VARCHAR table from a registered CSV', () => {
+    expect(buildLoadCsv('events.csv', 'events')).toBe(
+      `CREATE OR REPLACE TABLE "events" AS SELECT * FROM read_csv_auto('events.csv', all_varchar = true)`,
+    )
+  })
+})
+
+describe('buildLoadParquet', () => {
+  it('creates a table from a registered Parquet file', () => {
+    expect(buildLoadParquet('orders.parquet', 'orders')).toBe(
+      `CREATE OR REPLACE TABLE "orders" AS SELECT * FROM read_parquet('orders.parquet')`,
+    )
+  })
+})
+
+describe('buildDescribe', () => {
+  it('describes a quoted table', () => {
+    expect(buildDescribe('events')).toBe('DESCRIBE "events"')
+  })
+})
+
+describe('buildDropTable', () => {
+  it('drops a quoted table if it exists', () => {
+    expect(buildDropTable('events')).toBe('DROP TABLE IF EXISTS "events"')
   })
 })
