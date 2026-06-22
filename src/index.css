@@ -154,3 +154,11 @@ table.data th {
 .schema-col.used { opacity: 1; }
 .schema-col.used .col-name { color: #e9eeea; }
 .rail-note { color: #5c7975; font-size: 11px; margin-top: 10px; line-height: 1.4; }
+.view-toggle { display: flex; gap: 2px; background: #11262a; border-radius: 7px; padding: 3px; }
+.view-toggle button {
+  border: 0; background: transparent; color: #8da6a2; cursor: pointer;
+  padding: 4px 10px; border-radius: 5px; font-size: 12px;
+}
+.view-toggle button.on { background: #1d363b; color: #e9eeea; }
+.view-toggle button:disabled { opacity: .4; cursor: not-allowed; }
+.chart { padding: 8px 4px; }
