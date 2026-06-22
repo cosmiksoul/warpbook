@@ -5,6 +5,7 @@ import { CsvDropzone } from '../components/CsvDropzone'
 import { loadOneFile } from './loadFiles'
 import { Explore } from './Explore'
 import { Report } from './Report'
+import { Rail } from './Rail'
 
 export function Shell({ client }: { client: DuckDBClient }) {
   const mode = useSession((s) => s.mode)
@@ -68,19 +69,22 @@ export function Shell({ client }: { client: DuckDBClient }) {
         <CsvDropzone onFiles={handleFiles} />
       </div>
 
-      <main className="workspace">
-        {mode === 'explore' ? (
-          datasets.length === 0 ? (
-            <div className="explore-empty">
-              Брось файлы выше, чтобы начать.
-            </div>
+      <div className="body">
+        <Rail />
+        <main className="workspace">
+          {mode === 'explore' ? (
+            datasets.length === 0 ? (
+              <div className="explore-empty">
+                Брось файлы выше, чтобы начать.
+              </div>
+            ) : (
+              <Explore client={client} />
+            )
           ) : (
-            <Explore client={client} />
-          )
-        ) : (
-          <Report />
-        )}
-      </main>
+            <Report />
+          )}
+        </main>
+      </div>
     </div>
   )
 }
