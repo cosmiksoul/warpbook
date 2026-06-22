@@ -1,11 +1,5 @@
-node_modules/
-dist/
-build/
-.vite/
-coverage/
-*.log
-.env
-.env.local
+node_modules
+dist
+*.local
 .DS_Store
-.idea/
-.vscode/
+node_modules/.tmp
