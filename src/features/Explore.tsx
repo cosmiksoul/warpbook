@@ -1,0 +1,58 @@
+import { useSession } from '../state/session'
+import type { DuckDBClient } from '../db/duckdbClient'
+import { arrowToRows } from '../core/arrowToRows'
+import { SqlEditor } from '../components/SqlEditor'
+import { ResultPanel } from '../components/ResultPanel'
+
+export function Explore({ client }: { client: DuckDBClient }) {
+  const tabs = useSession((s) => s.tabs)
+  const activeTabId = useSession((s) => s.activeTabId)
+  const updateTabSql = useSession((s) => s.updateTabSql)
+  const setTabResult = useSession((s) => s.setTabResult)
+  const setTabError = useSession((s) => s.setTabError)
+
+  const tab = tabs.find((t) => t.id === activeTabId) ?? null
+
+  async function run(sql: string) {
+    if (!tab) return
+    const t0 = performance.now()
+    try {
+      const table = await client.query(sql)
+      const result = arrowToRows(table)
+      setTabResult(tab.id, result, {
+        ms: performance.now() - t0,
+        rows: result.numRows,
+      })
+    } catch (e) {
+      setTabError(tab.id, String(e))
+    }
+  }
+
+  if (!tab) {
+    return (
+      <div className="explore-empty">
+        Кликни источник в рейле, чтобы открыть запрос.
+      </div>
+    )
+  }
+
+  return (
+    <div className="explore">
+      <section className="query-panel">
+        <header className="panel-head">
+          <span className="panel-title">Запрос</span>
+          <button className="run-btn" onClick={() => run(tab.sql)}>
+            ▶ запустить
+          </button>
+        </header>
+        <SqlEditor
+          key={tab.id}
+          value={tab.sql}
+          onChange={(v) => updateTabSql(tab.id, v)}
+          onRun={run}
+        />
+      </section>
+      <ResultPanel result={tab.result} meta={tab.meta} error={tab.error} />
+    </div>
+  )
+}

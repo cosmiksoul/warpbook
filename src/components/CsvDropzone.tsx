@@ -1,17 +1,17 @@
 import { useRef, useState } from 'react'
 
 interface Props {
-  onFile: (file: File) => void
+  onFiles: (files: File[]) => void
   disabled?: boolean
 }
 
-export function CsvDropzone({ onFile, disabled }: Props) {
+export function CsvDropzone({ onFiles, disabled }: Props) {
   const inputRef = useRef<HTMLInputElement>(null)
   const [over, setOver] = useState(false)
 
-  function pick(files: FileList | null) {
-    const file = files?.[0]
-    if (file) onFile(file)
+  function pick(list: FileList | null) {
+    const files = list ? Array.from(list) : []
+    if (files.length) onFiles(files)
   }
 
   return (
@@ -33,11 +33,12 @@ export function CsvDropzone({ onFile, disabled }: Props) {
       <input
         ref={inputRef}
         type="file"
-        accept=".csv,text/csv"
+        accept=".csv,.parquet,text/csv"
+        multiple
         hidden
         onChange={(e) => pick(e.target.files)}
       />
-      Перетащи CSV сюда или кликни, чтобы выбрать
+      Перетащи CSV / Parquet (можно несколько) или кликни
     </div>
   )
 }
