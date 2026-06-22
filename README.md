@@ -6,7 +6,7 @@
 
 - **Скоуп:** `scope-quackbook-v1.md`
 - **Правила для Claude Code:** `CLAUDE.md`
-- **Статус:** v1, в разработке. Каркас (vanilla / React) — решается первым.
+- **Статус:** v1, в разработке. Каркас — React + TypeScript + Vite (решено, см. `DECISIONS.md`).
 
 ## Старт
 
