@@ -12,3 +12,20 @@ export function quoteLiteral(value: string): string {
 export function buildSelectAll(table: string, limit = 100): string {
   return `SELECT * FROM ${quoteIdent(table)} LIMIT ${limit}`
 }
+
+/** Derive a safe SQL identifier from a file name (strip extension, sanitize). */
+export function tableNameFromFilename(fileName: string): string {
+  const base = fileName.replace(/\.[^.]+$/, '') // strip last extension
+  let ident = base.replace(/[^A-Za-z0-9_]/g, '_') // invalid chars -> _
+  if (ident === '') return 'table'
+  if (/^[0-9]/.test(ident)) ident = `_${ident}` // identifiers cannot start with a digit
+  return ident
+}
+
+/** Make `desired` unique against `taken` by appending _1, _2, ... */
+export function uniqueTableName(desired: string, taken: string[]): string {
+  if (!taken.includes(desired)) return desired
+  let i = 1
+  while (taken.includes(`${desired}_${i}`)) i++
+  return `${desired}_${i}`
+}
