@@ -3,6 +3,7 @@ import type { DuckDBClient } from '../db/duckdbClient'
 import { arrowToRows } from '../core/arrowToRows'
 import { SqlEditor } from '../components/SqlEditor'
 import { ResultPanel } from '../components/ResultPanel'
+import { TabStrip } from '../components/TabStrip'
 
 export function Explore({ client }: { client: DuckDBClient }) {
   const tabs = useSession((s) => s.tabs)
@@ -30,14 +31,18 @@ export function Explore({ client }: { client: DuckDBClient }) {
 
   if (!tab) {
     return (
-      <div className="explore-empty">
-        Кликни источник в рейле, чтобы открыть запрос.
+      <div className="explore">
+        <TabStrip />
+        <div className="explore-empty">
+          Открой источник в рейле или нажми «+» для пустого запроса.
+        </div>
       </div>
     )
   }
 
   return (
     <div className="explore">
+      <TabStrip />
       <section className="query-panel">
         <header className="panel-head">
           <span className="panel-title">Запрос</span>
