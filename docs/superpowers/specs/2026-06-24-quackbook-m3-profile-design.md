@@ -13,7 +13,7 @@
 
 1. **Два таргета профиля** (slice 1 — источник; slice 2 — результат; расширение скоупа по запросу владельца 2026-06-24):
    - **источник** — таблица датасета (`Dataset.table`: CSV типизированная `<t>` / Parquet нативная), вход из рейла «профиль источника»;
-   - **результат запроса** — текущий SQL активного таба, вход из таба «профиль» в панели. Делается материализацией результата во временную таблицу + переиспользованием того же профайлера (см. «Профиль результата (slice 2)»).
+   - **результат запроса** — текущий SQL активного таба, вход из таба «профиль» в панели. Делается материализацией результата во внутреннюю таблицу (обычную, **не `TEMP`** — см. ниже) + переиспользованием того же профайлера (см. «Профиль результата (slice 2)»).
 2. **Категориальные с высокой кардинальностью — порог по distinct.** `approx_unique ≤ THRESHOLD` (дефолт **50**) → топ-K значений с барами; иначе карточка «≈N distinct, высокая кардинальность» без разбивки (не врём баром на ID/email, экономим точечные запросы).
 3. **Histogram — только в карточках профиля.** Основной `Chart`/`chartSpec` не трогаем. Это осознанное прочтение скоупа: строка M3 «Чарт: добавляется histogram» vs done-when (гистограммы только в профиле) — берём done-when (rule 5: трассируемость; YAGNI). Гистограмма в авто-чарте — отложена, не firewall-нарушение, обсуждаемо позже.
 
@@ -98,16 +98,16 @@ export interface ColumnProfile {
 
 Профилируем **результат текущего SQL** активного таба, переиспользуя `profileRelation` без изменений:
 
-1. **Материализация результата:** `buildResultTempDDL(tabId, sql)` → `CREATE OR REPLACE TEMP TABLE _qb_result_<tabId> AS <sql>` (хвостовой `;`/пробелы — strip). Запрос исполняется один раз в temp-таблицу с настоящими выведенными DuckDB типами (числа — числа, даты — даты), поэтому профиль результата осмысленнее, чем у нетипизированного CSV-источника.
+1. **Материализация результата:** `buildResultTempDDL(tabId, sql)` → `CREATE OR REPLACE TABLE _qb_result_<tabId> AS <sql>` (хвостовой `;`/пробелы — strip). **Обычная (catalog-global) таблица, НЕ `TEMP`** (проверено против движка): `DuckDBClient.run()` открывает свежее соединение на каждый `query`/`exec`, а DuckDB-`TEMP`-таблица локальна для соединения → не дожила бы до профилирующих запросов (`Catalog Error`). Обычная таблица каталог-глобальна (тот же механизм, что `_qb_raw_*`). Запрос исполняется один раз с настоящими выведенными DuckDB типами (числа — числа, даты — даты), поэтому профиль результата осмысленнее, чем у нетипизированного CSV-источника.
 2. `profileRelation('_qb_result_<tabId>')` — тот же SUMMARIZE + null-каунт + top-values + гистограммы.
-3. Не дропаем temp явно: следующий `CREATE OR REPLACE` перезатирает, temp умирает с сессией (проще, без лишнего DDL).
+3. Не дропаем явно: следующий `CREATE OR REPLACE` перезатирает таблицу на таб, она живёт сессию (проще, без лишнего DDL) и скрыта из рейла через `isInternalTable`.
 4. `setResultProfile(tabId, profiles)`.
 
 Внутреннее имя `_qb_result_*` **скрывается из рейла** (расширить `isInternalTable`, как `_qb_raw_*`).
 
 Оркестратор: `profileResult(tabId, sql)` в `useProfileActions`. Ошибка (невалидный SQL и т.п.) → `setResultProfileError(tabId, msg)` → показ в panel profile-view, не краш.
 
-**Спайк-доверие:** `CREATE OR REPLACE TEMP TABLE … AS <select>` + весь конвейер по temp-таблице — стандартный DuckDB; спайк уже доказал конвейер на `CREATE TABLE AS`. Быстрый confirm temp-варианта — первой задачей slice 2 (дёшево).
+**Спайк-доверие:** `CREATE OR REPLACE TABLE … AS <select>` + весь конвейер по этой таблице — стандартный DuckDB; спайк уже доказал конвейер на `CREATE TABLE AS`. Confirm обычной (не `TEMP`) таблицы через per-call соединения — первой задачей slice 2 (дёшево).
 
 ## Состояние и инвалидация (`state/session.ts`)
 
@@ -149,7 +149,7 @@ export interface ColumnProfile {
 ## Архитектура (4 зоны, как M1/M2)
 
 - **`core/profile.ts`** (+ `profile.test.ts`, TDD-ядро): типы; `classifyColumn`; `parseSummarize`; `buildNullCountQuery`/`interpretNullCounts`; `buildTopValuesQuery`/`interpretTopValues`; `buildHistogramQuery`/`interpretHistogram`. Чистые функции, без DuckDB.
-- **`core/sql.ts`** (slice 2): `resultTempName(tabId)` → `_qb_result_<tabId>`; `buildResultTempDDL(tabId, sql)` (`CREATE OR REPLACE TEMP TABLE … AS <stripped sql>`); расширить `isInternalTable` на `_qb_result_*`. TDD.
+- **`core/sql.ts`** (slice 2): `resultTempName(tabId)` → `_qb_result_<tabId>`; `buildResultTempDDL(tabId, sql)` (обычная `CREATE OR REPLACE TABLE … AS <stripped sql>`, **не `TEMP`** — см. «Профиль результата»); расширить `isInternalTable` на `_qb_result_*`. TDD.
 - **`db/duckdbClient.ts`**: переиспользуем `query`/`exec`/`describeTable` — новых методов, скорее всего, не нужно (профиль строится из готовых примитивов).
 - **`features/useProfileActions.ts`**: `profileRelation(name)` (общее ядро) + `profile(table)` (источник, slice 1) + `profileResult(tabId, sql)` (результат, slice 2).
 - **`state/session.ts`**: per-dataset + per-tab поля + `exploreView`/`profileTarget` + экшены + инвалидация (см. выше).
@@ -163,7 +163,7 @@ export interface ColumnProfile {
 ## Тестирование (TDD-граница)
 
 - **Логика (node-TDD red→green):** `classifyColumn`, `parseSummarize`, `buildNullCountQuery`/`interpretNullCounts`, `buildTopValuesQuery`/`interpretTopValues`, `buildHistogramQuery`/`interpretHistogram` (вкл. вырожденный `hi==lo`, пустые бины, нормализацию `frac`); slice 2 — `resultTempName`/`buildResultTempDDL` (strip хвостового `;`) и `isInternalTable('_qb_result_*')`.
-- **Интеграционный node-смоук** (зеркало `duckdbClient.dirty.test.ts`): на маленькой таблице прогнать весь конвейер и проверить собранный `ColumnProfile[]` (distinct/null/top/histogram); slice 2 — то же через temp-таблицу из `CREATE OR REPLACE TEMP TABLE AS <select>` (заодно подтверждает temp-вариант). Уверенность по реальному DuckDB.
+- **Интеграционный node-смоук** (зеркало `duckdbClient.dirty.test.ts`): на маленькой таблице прогнать весь конвейер и проверить собранный `ColumnProfile[]` (distinct/null/top/histogram); slice 2 — то же через `CREATE OR REPLACE TABLE _qb_result_* AS <select>` (заодно подтверждает обычную таблицу при per-call соединениях). Уверенность по реальному DuckDB.
 - **Карточки/CSS — глазами** (jsdom в репо нет; как в M1/M2).
 
 ## Вне скоупа (firewall)
