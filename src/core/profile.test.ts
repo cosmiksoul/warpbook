@@ -1,8 +1,10 @@
 import { describe, expect, it } from 'vitest'
 import {
   buildNullCountQuery,
+  buildTopValuesQuery,
   classifyColumn,
   interpretNullCounts,
+  interpretTopValues,
   parseSummarize,
   THRESHOLD_DISTINCT,
 } from './profile'
@@ -111,5 +113,38 @@ describe('interpretNullCounts', () => {
       total: 0,
       nulls: { x: 0 },
     })
+  })
+})
+
+describe('buildTopValuesQuery', () => {
+  it('GROUP BY a non-null column ORDER BY count DESC LIMIT k, quoted ident', () => {
+    expect(buildTopValuesQuery('events', 'country', 7)).toBe(
+      'SELECT "country" AS v, count(*) AS c FROM "events" ' +
+        'WHERE "country" IS NOT NULL GROUP BY "country" ORDER BY c DESC LIMIT 7',
+    )
+  })
+})
+
+describe('interpretTopValues', () => {
+  it('normalizes frac by the max count, casts BigInt to Number, stringifies values', () => {
+    const rows = [
+      { v: 'DE', c: 12840n },
+      { v: 'PL', c: 9610n },
+      { v: 'RU', c: 6420n },
+    ]
+    expect(interpretTopValues(rows)).toEqual([
+      { value: 'DE', count: 12840, frac: 1 },
+      { value: 'PL', count: 9610, frac: 9610 / 12840 },
+      { value: 'RU', count: 6420, frac: 0.5 },
+    ])
+  })
+  it('renders boolean values as true/false strings', () => {
+    expect(interpretTopValues([{ v: true, c: 3n }, { v: false, c: 1n }])).toEqual([
+      { value: 'true', count: 3, frac: 1 },
+      { value: 'false', count: 1, frac: 1 / 3 },
+    ])
+  })
+  it('returns [] for an empty result (empty table)', () => {
+    expect(interpretTopValues([])).toEqual([])
   })
 })

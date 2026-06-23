@@ -126,3 +126,26 @@ export function interpretNullCounts(
   })
   return { total: Number(row.total ?? 0), nulls }
 }
+
+/**
+ * Build a top-K query for a categorical column: group non-null values, order by
+ * frequency, cap at k. v/c aliases feed interpretTopValues. ident is quoted.
+ */
+export function buildTopValuesQuery(table: string, col: string, k: number): string {
+  const c = quoteIdent(col)
+  return (
+    `SELECT ${c} AS v, count(*) AS c FROM ${quoteIdent(table)} ` +
+    `WHERE ${c} IS NOT NULL GROUP BY ${c} ORDER BY c DESC LIMIT ${k}`
+  )
+}
+
+/** Render value (boolean -> 'true'/'false'), Number(count), frac = count/max. */
+export function interpretTopValues(rows: Record<string, unknown>[]): TopValue[] {
+  const counts = rows.map((r) => Number(r.c ?? 0))
+  const maxCount = Math.max(...counts, 0)
+  return rows.map((r, i) => ({
+    value: String(r.v),
+    count: counts[i],
+    frac: maxCount > 0 ? counts[i] / maxCount : 0,
+  }))
+}
