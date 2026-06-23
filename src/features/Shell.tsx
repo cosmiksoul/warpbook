@@ -73,7 +73,7 @@ export function Shell({ client }: { client: DuckDBClient }) {
       </div>
 
       <div className="body">
-        <Rail />
+        <Rail client={client} />
         <main className="workspace">
           {mode === 'explore' ? (
             datasets.length === 0 ? (

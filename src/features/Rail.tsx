@@ -1,5 +1,7 @@
 import { useSession, type Dataset } from '../state/session'
 import { detectReferencedTables, detectUsedColumns } from '../core/pruning'
+import type { DuckDBClient } from '../db/duckdbClient'
+import { useSchemaActions } from './useSchemaActions'
 
 function formatBytes(n: number): string {
   if (n < 1024) return `${n} B`
@@ -7,11 +9,12 @@ function formatBytes(n: number): string {
   return `${(n / (1024 * 1024)).toFixed(1)}M`
 }
 
-export function Rail() {
+export function Rail({ client }: { client: DuckDBClient }) {
   const datasets = useSession((s) => s.datasets)
   const tabs = useSession((s) => s.tabs)
   const activeTabId = useSession((s) => s.activeTabId)
   const openOrFocusTab = useSession((s) => s.openOrFocusTab)
+  const { applyInferred } = useSchemaActions(client)
 
   const activeTab = tabs.find((t) => t.id === activeTabId) ?? null
 
@@ -66,14 +69,31 @@ export function Rail() {
               )
             : [],
         )
+        const canType = ds.kind === 'csv' && (ds.suggested?.length ?? 0) > 0
         return (
           <div className="schema-block" key={ds.table}>
-            <div className="rail-section-label">
-              Схема · {ds.fileName}{' '}
-              <span className="schema-count">
-                {used.size}/{ds.columns.length}
+            <div className="rail-section-label schema-head">
+              <span>
+                Схема · {ds.fileName}{' '}
+                <span className="schema-count">
+                  {used.size}/{ds.columns.length}
+                </span>
               </span>
+              {canType && (
+                <button
+                  className="schema-btn"
+                  onClick={() => void applyInferred(ds.table)}
+                  title="применить предложенные типы одним кликом"
+                >
+                  типы
+                </button>
+              )}
             </div>
+            {ds.schemaError && (
+              <div className="schema-error" role="alert">
+                {ds.schemaError}
+              </div>
+            )}
             <ul className="schema">
               {ds.columns.map((c) => (
                 <li
@@ -81,7 +101,14 @@ export function Rail() {
                   key={c.name}
                 >
                   <span className="col-name">{c.name}</span>
-                  <span className="col-type">{c.type}</span>
+                  <span className="col-meta">
+                    <span className="col-type">{c.type}</span>
+                    {c.nullLoss != null && c.nullLoss > 0 && (
+                      <span className="col-warn" title={`${c.nullLoss} → NULL`}>
+                        ⚠ {c.nullLoss}
+                      </span>
+                    )}
+                  </span>
                 </li>
               ))}
             </ul>

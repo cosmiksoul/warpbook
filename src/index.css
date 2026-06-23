@@ -138,3 +138,18 @@ body {
 .view-toggle button.on { background: #1d363b; color: #e9eeea; }
 .view-toggle button:disabled { opacity: .4; cursor: not-allowed; }
 .chart { padding: 8px 4px; }
+
+/* --- M2 schema typing --- */
+.schema-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.schema-btn {
+  border: 1px solid #34555a; background: #11262a; color: #e9eeea;
+  padding: 2px 9px; border-radius: 6px; cursor: pointer; font-size: 11px;
+}
+.schema-btn:hover { background: #1d363b; }
+.schema-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+.schema-error {
+  color: #e88; background: #2a1414; border: 1px solid #5a2c2c;
+  border-radius: 6px; padding: 5px 8px; font-size: 11px; margin: 4px 0;
+}
+.col-meta { display: inline-flex; align-items: center; gap: 8px; }
+.col-warn { color: #e3a95c; font-size: 10.5px; white-space: nowrap; cursor: help; }
