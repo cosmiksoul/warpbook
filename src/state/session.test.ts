@@ -284,3 +284,21 @@ describe('session: source profile state (M3)', () => {
     expect(d.rowCount).toBeUndefined()
   })
 })
+
+describe('session: explore view + profile target (M3, shared)', () => {
+  it('defaults to table view and no profile target', () => {
+    useSession.getState().reset()
+    const s = useSession.getState()
+    expect(s.exploreView).toBe('table')
+    expect(s.profileTarget).toBeNull()
+  })
+  it('setExploreView / setProfileTarget update the shared view selectors', () => {
+    useSession.getState().reset()
+    const s = useSession.getState()
+    s.setExploreView('profile')
+    s.setProfileTarget({ kind: 'source', table: 'events' })
+    const after = useSession.getState()
+    expect(after.exploreView).toBe('profile')
+    expect(after.profileTarget).toEqual({ kind: 'source', table: 'events' })
+  })
+})

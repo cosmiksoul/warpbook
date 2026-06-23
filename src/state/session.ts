@@ -31,13 +31,25 @@ export interface Tab {
   result: QueryResult | null
   meta: { ms: number; rows: number } | null
   error: string | null
+  // --- M3 profile (result target), in-memory cache (wired in slice 2) ---
+  resultProfile?: ColumnProfile[]
+  resultRowCount?: number
+  resultProfiling?: boolean
+  resultProfileError?: string | null
 }
+
+export type ProfileTarget =
+  | { kind: 'source'; table: string }
+  | { kind: 'result'; tabId: string }
+  | null
 
 interface SessionState {
   datasets: Dataset[]
   tabs: Tab[]
   activeTabId: string | null
   mode: 'explore' | 'report'
+  exploreView: 'table' | 'chart' | 'profile'
+  profileTarget: ProfileTarget
   seq: number // deterministic id counter (no Math.random/Date.now)
   // actions
   addDataset: (dataset: Dataset) => void
@@ -62,6 +74,8 @@ interface SessionState {
   setProfile: (table: string, profile: ColumnProfile[], rowCount: number) => void
   setProfiling: (table: string, profiling: boolean) => void
   setProfileError: (table: string, message: string | null) => void
+  setExploreView: (view: 'table' | 'chart' | 'profile') => void
+  setProfileTarget: (target: ProfileTarget) => void
 }
 
 const initial = {
@@ -69,6 +83,8 @@ const initial = {
   tabs: [] as Tab[],
   activeTabId: null as string | null,
   mode: 'explore' as const,
+  exploreView: 'table' as const,
+  profileTarget: null as ProfileTarget,
   seq: 0,
 }
 
@@ -223,4 +239,6 @@ export const useSession = create<SessionState>((set) => ({
         d.table === table ? { ...d, profileError: message, profiling: false } : d,
       ),
     })),
+  setExploreView: (exploreView) => set({ exploreView }),
+  setProfileTarget: (profileTarget) => set({ profileTarget }),
 }))
