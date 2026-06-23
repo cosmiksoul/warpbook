@@ -57,3 +57,47 @@ export function buildMaterializeDDL(
   const selectList = included.map(buildCastExpr).join(', ')
   return `CREATE OR REPLACE TABLE ${quoteIdent(table)} AS SELECT ${selectList} FROM ${quoteIdent(rawTable)}`
 }
+
+/**
+ * Build a single-pass query that counts, per included NON-VARCHAR column, how
+ * many present raw values become NULL after the cast (the "N -> NULL" loss).
+ * present := NOT NULL AND <> '' (AND <> nullToken when set: a token-NULL is an
+ * intentional NULL, not a cast loss). VARCHAR columns are skipped (no cast).
+ * The CASE uses buildCastValue (bare, no alias) directly — no string surgery,
+ * correct for any rename target including names with embedded quotes.
+ * Returns { sql: '', columns: [] } when nothing needs counting.
+ */
+export function buildNullLossQuery(
+  rawTable: string,
+  cfgs: ColumnConfig[],
+): { sql: string; columns: string[] } {
+  const counted = cfgs.filter((c) => c.include && c.type !== 'VARCHAR')
+  if (counted.length === 0) return { sql: '', columns: [] }
+
+  const parts = counted.map((cfg, i) => {
+    const orig = quoteIdent(cfg.origName)
+    let present = `${orig} IS NOT NULL AND ${orig} <> ''`
+    if (cfg.nullToken != null) {
+      present += ` AND ${orig} <> ${quoteLiteral(cfg.nullToken)}`
+    }
+    const cast = buildCastValue(cfg)
+    return `sum(CASE WHEN ${present} AND (${cast}) IS NULL THEN 1 ELSE 0 END) AS l${i}`
+  })
+
+  return {
+    sql: `SELECT ${parts.join(', ')} FROM ${quoteIdent(rawTable)}`,
+    columns: counted.map((c) => c.name),
+  }
+}
+
+/** Interpret the l0..ln result row into a { columnName: lostCount } map. */
+export function interpretNullLoss(
+  row: Record<string, unknown>,
+  columns: string[],
+): Record<string, number> {
+  const out: Record<string, number> = {}
+  columns.forEach((name, i) => {
+    out[name] = Number(row[`l${i}`] ?? 0)
+  })
+  return out
+}

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { buildCastExpr, buildCastValue, buildMaterializeDDL } from './castBuilder'
+import { buildCastExpr, buildCastValue, buildMaterializeDDL, buildNullLossQuery, interpretNullLoss } from './castBuilder'
 import type { ColumnConfig } from './schemaTypes'
 
 const base = (over: Partial<ColumnConfig>): ColumnConfig => ({
@@ -129,5 +129,64 @@ describe('buildMaterializeDDL', () => {
         { origName: 'a', name: 'a', type: 'VARCHAR', include: false },
       ]),
     ).toThrow(/at least one/i)
+  })
+})
+
+describe('buildNullLossQuery', () => {
+  it('one pass over the raw table, one loss column per non-VARCHAR included column', () => {
+    const cfgs: ColumnConfig[] = [
+      { origName: 'name', name: 'name', type: 'VARCHAR', include: true }, // skipped: no cast
+      { origName: 'n', name: 'n', type: 'BIGINT', include: true },
+      { origName: 'rev', name: 'rev', type: 'DOUBLE', include: true, decimalSep: ',' },
+      { origName: 'skip', name: 'skip', type: 'BIGINT', include: false }, // excluded
+    ]
+    const { sql, columns } = buildNullLossQuery('_qb_raw_events', cfgs)
+    expect(columns).toEqual(['n', 'rev'])
+    expect(sql).toBe(
+      'SELECT ' +
+        `sum(CASE WHEN "n" IS NOT NULL AND "n" <> '' AND (TRY_CAST("n" AS BIGINT)) IS NULL THEN 1 ELSE 0 END) AS l0, ` +
+        `sum(CASE WHEN "rev" IS NOT NULL AND "rev" <> '' AND (TRY_CAST(replace("rev", ',', '.') AS DOUBLE)) IS NULL THEN 1 ELSE 0 END) AS l1 ` +
+        'FROM "_qb_raw_events"',
+    )
+  })
+  it('adds a nullToken exclusion to the present condition (token NULL is intentional, not a loss)', () => {
+    const cfgs: ColumnConfig[] = [
+      { origName: 'n', name: 'n', type: 'BIGINT', include: true, nullToken: 'NA' },
+    ]
+    const { sql } = buildNullLossQuery('_qb_raw_t', cfgs)
+    expect(sql).toBe(
+      'SELECT ' +
+        `sum(CASE WHEN "n" IS NOT NULL AND "n" <> '' AND "n" <> 'NA' AND (TRY_CAST(nullif("n", 'NA') AS BIGINT)) IS NULL THEN 1 ELSE 0 END) AS l0 ` +
+        'FROM "_qb_raw_t"',
+    )
+  })
+  it('uses the bare cast value even for a renamed target whose name contains a quote', () => {
+    const cfgs: ColumnConfig[] = [
+      { origName: 'we"ird', name: 'o"k', type: 'BIGINT', include: true },
+    ]
+    const { sql, columns } = buildNullLossQuery('_qb_raw_t', cfgs)
+    expect(columns).toEqual(['o"k'])
+    // no trailing `AS "o""k"` leaks into the CASE expression
+    expect(sql).toBe(
+      'SELECT ' +
+        `sum(CASE WHEN "we""ird" IS NOT NULL AND "we""ird" <> '' AND (TRY_CAST("we""ird" AS BIGINT)) IS NULL THEN 1 ELSE 0 END) AS l0 ` +
+        'FROM "_qb_raw_t"',
+    )
+  })
+  it('returns no-op (empty sql, no columns) when nothing to count', () => {
+    const cfgs: ColumnConfig[] = [
+      { origName: 'name', name: 'name', type: 'VARCHAR', include: true },
+    ]
+    expect(buildNullLossQuery('_qb_raw_t', cfgs)).toEqual({ sql: '', columns: [] })
+  })
+})
+
+describe('interpretNullLoss', () => {
+  it('maps the l0..ln result row to per-column losses', () => {
+    const row = { l0: 3n, l1: 0n }
+    expect(interpretNullLoss(row, ['n', 'rev'])).toEqual({ n: 3, rev: 0 })
+  })
+  it('coerces null/undefined cells to 0', () => {
+    expect(interpretNullLoss({ l0: null }, ['x'])).toEqual({ x: 0 })
   })
 })
