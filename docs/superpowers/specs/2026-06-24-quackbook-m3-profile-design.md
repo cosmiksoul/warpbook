@@ -5,17 +5,21 @@
 
 ## Цель
 
-Видеть, что внутри колонок таблицы-источника, по клику: сетка карточек — distinct-каунты, топ-значения категориальных (с барами), мини-гистограммы числовых (+ min/median/max), маркеры null. Без сети, всё в браузерной DuckDB.
+Видеть, что внутри колонок, по клику: сетка карточек — distinct-каунты, топ-значения категориальных (с барами), мини-гистограммы числовых (+ min/median/max), маркеры null. Два таргета: **таблица-источник** (понять сырьё до запроса, вход из рейла) и **результат запроса** (понять, что вернул join/group by на этапе исследования, вход из панели). Без сети, всё в браузерной DuckDB.
 
 **Done when (из скоупа):** жму профиль → карточки с distinct-каунтами, бары топ-значений, гистограммы числовых + min/median/max, маркеры null.
 
 ## Принятые решения (развилки брейншторма)
 
-1. **Цель профиля — таблица-источник** (`Dataset.table`: для CSV типизированная `<t>`, для Parquet нативная). НЕ результат запроса.
+1. **Два таргета профиля** (slice 1 — источник; slice 2 — результат; расширение скоупа по запросу владельца 2026-06-24):
+   - **источник** — таблица датасета (`Dataset.table`: CSV типизированная `<t>` / Parquet нативная), вход из рейла «профиль источника»;
+   - **результат запроса** — текущий SQL активного таба, вход из таба «профиль» в панели. Делается материализацией результата во временную таблицу + переиспользованием того же профайлера (см. «Профиль результата (slice 2)»).
 2. **Категориальные с высокой кардинальностью — порог по distinct.** `approx_unique ≤ THRESHOLD` (дефолт **50**) → топ-K значений с барами; иначе карточка «≈N distinct, высокая кардинальность» без разбивки (не врём баром на ID/email, экономим точечные запросы).
 3. **Histogram — только в карточках профиля.** Основной `Chart`/`chartSpec` не трогаем. Это осознанное прочтение скоупа: строка M3 «Чарт: добавляется histogram» vs done-when (гистограммы только в профиле) — берём done-when (rule 5: трассируемость; YAGNI). Гистограмма в авто-чарте — отложена, не firewall-нарушение, обсуждаемо позже.
 
 **Дефолты:** `THRESHOLD_DISTINCT = 50`, `TOP_K = 7` (показываем + «+N ещё»), `HISTOGRAM_BINS = 12`.
+
+**Слайсы:** **slice 1** — профиль источника (рейл) + весь профайлер-кор (`core/profile.ts`) + UI; **slice 2** — профиль результата (панель), переиспользует кор/UI slice 1 через temp-таблицу. Оба мержатся одной веткой `m3-profile`.
 
 ## Проверенные факты DuckDB-WASM 1.32 (спайк, node-движок)
 
@@ -72,14 +76,14 @@ export interface ColumnProfile {
 
 ## Конвейер вычисления (`features/useProfileActions.ts`, зеркало `useSchemaActions`)
 
-Сайд-эффекты (запросы) — снаружи стора; ошибка DuckDB → в стор (`setProfileError`), не throw. Шаги для `profile(table)`:
+Сайд-эффекты (запросы) — снаружи стора; ошибка DuckDB → в стор, не throw. Ядро — `profileRelation(name)` (работает по имени таблицы; **переиспользуется и источником, и результатом** — для результата `name` = temp-таблица). Шаги:
 
 1. **`SUMMARIZE <table>`** → `parseSummarize` → per-колонка `{ name, type, approxUnique, min, max, median }` (строки, кроме approxUnique).
 2. **Null-каунт + total одним проходом** — `buildNullCountQuery(table, colNames)` (паттерн `buildNullLossQuery`): `SELECT count(*) AS total, count(*) FILTER (WHERE "c0" IS NULL) AS n0, … FROM <t>` → `interpretNullCounts` → `{col: nullCount}` + `total`. Чистые Int64.
 3. **Классификация** каждой колонки (`classifyColumn`).
 4. **На каждую `categorical`:** `buildTopValuesQuery(table, col, TOP_K)` → `interpretTopValues` (нормализация `frac` по максимуму) + `moreDistinct = max(0, distinct - top.length)`.
 5. **На каждую `numeric`:** `buildHistogramQuery(table, col, lo, hi, BINS)` (lo/hi = распарсенные min/max). `interpretHistogram` добивает пустые бины нулями и считает границы `lo/hi` каждого бина.
-6. Собрать `ColumnProfile[]` → `setProfile(table, profiles)`.
+6. Собрать и вернуть `ColumnProfile[]`. Вызывающий кладёт в стор: источник → `setProfile(table, …)`, результат → `setResultProfile(tabId, …)`.
 
 **Кол-во запросов:** `1 (SUMMARIZE) + 1 (null-каунт) + #categorical + #numeric`. Для типичной таблицы ~5–12, локально быстро. Батчинг топ-значений/гистограмм в меньшее число запросов — возможен, но YAGNI; начинаем последовательно-просто. Честно отражаем в подписи (см. ниже).
 
@@ -90,25 +94,48 @@ export interface ColumnProfile {
 - **Пустая таблица (0 строк):** топ-значения пусты, гистограммы опускаем; карточки показывают «0 строк». Покрыть.
 - **Нетипизированный CSV (всё VARCHAR):** все колонки `categorical`/`highCardinality`; числовые гистограммы появляются только после типизации (M2). Это честно — профиль отражает текущие типы.
 
+## Профиль результата (slice 2)
+
+Профилируем **результат текущего SQL** активного таба, переиспользуя `profileRelation` без изменений:
+
+1. **Материализация результата:** `buildResultTempDDL(tabId, sql)` → `CREATE OR REPLACE TEMP TABLE _qb_result_<tabId> AS <sql>` (хвостовой `;`/пробелы — strip). Запрос исполняется один раз в temp-таблицу с настоящими выведенными DuckDB типами (числа — числа, даты — даты), поэтому профиль результата осмысленнее, чем у нетипизированного CSV-источника.
+2. `profileRelation('_qb_result_<tabId>')` — тот же SUMMARIZE + null-каунт + top-values + гистограммы.
+3. Не дропаем temp явно: следующий `CREATE OR REPLACE` перезатирает, temp умирает с сессией (проще, без лишнего DDL).
+4. `setResultProfile(tabId, profiles)`.
+
+Внутреннее имя `_qb_result_*` **скрывается из рейла** (расширить `isInternalTable`, как `_qb_raw_*`).
+
+Оркестратор: `profileResult(tabId, sql)` в `useProfileActions`. Ошибка (невалидный SQL и т.п.) → `setResultProfileError(tabId, msg)` → показ в panel profile-view, не краш.
+
+**Спайк-доверие:** `CREATE OR REPLACE TEMP TABLE … AS <select>` + весь конвейер по temp-таблице — стандартный DuckDB; спайк уже доказал конвейер на `CREATE TABLE AS`. Быстрый confirm temp-варианта — первой задачей slice 2 (дёшево).
+
 ## Состояние и инвалидация (`state/session.ts`)
 
+**Источник** (slice 1) — кэш на датасете:
 - `Dataset`: `profile?: ColumnProfile[]`, `profiling?: boolean`, `profileError?: string | null`.
-- Session: `profileTarget: string | null` (какую таблицу показывает profile-view), `exploreView: 'table' | 'chart' | 'profile'` (**подъём** текущего локального `view` из `ResultPanel` в стор — нужен, т.к. вид переключают два места: кнопка рейла и таб панели).
-- Экшены: `setProfileTarget`, `setProfile`, `setProfiling`, `setProfileError`, `setExploreView`.
-- **Инвалидация:** `setApplied` (ре-материализация при apply/«сброс» схемы) **очищает `profile`** датасета → следующий показ пересчитает. Единственная точка инвалидации (header-«сброс»/per-column «сбросить» идут через apply→setApplied). Parquet не ре-материализуется → его профиль живёт сессию.
+- Инвалидация: `setApplied` (ре-материализация при apply/«сброс» схемы) **очищает `profile`** датасета. Единственная точка (header-«сброс»/per-column «сбросить» идут через apply→setApplied). Parquet не ре-материализуется → его профиль живёт сессию.
+
+**Результат** (slice 2) — кэш на табе:
+- `Tab`: `resultProfile?: ColumnProfile[]`, `resultProfiling?: boolean`, `resultProfileError?: string | null`.
+- Инвалидация: `updateTabSql` (правка SQL) **очищает `resultProfile`** таба → следующий показ пересчитает по новому SQL.
+
+**Общее (вид/таргет):**
+- Session: `exploreView: 'table' | 'chart' | 'profile'` (**подъём** локального `view` из `ResultPanel` в стор — вид переключают два места: кнопка рейла и таб панели) и `profileTarget: { kind: 'source'; table: string } | { kind: 'result'; tabId: string } | null` (что показывает profile-view при `exploreView==='profile'`).
+- Экшены: `setExploreView`, `setProfileTarget`; источник — `setProfile`/`setProfiling`/`setProfileError`; результат — `setResultProfile`/`setResultProfiling`/`setResultProfileError`.
 
 ## UI
 
 ### Энтрипоинты (мокап `docs/quackpad-app.html`)
 
-- **Рейл (`Rail.tsx`):** в каждом schema-блоке — кнопка «профиль источника» → `setProfileTarget(table)` + `setExploreView('profile')` + запуск `profile(table)` (если профиль ещё не закэширован).
-- **Панель (`ResultPanel.tsx`):** третий вид «профиль» в тогле рядом с таблица/график. Вид «профиль» доступен **независимо от наличия результата** (профиль — про источник, не про результат) — значит тогл и profile-view рендерятся, даже когда `result === null`. `ResultPanel` читает `exploreView`/`profileTarget`/`datasets` из стора (сейчас держит `view` локально — M3 поднимает его в стор).
+- **Рейл (`Rail.tsx`) → профиль ИСТОЧНИКА:** в каждом schema-блоке кнопка «профиль источника» → `setProfileTarget({kind:'source', table})` + `setExploreView('profile')` + `profile(table)` (если не закэширован). Работает **независимо от результата** (сырьё до запроса).
+- **Панель (`ResultPanel.tsx`) → профиль РЕЗУЛЬТАТА:** третий вид «профиль» рядом с таблица/график → `setProfileTarget({kind:'result', tabId})` + `setExploreView('profile')` + `profileResult(tabId, sql)`. Доступен при наличии результата (как «график»); без результата кнопка disabled с подсказкой.
 
-Цель панельного «профиль» по умолчанию = датасет активного таба (`tab.datasetTable`), иначе первый референснутый источник; если ни одного источника — таб disabled с подсказкой.
+Одна profile-view, два возможных таргета; шапка disambiguates (см. ниже). `ResultPanel` читает `exploreView`/`profileTarget` из стора (сейчас держит `view` локально — M3 поднимает его в стор). При показе source-таргета без результата кнопки таблица/график disabled (нечего показывать), активна «профиль».
 
 ### Profile-view (`components/ProfilePanel.tsx` + `ProfileCard.tsx`)
 
-- Подпись (psub): **«профиль · <fileName> · N строк»** — мокаповское «один проход (SUMMARIZE)» **убираем** (это N запросов, не один проход; честность для демо).
+- Один компонент `ProfilePanel` для обоих путей — рендерит `ColumnProfile[]` активного таргета (источник: `Dataset.profile`; результат: `Tab.resultProfile`).
+- Подпись (psub) по таргету: источник → **«профиль источника · <fileName> · N строк»**; результат → **«профиль результата · <имя таба> · N строк»**. Мокаповское «один проход (SUMMARIZE)» **убираем** (это N запросов; честность для демо).
 - Сетка карточек `.pgrid` (auto-fill `minmax(240px,1fr)`) — порт стилей из мокапа.
 - Карточка (`ProfileCard`):
   - Шапка: имя, бейдж типа, `N distinct` (или `null · N` коралловым при `nullCount > 0`).
@@ -122,27 +149,27 @@ export interface ColumnProfile {
 ## Архитектура (4 зоны, как M1/M2)
 
 - **`core/profile.ts`** (+ `profile.test.ts`, TDD-ядро): типы; `classifyColumn`; `parseSummarize`; `buildNullCountQuery`/`interpretNullCounts`; `buildTopValuesQuery`/`interpretTopValues`; `buildHistogramQuery`/`interpretHistogram`. Чистые функции, без DuckDB.
-- **`db/duckdbClient.ts`**: переиспользуем `query`/`exec`/`describeTable` — новых методов, скорее всего, не нужно (профиль строится из готовых примитивов). Если удобно — тонкий `summarize(table)`, но по умолчанию без него.
-- **`features/useProfileActions.ts`**: оркестратор (см. конвейер).
-- **`state/session.ts`**: поля/экшены/инвалидация (см. выше).
-- **`components/ProfilePanel.tsx` + `ProfileCard.tsx`**: рендер. Правки `ResultPanel.tsx`, `Rail.tsx`. Стили в `index.css` (порт `.psub/.pgrid/.pcard/.pc-*/.pt/.pf/.histo/.hb/.pstats`).
+- **`core/sql.ts`** (slice 2): `resultTempName(tabId)` → `_qb_result_<tabId>`; `buildResultTempDDL(tabId, sql)` (`CREATE OR REPLACE TEMP TABLE … AS <stripped sql>`); расширить `isInternalTable` на `_qb_result_*`. TDD.
+- **`db/duckdbClient.ts`**: переиспользуем `query`/`exec`/`describeTable` — новых методов, скорее всего, не нужно (профиль строится из готовых примитивов).
+- **`features/useProfileActions.ts`**: `profileRelation(name)` (общее ядро) + `profile(table)` (источник, slice 1) + `profileResult(tabId, sql)` (результат, slice 2).
+- **`state/session.ts`**: per-dataset + per-tab поля + `exploreView`/`profileTarget` + экшены + инвалидация (см. выше).
+- **`components/ProfilePanel.tsx` + `ProfileCard.tsx`**: рендер (общие для обоих таргетов). Правки `ResultPanel.tsx`, `Rail.tsx`. Стили в `index.css` (порт `.psub/.pgrid/.pcard/.pc-*/.pt/.pf/.histo/.hb/.pstats`).
 
 ## Обработка ошибок и загрузки
 
-- Любая ошибка DuckDB при профилировании → `setProfileError(table, msg)` → показ в profile-view; стор и приложение не падают (паттерн `setSchemaError`).
-- `profiling` флаг на время вычисления → плейсхолдер.
+- Любая ошибка DuckDB при профилировании → в стор (`setProfileError(table, msg)` для источника / `setResultProfileError(tabId, msg)` для результата) → показ в profile-view; стор и приложение не падают (паттерн `setSchemaError`).
+- Флаг вычисления (`profiling` / `resultProfiling`) → плейсхолдер «считаю профиль…».
 
 ## Тестирование (TDD-граница)
 
-- **Логика (node-TDD red→green):** `classifyColumn`, `parseSummarize`, `buildNullCountQuery`/`interpretNullCounts`, `buildTopValuesQuery`/`interpretTopValues`, `buildHistogramQuery`/`interpretHistogram` (вкл. вырожденный `hi==lo`, пустые бины, нормализацию `frac`).
-- **Интеграционный node-смоук** (опц., зеркало `duckdbClient.dirty.test.ts`): на маленькой таблице прогнать весь конвейер и проверить собранный `ColumnProfile[]` (distinct/null/top/histogram) — даёт уверенность по реальному DuckDB.
+- **Логика (node-TDD red→green):** `classifyColumn`, `parseSummarize`, `buildNullCountQuery`/`interpretNullCounts`, `buildTopValuesQuery`/`interpretTopValues`, `buildHistogramQuery`/`interpretHistogram` (вкл. вырожденный `hi==lo`, пустые бины, нормализацию `frac`); slice 2 — `resultTempName`/`buildResultTempDDL` (strip хвостового `;`) и `isInternalTable('_qb_result_*')`.
+- **Интеграционный node-смоук** (зеркало `duckdbClient.dirty.test.ts`): на маленькой таблице прогнать весь конвейер и проверить собранный `ColumnProfile[]` (distinct/null/top/histogram); slice 2 — то же через temp-таблицу из `CREATE OR REPLACE TEMP TABLE AS <select>` (заодно подтверждает temp-вариант). Уверенность по реальному DuckDB.
 - **Карточки/CSS — глазами** (jsdom в репо нет; как в M1/M2).
 
 ## Вне скоупа (firewall)
 
 - **Key-хинт** (джойн-подсказка от профиля) — нет (вырезан/v1.5).
-- **Профиль результата запроса** — нет (выбрана таблица-источник).
-- **Histogram в основном чарте** — нет (выбор: только карточки).
+- **Histogram в основном чарте** — нет (выбор: только карточки профиля).
 - **Биннинг дат / временная гистограмма** — отложено (DATE/TIMESTAMP = `range`).
 - **Персист профиля** между сессиями — нет (считается по требованию, кэш в памяти).
 
