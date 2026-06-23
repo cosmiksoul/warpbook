@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useSession, type Dataset } from '../state/session'
 import { detectReferencedTables, detectUsedColumns } from '../core/pruning'
+import { isInternalTable } from '../core/sql'
 import type { DuckDBClient } from '../db/duckdbClient'
 import { SchemaColumnEditor } from '../components/SchemaColumnEditor'
 import { useSchemaActions } from './useSchemaActions'
@@ -12,7 +13,8 @@ function formatBytes(n: number): string {
 }
 
 export function Rail({ client }: { client: DuckDBClient }) {
-  const datasets = useSession((s) => s.datasets)
+  const allDatasets = useSession((s) => s.datasets)
+  const datasets = allDatasets.filter((d) => !isInternalTable(d.table))
   const tabs = useSession((s) => s.tabs)
   const activeTabId = useSession((s) => s.activeTabId)
   const openOrFocusTab = useSession((s) => s.openOrFocusTab)
