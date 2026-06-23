@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 import type { QueryResult } from '../core/arrowToRows'
 import type { ColumnConfig } from '../core/schemaTypes'
+import type { ColumnProfile } from '../core/profile'
 import { buildSelectStar } from '../core/sql'
 
 export interface Dataset {
@@ -15,6 +16,11 @@ export interface Dataset {
   schemaConfig?: ColumnConfig[]
   dirty?: boolean
   schemaError?: string | null
+  // --- M3 profile (source target), in-memory cache ---
+  profile?: ColumnProfile[]
+  rowCount?: number // relation row count (panel caption «N строк»)
+  profiling?: boolean
+  profileError?: string | null
 }
 
 export interface Tab {
@@ -53,6 +59,9 @@ interface SessionState {
     columns: { name: string; type: string }[],
     losses: Record<string, number>,
   ) => void
+  setProfile: (table: string, profile: ColumnProfile[], rowCount: number) => void
+  setProfiling: (table: string, profiling: boolean) => void
+  setProfileError: (table: string, message: string | null) => void
 }
 
 const initial = {
@@ -183,6 +192,8 @@ export const useSession = create<SessionState>((set) => ({
               ...d,
               dirty: false,
               schemaError: null,
+              profile: undefined, // re-materialized table -> stale profile
+              rowCount: undefined,
               columns: columns.map((c) => ({
                 name: c.name,
                 type: c.type,
@@ -190,6 +201,26 @@ export const useSession = create<SessionState>((set) => ({
               })),
             }
           : d,
+      ),
+    })),
+  setProfile: (table, profile, rowCount) =>
+    set((s) => ({
+      datasets: s.datasets.map((d) =>
+        d.table === table
+          ? { ...d, profile, rowCount, profiling: false, profileError: null }
+          : d,
+      ),
+    })),
+  setProfiling: (table, profiling) =>
+    set((s) => ({
+      datasets: s.datasets.map((d) =>
+        d.table === table ? { ...d, profiling } : d,
+      ),
+    })),
+  setProfileError: (table, message) =>
+    set((s) => ({
+      datasets: s.datasets.map((d) =>
+        d.table === table ? { ...d, profileError: message, profiling: false } : d,
       ),
     })),
 }))

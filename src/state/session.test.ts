@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it } from 'vitest'
 import { useSession, type Dataset } from './session'
 import type { ColumnConfig } from '../core/schemaTypes'
+import type { ColumnProfile } from '../core/profile'
 
 const ds = (table: string): Dataset => ({
   table,
@@ -232,5 +233,54 @@ describe('session: schema config — resetColumn / setApplied (M2)', () => {
       { name: 'id', type: 'BIGINT', nullLoss: 0 },
       { name: 'rev', type: 'DOUBLE', nullLoss: 3 },
     ])
+  })
+})
+
+const profileFixture: ColumnProfile[] = [
+  { name: 'id', type: 'BIGINT', distinct: 4, nullCount: 0, kind: 'numeric' },
+]
+
+describe('session: source profile state (M3)', () => {
+  it('setProfiling toggles the per-dataset flag', () => {
+    useSession.getState().reset()
+    const s = useSession.getState()
+    s.addDataset(csvDs('events'))
+    s.setProfiling('events', true)
+    expect(useSession.getState().datasets[0].profiling).toBe(true)
+  })
+
+  it('setProfile stores profiles + rowCount, clears flag + error', () => {
+    useSession.getState().reset()
+    const s = useSession.getState()
+    s.addDataset(csvDs('events'))
+    s.setProfiling('events', true)
+    s.setProfile('events', profileFixture, 48210)
+    const d = useSession.getState().datasets[0]
+    expect(d.profile).toEqual(profileFixture)
+    expect(d.rowCount).toBe(48210)
+    expect(d.profiling).toBe(false)
+    expect(d.profileError).toBeNull()
+  })
+
+  it('setProfileError stores the message and clears the flag', () => {
+    useSession.getState().reset()
+    const s = useSession.getState()
+    s.addDataset(csvDs('events'))
+    s.setProfiling('events', true)
+    s.setProfileError('events', 'boom')
+    const d = useSession.getState().datasets[0]
+    expect(d.profileError).toBe('boom')
+    expect(d.profiling).toBe(false)
+  })
+
+  it('setApplied invalidates a cached source profile + rowCount (re-materialized table)', () => {
+    useSession.getState().reset()
+    const s = useSession.getState()
+    s.addDataset(csvDs('events'))
+    s.setProfile('events', profileFixture, 48210)
+    s.setApplied('events', [{ name: 'id', type: 'BIGINT' }], {})
+    const d = useSession.getState().datasets[0]
+    expect(d.profile).toBeUndefined()
+    expect(d.rowCount).toBeUndefined()
   })
 })
