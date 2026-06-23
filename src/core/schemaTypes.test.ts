@@ -14,10 +14,14 @@ describe('mapDuckDBType', () => {
     expect(mapDuckDBType('INTEGER')).toBe('BIGINT')
     expect(mapDuckDBType('HUGEINT')).toBe('BIGINT')
   })
-  it('maps real/decimal family to DOUBLE', () => {
+  it('maps DOUBLE/DECIMAL/NUMERIC to DOUBLE', () => {
     expect(mapDuckDBType('DOUBLE')).toBe('DOUBLE')
-    expect(mapDuckDBType('FLOAT')).toBe('DOUBLE')
     expect(mapDuckDBType('DECIMAL(18,3)')).toBe('DOUBLE')
+    expect(mapDuckDBType('NUMERIC')).toBe('DOUBLE')
+  })
+  it('maps FLOAT/REAL to FLOAT (single precision — honest, not folded to DOUBLE)', () => {
+    expect(mapDuckDBType('FLOAT')).toBe('FLOAT')
+    expect(mapDuckDBType('REAL')).toBe('FLOAT')
   })
   it('maps date/timestamp/boolean', () => {
     expect(mapDuckDBType('DATE')).toBe('DATE')

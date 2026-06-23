@@ -17,7 +17,8 @@ export function buildCastValue(cfg: ColumnConfig): string {
     case 'VARCHAR':
       return v
     case 'BIGINT':
-    case 'DOUBLE': {
+    case 'DOUBLE':
+    case 'FLOAT': {
       const num = cfg.decimalSep === ',' ? `replace(${v}, ',', '.')` : v
       return `TRY_CAST(${num} AS ${cfg.type})`
     }

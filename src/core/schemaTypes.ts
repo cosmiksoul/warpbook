@@ -1,10 +1,11 @@
 import type { QueryResult, ResultColumn } from './arrowToRows'
 
-/** The six target types quackbook can cast a column to. */
+/** The target types quackbook can cast a column to. */
 export type ColType =
   | 'VARCHAR'
   | 'BIGINT'
   | 'DOUBLE'
+  | 'FLOAT'
   | 'DATE'
   | 'TIMESTAMP'
   | 'BOOLEAN'
@@ -24,7 +25,8 @@ export function mapDuckDBType(duckType: string): ColType {
   const t = duckType.toUpperCase()
   if (/^(BIGINT|INTEGER|INT|SMALLINT|TINYINT|HUGEINT|UBIGINT|UINTEGER|USMALLINT|UTINYINT)\b/.test(t))
     return 'BIGINT'
-  if (/^(DOUBLE|FLOAT|REAL|DECIMAL|NUMERIC)\b/.test(t)) return 'DOUBLE'
+  if (/^(FLOAT|REAL)\b/.test(t)) return 'FLOAT'
+  if (/^(DOUBLE|DECIMAL|NUMERIC)\b/.test(t)) return 'DOUBLE'
   if (/^DATE\b/.test(t)) return 'DATE'
   if (/^TIMESTAMP\b/.test(t)) return 'TIMESTAMP'
   if (/^BOOL/.test(t)) return 'BOOLEAN'

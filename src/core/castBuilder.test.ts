@@ -24,6 +24,16 @@ describe('buildCastValue (bare cast expression, no alias)', () => {
       buildCastValue(base({ origName: 'rev', type: 'DOUBLE', decimalSep: ',' })),
     ).toBe(`TRY_CAST(replace("rev", ',', '.') AS DOUBLE)`)
   })
+  it('FLOAT uses TRY_CAST (single precision, same path as DOUBLE)', () => {
+    expect(buildCastValue(base({ origName: 'rev', type: 'FLOAT' }))).toBe(
+      'TRY_CAST("rev" AS FLOAT)',
+    )
+  })
+  it('FLOAT with decimal comma replaces , with . before casting', () => {
+    expect(
+      buildCastValue(base({ origName: 'rev', type: 'FLOAT', decimalSep: ',' })),
+    ).toBe(`TRY_CAST(replace("rev", ',', '.') AS FLOAT)`)
+  })
   it('DATE with format casts try_strptime result to DATE', () => {
     expect(
       buildCastValue(base({ origName: 'd', type: 'DATE', dateFormat: '%d.%m.%Y' })),

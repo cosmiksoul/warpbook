@@ -5,6 +5,7 @@ const TYPES: ColType[] = [
   'VARCHAR',
   'BIGINT',
   'DOUBLE',
+  'FLOAT',
   'DATE',
   'TIMESTAMP',
   'BOOLEAN',
@@ -31,7 +32,8 @@ export function SchemaColumnEditor({
   const set = (patch: Partial<ColumnConfig>) =>
     setDraft((d) => ({ ...d, ...patch }))
 
-  const isNumeric = draft.type === 'BIGINT' || draft.type === 'DOUBLE'
+  const isNumeric =
+    draft.type === 'BIGINT' || draft.type === 'DOUBLE' || draft.type === 'FLOAT'
   const isTemporal = draft.type === 'DATE' || draft.type === 'TIMESTAMP'
 
   function save() {
