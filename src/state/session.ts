@@ -1,5 +1,6 @@
 import { create } from 'zustand'
-import type { QueryResult, ResultColumn } from '../core/arrowToRows'
+import type { QueryResult } from '../core/arrowToRows'
+import type { ColumnConfig } from '../core/schemaTypes'
 import { buildSelectStar } from '../core/sql'
 
 export interface Dataset {
@@ -7,7 +8,13 @@ export interface Dataset {
   fileName: string
   bytes: number
   kind: 'csv' | 'parquet'
-  columns: ResultColumn[]
+  columns: { name: string; type: string; nullLoss?: number }[]
+  // --- M2, only for kind === 'csv' ---
+  rawTable?: string
+  suggested?: { name: string; type: ColumnConfig['type'] }[]
+  schemaConfig?: ColumnConfig[]
+  dirty?: boolean
+  schemaError?: string | null
 }
 
 export interface Tab {
@@ -37,6 +44,9 @@ interface SessionState {
   updateTabSql: (id: string, sql: string) => void
   setTabResult: (id: string, result: QueryResult, meta: { ms: number; rows: number }) => void
   setTabError: (id: string, message: string) => void
+  setColumnConfig: (table: string, cfgs: ColumnConfig[]) => void
+  stageColumn: (table: string, cfg: ColumnConfig) => void
+  setSchemaError: (table: string, message: string | null) => void
 }
 
 const initial = {
@@ -110,5 +120,31 @@ export const useSession = create<SessionState>((set) => ({
   setTabError: (id, message) =>
     set((s) => ({
       tabs: s.tabs.map((t) => (t.id === id ? { ...t, error: message } : t)),
+    })),
+  setColumnConfig: (table, cfgs) =>
+    set((s) => ({
+      datasets: s.datasets.map((d) =>
+        d.table === table ? { ...d, schemaConfig: cfgs, dirty: false } : d,
+      ),
+    })),
+  stageColumn: (table, cfg) =>
+    set((s) => ({
+      datasets: s.datasets.map((d) =>
+        d.table === table
+          ? {
+              ...d,
+              dirty: true,
+              schemaConfig: (d.schemaConfig ?? []).map((c) =>
+                c.origName === cfg.origName ? cfg : c,
+              ),
+            }
+          : d,
+      ),
+    })),
+  setSchemaError: (table, message) =>
+    set((s) => ({
+      datasets: s.datasets.map((d) =>
+        d.table === table ? { ...d, schemaError: message } : d,
+      ),
     })),
 }))

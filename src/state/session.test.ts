@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest'
 import { useSession, type Dataset } from './session'
+import type { ColumnConfig } from '../core/schemaTypes'
 
 const ds = (table: string): Dataset => ({
   table,
@@ -118,5 +119,71 @@ describe('session: tabs', () => {
       'tab-1',
       'tab-2',
     ])
+  })
+})
+
+const csvDs = (table: string): Dataset => ({
+  table,
+  fileName: `${table}.csv`,
+  bytes: 10,
+  kind: 'csv',
+  columns: [
+    { name: 'id', type: 'VARCHAR' },
+    { name: 'rev', type: 'VARCHAR' },
+  ],
+  rawTable: `_qb_raw_${table}`,
+  suggested: [
+    { name: 'id', type: 'BIGINT' },
+    { name: 'rev', type: 'DOUBLE' },
+  ],
+  schemaConfig: [
+    { origName: 'id', name: 'id', type: 'VARCHAR', include: true },
+    { origName: 'rev', name: 'rev', type: 'VARCHAR', include: true },
+  ],
+  dirty: false,
+})
+
+describe('session: schema config — setColumnConfig / stageColumn (M2)', () => {
+  it('setColumnConfig replaces the whole config and clears dirty (used by "типы")', () => {
+    useSession.getState().reset()
+    const s = useSession.getState()
+    s.addDataset(csvDs('events'))
+    const next: ColumnConfig[] = [
+      { origName: 'id', name: 'id', type: 'BIGINT', include: true },
+      { origName: 'rev', name: 'rev', type: 'DOUBLE', include: true },
+    ]
+    s.setColumnConfig('events', next)
+    const d = useSession.getState().datasets[0]
+    expect(d.schemaConfig).toEqual(next)
+    expect(d.dirty).toBe(false)
+  })
+
+  it('stageColumn edits one column by origName and marks dirty', () => {
+    useSession.getState().reset()
+    const s = useSession.getState()
+    s.addDataset(csvDs('events'))
+    s.stageColumn('events', {
+      origName: 'rev',
+      name: 'revenue',
+      type: 'DOUBLE',
+      include: true,
+      decimalSep: ',',
+    })
+    const d = useSession.getState().datasets[0]
+    expect(d.dirty).toBe(true)
+    expect(d.schemaConfig).toEqual([
+      { origName: 'id', name: 'id', type: 'VARCHAR', include: true },
+      { origName: 'rev', name: 'revenue', type: 'DOUBLE', include: true, decimalSep: ',' },
+    ])
+  })
+
+  it('setSchemaError stores a per-dataset error message', () => {
+    useSession.getState().reset()
+    const s = useSession.getState()
+    s.addDataset(csvDs('events'))
+    s.setSchemaError('events', 'boom')
+    expect(useSession.getState().datasets[0].schemaError).toBe('boom')
+    s.setSchemaError('events', null)
+    expect(useSession.getState().datasets[0].schemaError).toBeNull()
   })
 })
