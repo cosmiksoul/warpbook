@@ -158,12 +158,13 @@ body {
   font-size: 12px; padding: 0 2px; line-height: 1;
 }
 .col-edit:hover { color: #e3a95c; }
-.schema-col { position: relative; }
+.schema-col { flex-wrap: wrap; }
+/* the row being edited must not inherit the pruning dim of an unused column */
+.schema-col:has(.col-editor) { opacity: 1; }
 .col-editor {
-  position: absolute; right: 0; top: 100%; z-index: 10; width: 280px;
+  flex: 0 0 100%; box-sizing: border-box; margin: 6px 0 2px;
   background: #0d1c1f; border: 1px solid #34555a; border-radius: 10px;
-  padding: 12px; margin-top: 4px; display: flex; flex-direction: column; gap: 9px;
-  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.45);
+  padding: 12px; display: flex; flex-direction: column; gap: 9px;
 }
 .col-editor-head { display: flex; align-items: center; justify-content: space-between; }
 .col-editor-orig { font-family: ui-monospace, monospace; color: #e9eeea; font-size: 13px; }
