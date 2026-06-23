@@ -5,6 +5,7 @@ import { isInternalTable } from '../core/sql'
 import type { DuckDBClient } from '../db/duckdbClient'
 import { SchemaColumnEditor } from '../components/SchemaColumnEditor'
 import { useSchemaActions } from './useSchemaActions'
+import { useProfileActions } from './useProfileActions'
 
 function formatBytes(n: number): string {
   if (n < 1024) return `${n} B`
@@ -19,6 +20,9 @@ export function Rail({ client }: { client: DuckDBClient }) {
   const activeTabId = useSession((s) => s.activeTabId)
   const openOrFocusTab = useSession((s) => s.openOrFocusTab)
   const { applyInferred, apply } = useSchemaActions(client)
+  const setExploreView = useSession((s) => s.setExploreView)
+  const setProfileTarget = useSession((s) => s.setProfileTarget)
+  const { profile } = useProfileActions(client)
   const stageColumn = useSession((s) => s.stageColumn)
   const resetColumn = useSession((s) => s.resetColumn)
   const setColumnConfig = useSession((s) => s.setColumnConfig)
@@ -181,6 +185,17 @@ export function Rail({ client }: { client: DuckDBClient }) {
                 })
               })()}
             </ul>
+            <button
+              className="profbtn"
+              onClick={() => {
+                setProfileTarget({ kind: 'source', table: ds.table })
+                setExploreView('profile')
+                void profile(ds.table)
+              }}
+              title="посмотреть распределения колонок источника"
+            >
+              ▦ профиль источника
+            </button>
           </div>
         )
       })}

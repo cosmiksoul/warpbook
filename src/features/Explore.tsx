@@ -3,6 +3,7 @@ import type { DuckDBClient } from '../db/duckdbClient'
 import { arrowToRows } from '../core/arrowToRows'
 import { SqlEditor } from '../components/SqlEditor'
 import { ResultPanel } from '../components/ResultPanel'
+import { ProfilePanel } from '../components/ProfilePanel'
 import { TabStrip } from '../components/TabStrip'
 
 export function Explore({ client }: { client: DuckDBClient }) {
@@ -11,6 +12,8 @@ export function Explore({ client }: { client: DuckDBClient }) {
   const updateTabSql = useSession((s) => s.updateTabSql)
   const setTabResult = useSession((s) => s.setTabResult)
   const setTabError = useSession((s) => s.setTabError)
+  const exploreView = useSession((s) => s.exploreView)
+  const profileTarget = useSession((s) => s.profileTarget)
 
   const tab = tabs.find((t) => t.id === activeTabId) ?? null
 
@@ -33,9 +36,15 @@ export function Explore({ client }: { client: DuckDBClient }) {
     return (
       <div className="explore">
         <TabStrip />
-        <div className="explore-empty">
-          Открой источник в рейле или нажми «+» для пустого запроса.
-        </div>
+        {exploreView === 'profile' && profileTarget?.kind === 'source' ? (
+          <section className="result-panel">
+            <ProfilePanel />
+          </section>
+        ) : (
+          <div className="explore-empty">
+            Открой источник в рейле или нажми «+» для пустого запроса.
+          </div>
+        )}
       </div>
     )
   }

@@ -1,8 +1,9 @@
-import { useState } from 'react'
 import type { QueryResult } from '../core/arrowToRows'
 import { buildChartSpec } from '../core/chartSpec'
+import { useSession } from '../state/session'
 import { ResultGrid } from './ResultGrid'
 import { Chart } from './Chart'
+import { ProfilePanel } from './ProfilePanel'
 
 interface Props {
   result: QueryResult | null
@@ -11,7 +12,8 @@ interface Props {
 }
 
 export function ResultPanel({ result, meta, error }: Props) {
-  const [view, setView] = useState<'table' | 'chart'>('table')
+  const view = useSession((s) => s.exploreView)
+  const setView = useSession((s) => s.setExploreView)
   const spec = result ? buildChartSpec(result.columns) : null
   const showChart = view === 'chart' && spec && result
 
@@ -43,10 +45,11 @@ export function ResultPanel({ result, meta, error }: Props) {
           </div>
         )}
       </header>
-      {error && <pre className="result-error">{error}</pre>}
-      {!error && showChart && <Chart spec={spec!} rows={result!.rows} />}
-      {!error && result && !showChart && <ResultGrid result={result} />}
-      {!error && !result && (
+      {view === 'profile' && <ProfilePanel />}
+      {view !== 'profile' && error && <pre className="result-error">{error}</pre>}
+      {view !== 'profile' && !error && showChart && <Chart spec={spec!} rows={result!.rows} />}
+      {view !== 'profile' && !error && result && !showChart && <ResultGrid result={result} />}
+      {view !== 'profile' && !error && !result && (
         <p className="result-empty">Запусти запрос (⌘↵), чтобы увидеть строки.</p>
       )}
     </section>
