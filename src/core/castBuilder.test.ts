@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { buildCastExpr, buildCastValue } from './castBuilder'
+import { buildCastExpr, buildCastValue, buildMaterializeDDL } from './castBuilder'
 import type { ColumnConfig } from './schemaTypes'
 
 const base = (over: Partial<ColumnConfig>): ColumnConfig => ({
@@ -107,5 +107,27 @@ describe('buildCastExpr (cast value + target-name alias)', () => {
         base({ origName: 'we"ird', name: 'o"k', type: 'BIGINT', nullToken: "o'NA" }),
       ),
     ).toBe(`TRY_CAST(nullif("we""ird", 'o''NA') AS BIGINT) AS "o""k"`)
+  })
+})
+
+describe('buildMaterializeDDL', () => {
+  it('CREATE OR REPLACE from the raw table with only included columns, order kept', () => {
+    const cfgs: ColumnConfig[] = [
+      { origName: 'id', name: 'id', type: 'BIGINT', include: true },
+      { origName: 'skip', name: 'skip', type: 'VARCHAR', include: false },
+      { origName: 'name', name: 'label', type: 'VARCHAR', include: true },
+    ]
+    expect(buildMaterializeDDL('events', '_qb_raw_events', cfgs)).toBe(
+      'CREATE OR REPLACE TABLE "events" AS SELECT ' +
+        'TRY_CAST("id" AS BIGINT) AS "id", "name" AS "label" ' +
+        'FROM "_qb_raw_events"',
+    )
+  })
+  it('throws when no column is included (empty SELECT is invalid)', () => {
+    expect(() =>
+      buildMaterializeDDL('events', '_qb_raw_events', [
+        { origName: 'a', name: 'a', type: 'VARCHAR', include: false },
+      ]),
+    ).toThrow(/at least one/i)
   })
 })

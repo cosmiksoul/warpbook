@@ -38,3 +38,22 @@ export function buildCastValue(cfg: ColumnConfig): string {
 export function buildCastExpr(cfg: ColumnConfig): string {
   return `${buildCastValue(cfg)} AS ${quoteIdent(cfg.name)}`
 }
+
+/**
+ * Build the re-materialization DDL: replace the typed table with a SELECT of
+ * cast expressions (included columns only, source order preserved) over the
+ * immutable raw table. Throws if no column is included — an empty SELECT is
+ * invalid SQL (the UI guarantees >= 1 included column).
+ */
+export function buildMaterializeDDL(
+  table: string,
+  rawTable: string,
+  cfgs: ColumnConfig[],
+): string {
+  const included = cfgs.filter((c) => c.include)
+  if (included.length === 0) {
+    throw new Error('buildMaterializeDDL: at least one column must be included')
+  }
+  const selectList = included.map(buildCastExpr).join(', ')
+  return `CREATE OR REPLACE TABLE ${quoteIdent(table)} AS SELECT ${selectList} FROM ${quoteIdent(rawTable)}`
+}
