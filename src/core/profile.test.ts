@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest'
-import { classifyColumn, parseSummarize, THRESHOLD_DISTINCT } from './profile'
+import {
+  buildNullCountQuery,
+  classifyColumn,
+  interpretNullCounts,
+  parseSummarize,
+  THRESHOLD_DISTINCT,
+} from './profile'
 import type { QueryResult } from './arrowToRows'
 
 describe('classifyColumn', () => {
@@ -68,5 +74,42 @@ describe('parseSummarize', () => {
     expect(parseSummarize(r)).toEqual([
       { name: 'x', type: 'BIGINT', approxUnique: 0, min: null, max: null, median: null },
     ])
+  })
+})
+
+describe('buildNullCountQuery', () => {
+  it('one pass: total + a FILTERed null count per column, quoted idents', () => {
+    expect(buildNullCountQuery('events', ['country', 'rev'])).toBe(
+      'SELECT count(*) AS total, ' +
+        'count(*) FILTER (WHERE "country" IS NULL) AS n0, ' +
+        'count(*) FILTER (WHERE "rev" IS NULL) AS n1 ' +
+        'FROM "events"',
+    )
+  })
+  it('escapes identifiers with embedded quotes', () => {
+    expect(buildNullCountQuery('_qb_raw_t', ['we"ird'])).toBe(
+      'SELECT count(*) AS total, ' +
+        'count(*) FILTER (WHERE "we""ird" IS NULL) AS n0 ' +
+        'FROM "_qb_raw_t"',
+    )
+  })
+  it('still selects total when there are no columns', () => {
+    expect(buildNullCountQuery('events', [])).toBe('SELECT count(*) AS total FROM "events"')
+  })
+})
+
+describe('interpretNullCounts', () => {
+  it('maps total + n0..nk (BigInt) into Number total and per-column counts', () => {
+    const row = { total: 48210n, n0: 0n, n1: 3n }
+    expect(interpretNullCounts(row, ['country', 'rev'])).toEqual({
+      total: 48210,
+      nulls: { country: 0, rev: 3 },
+    })
+  })
+  it('coerces null/undefined cells to 0', () => {
+    expect(interpretNullCounts({ total: null, n0: null }, ['x'])).toEqual({
+      total: 0,
+      nulls: { x: 0 },
+    })
   })
 })

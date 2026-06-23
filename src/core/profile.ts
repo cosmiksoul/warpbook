@@ -1,4 +1,5 @@
 import type { QueryResult } from './arrowToRows'
+import { quoteIdent } from './sql'
 
 /** How a column is profiled (drives which card body renders). */
 export type ColumnKind = 'numeric' | 'categorical' | 'range' | 'highCardinality'
@@ -97,4 +98,31 @@ export function parseSummarize(result: QueryResult): SummarizeColumn[] {
     max: toStatString(r.max),
     median: toStatString(r.q50),
   }))
+}
+
+/**
+ * Build a single-pass query that returns total row count plus, per column, the
+ * number of NULLs via count(*) FILTER (WHERE "col" IS NULL). A dedicated clean
+ * pass instead of SUMMARIZE's null_percentage (which decodes wrong). The total
+ * doubles as the relation's row count (panel caption «N строк»). Columns map to
+ * positional aliases n0..nk (idents quoted/escaped).
+ */
+export function buildNullCountQuery(table: string, columns: string[]): string {
+  const parts = ['count(*) AS total']
+  columns.forEach((col, i) => {
+    parts.push(`count(*) FILTER (WHERE ${quoteIdent(col)} IS NULL) AS n${i}`)
+  })
+  return `SELECT ${parts.join(', ')} FROM ${quoteIdent(table)}`
+}
+
+/** Interpret the {total, n0..nk} row (BigInt) into total + {col: nullCount}. */
+export function interpretNullCounts(
+  row: Record<string, unknown>,
+  columns: string[],
+): { total: number; nulls: Record<string, number> } {
+  const nulls: Record<string, number> = {}
+  columns.forEach((col, i) => {
+    nulls[col] = Number(row[`n${i}`] ?? 0)
+  })
+  return { total: Number(row.total ?? 0), nulls }
 }
