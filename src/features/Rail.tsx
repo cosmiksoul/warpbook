@@ -21,6 +21,7 @@ export function Rail({ client }: { client: DuckDBClient }) {
   const { applyInferred, apply } = useSchemaActions(client)
   const stageColumn = useSession((s) => s.stageColumn)
   const resetColumn = useSession((s) => s.resetColumn)
+  const setColumnConfig = useSession((s) => s.setColumnConfig)
   const [editing, setEditing] = useState<{ table: string; origName: string } | null>(null)
 
   const activeTab = tabs.find((t) => t.id === activeTabId) ?? null
@@ -77,8 +78,7 @@ export function Rail({ client }: { client: DuckDBClient }) {
             : [],
         )
         const canType = ds.kind === 'csv' && (ds.suggested?.length ?? 0) > 0
-        const hasIncluded =
-          (ds.schemaConfig?.filter((c) => c.include).length ?? 0) > 0
+        const isCsv = ds.kind === 'csv' && (ds.schemaConfig?.length ?? 0) > 0
         return (
           <div className="schema-block" key={ds.table}>
             <div className="rail-section-label schema-head">
@@ -89,25 +89,29 @@ export function Rail({ client }: { client: DuckDBClient }) {
                 </span>
               </span>
               <span className="schema-actions">
-                {ds.dirty && (
+                {isCsv && (
                   <button
-                    className="schema-btn apply"
-                    disabled={!hasIncluded}
-                    onClick={() => void apply(ds.table)}
-                    title={
-                      hasIncluded
-                        ? 'ре-материализовать таблицу из текущей конфигурации'
-                        : 'нужна хотя бы одна включённая колонка'
-                    }
+                    className="schema-btn"
+                    onClick={() => {
+                      const base = (ds.schemaConfig ?? []).map((c) => ({
+                        origName: c.origName,
+                        name: c.origName,
+                        type: 'VARCHAR' as const,
+                        include: true,
+                      }))
+                      setColumnConfig(ds.table, base)
+                      void apply(ds.table)
+                    }}
+                    title="сбросить схему к исходным VARCHAR-типам"
                   >
-                    применить
+                    сброс
                   </button>
                 )}
                 {canType && (
                   <button
                     className="schema-btn"
                     onClick={() => void applyInferred(ds.table)}
-                    title="применить предложенные типы одним кликом"
+                    title="типизировать все колонки по инференсу одним кликом"
                   >
                     типы
                   </button>
@@ -160,9 +164,13 @@ export function Rail({ client }: { client: DuckDBClient }) {
                         <SchemaColumnEditor
                           config={cfg}
                           canDisableInclude={canDisableInclude}
-                          onStage={(next) => stageColumn(ds.table, next)}
+                          onStage={(next) => {
+                            stageColumn(ds.table, next)
+                            void apply(ds.table)
+                          }}
                           onReset={(orig) => {
                             resetColumn(ds.table, orig)
+                            void apply(ds.table)
                             setEditing(null)
                           }}
                           onClose={() => setEditing(null)}
