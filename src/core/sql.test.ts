@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { buildDescribe, buildDropTable, buildLoadCsv, buildLoadParquet, buildSelectAll, buildSelectStar, quoteIdent, quoteLiteral, tableNameFromFilename, uniqueTableName } from './sql'
+import { buildCloneTable, buildDescribe, buildDropTable, buildLoadCsv, buildLoadCsvRaw, buildLoadParquet, buildSelectAll, buildSelectStar, buildSniffCsv, isInternalTable, quoteIdent, quoteLiteral, rawTableName, tableNameFromFilename, uniqueTableName } from './sql'
 
 describe('quoteIdent', () => {
   it('double-quotes an identifier', () => {
@@ -94,5 +94,45 @@ describe('buildDescribe', () => {
 describe('buildDropTable', () => {
   it('drops a quoted table if it exists', () => {
     expect(buildDropTable('events')).toBe('DROP TABLE IF EXISTS "events"')
+  })
+})
+
+describe('rawTableName', () => {
+  it('prefixes the immutable raw cast-source table name', () => {
+    expect(rawTableName('events')).toBe('_qb_raw_events')
+  })
+})
+
+describe('isInternalTable', () => {
+  it('flags raw tables as internal', () => {
+    expect(isInternalTable('_qb_raw_events')).toBe(true)
+  })
+  it('treats user tables as not internal', () => {
+    expect(isInternalTable('events')).toBe(false)
+    expect(isInternalTable('raw_events')).toBe(false)
+  })
+})
+
+describe('buildLoadCsvRaw', () => {
+  it('creates the immutable all-VARCHAR raw table from a registered CSV', () => {
+    expect(buildLoadCsvRaw('events.csv', '_qb_raw_events')).toBe(
+      `CREATE OR REPLACE TABLE "_qb_raw_events" AS SELECT * FROM read_csv_auto('events.csv', all_varchar = true)`,
+    )
+  })
+})
+
+describe('buildSniffCsv', () => {
+  it('describes the inferred (native-typed) schema of a registered CSV', () => {
+    expect(buildSniffCsv('events.csv')).toBe(
+      `DESCRIBE SELECT * FROM read_csv_auto('events.csv', sample_size = -1)`,
+    )
+  })
+})
+
+describe('buildCloneTable', () => {
+  it('clones a source table into a fresh dest table (quoted idents)', () => {
+    expect(buildCloneTable('events', '_qb_raw_events')).toBe(
+      'CREATE OR REPLACE TABLE "events" AS SELECT * FROM "_qb_raw_events"',
+    )
   })
 })

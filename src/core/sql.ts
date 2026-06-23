@@ -54,3 +54,31 @@ export function buildDescribe(table: string): string {
 export function buildDropTable(table: string): string {
   return `DROP TABLE IF EXISTS ${quoteIdent(table)}`
 }
+
+/** Internal prefix for the immutable all-VARCHAR cast-source table (model A). */
+const RAW_PREFIX = '_qb_raw_'
+
+/** Name of the immutable raw cast-source table for a user table. */
+export function rawTableName(table: string): string {
+  return `${RAW_PREFIX}${table}`
+}
+
+/** True for tables quackbook owns internally (filtered from sources/schema). */
+export function isInternalTable(name: string): boolean {
+  return name.startsWith(RAW_PREFIX)
+}
+
+/** DDL: materialize a registered CSV as the immutable all-VARCHAR raw table. */
+export function buildLoadCsvRaw(virtualFile: string, rawTable: string): string {
+  return `CREATE OR REPLACE TABLE ${quoteIdent(rawTable)} AS SELECT * FROM read_csv_auto(${quoteLiteral(virtualFile)}, all_varchar = true)`
+}
+
+/** Introspection: DuckDB's inferred (native) schema for a registered CSV. */
+export function buildSniffCsv(virtualFile: string): string {
+  return `DESCRIBE SELECT * FROM read_csv_auto(${quoteLiteral(virtualFile)}, sample_size = -1)`
+}
+
+/** DDL: (re)create `dest` as a verbatim SELECT * copy of `src` (both quoted). */
+export function buildCloneTable(dest: string, src: string): string {
+  return `CREATE OR REPLACE TABLE ${quoteIdent(dest)} AS SELECT * FROM ${quoteIdent(src)}`
+}
