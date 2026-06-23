@@ -1,0 +1,5 @@
+id,revenue,signup,note
+1,"1234,50",2024-01-15,ok
+2,"NA",2024-02-30,bad-date
+3,"99,9",not-a-date,NA
+4,"12,00",2024-03-01,ok

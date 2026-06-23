@@ -1,17 +1,32 @@
 import type { AsyncDuckDB } from '@duckdb/duckdb-wasm'
 import type { Table } from 'apache-arrow'
 import { arrowToRows, type ResultColumn } from '../core/arrowToRows'
-import { buildDescribe, buildLoadCsv, buildLoadParquet } from '../core/sql'
+import {
+  buildCloneTable,
+  buildDescribe,
+  buildLoadCsvRaw,
+  buildLoadParquet,
+  buildSniffCsv,
+  rawTableName,
+} from '../core/sql'
 
 export interface DuckDBClient {
   /** Register raw file bytes under a virtual filename DuckDB can read. */
   registerFile(name: string, data: Uint8Array): Promise<void>
-  /** Materialize a registered CSV as an all-VARCHAR baseline table. */
+  /**
+   * Materialize a registered CSV as TWO tables (model A): an immutable
+   * all-VARCHAR raw cast-source (_qb_raw_<t>) plus a typed table (<t>),
+   * initially an all_varchar copy of the raw baseline.
+   */
   loadCsvAllVarchar(virtualName: string, tableName: string): Promise<void>
-  /** Materialize a registered Parquet file as a typed table. */
+  /** Materialize a registered Parquet file as a typed table (no raw, M1 behavior). */
   loadParquet(virtualName: string, tableName: string): Promise<void>
+  /** DuckDB's inferred (native-typed) schema of a registered CSV. */
+  sniffCsv(virtualName: string): Promise<Table>
   /** Column names + DuckDB type names for a loaded table. */
   describeTable(tableName: string): Promise<ResultColumn[]>
+  /** Run a statement whose result is not needed (DDL: CREATE OR REPLACE, ...). */
+  exec(sql: string): Promise<void>
   /** Run a query and return the Arrow result table. */
   query(sql: string): Promise<Table>
 }
@@ -31,10 +46,15 @@ export function createClient(db: AsyncDuckDB): DuckDBClient {
       await db.registerFileBuffer(name, data)
     },
     async loadCsvAllVarchar(virtualName, tableName) {
-      await run(buildLoadCsv(virtualName, tableName))
+      const raw = rawTableName(tableName)
+      await run(buildLoadCsvRaw(virtualName, raw))
+      await run(buildCloneTable(tableName, raw))
     },
     async loadParquet(virtualName, tableName) {
       await run(buildLoadParquet(virtualName, tableName))
+    },
+    async sniffCsv(virtualName) {
+      return run(buildSniffCsv(virtualName))
     },
     async describeTable(tableName) {
       const result = arrowToRows(await run(buildDescribe(tableName)))
@@ -42,6 +62,9 @@ export function createClient(db: AsyncDuckDB): DuckDBClient {
         name: String(r.column_name),
         type: String(r.column_type),
       }))
+    },
+    async exec(sql) {
+      await run(sql)
     },
     query: run,
   }
