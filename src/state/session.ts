@@ -74,6 +74,9 @@ interface SessionState {
   setProfile: (table: string, profile: ColumnProfile[], rowCount: number) => void
   setProfiling: (table: string, profiling: boolean) => void
   setProfileError: (table: string, message: string | null) => void
+  setResultProfile: (tabId: string, profile: ColumnProfile[], rowCount: number) => void
+  setResultProfiling: (tabId: string, profiling: boolean) => void
+  setResultProfileError: (tabId: string, message: string | null) => void
   setExploreView: (view: 'table' | 'chart' | 'profile') => void
   setProfileTarget: (target: ProfileTarget) => void
 }
@@ -140,7 +143,11 @@ export const useSession = create<SessionState>((set) => ({
   setActiveTab: (id) => set({ activeTabId: id }),
   updateTabSql: (id, sql) =>
     set((s) => ({
-      tabs: s.tabs.map((t) => (t.id === id ? { ...t, sql } : t)),
+      tabs: s.tabs.map((t) =>
+        t.id === id
+          ? { ...t, sql, resultProfile: undefined, resultRowCount: undefined }
+          : t,
+      ),
     })),
   setTabResult: (id, result, meta) =>
     set((s) => ({
@@ -237,6 +244,30 @@ export const useSession = create<SessionState>((set) => ({
     set((s) => ({
       datasets: s.datasets.map((d) =>
         d.table === table ? { ...d, profileError: message, profiling: false } : d,
+      ),
+    })),
+  setResultProfile: (tabId, profile, rowCount) =>
+    set((s) => ({
+      tabs: s.tabs.map((t) =>
+        t.id === tabId
+          ? {
+              ...t,
+              resultProfile: profile,
+              resultRowCount: rowCount,
+              resultProfiling: false,
+              resultProfileError: null,
+            }
+          : t,
+      ),
+    })),
+  setResultProfiling: (tabId, resultProfiling) =>
+    set((s) => ({
+      tabs: s.tabs.map((t) => (t.id === tabId ? { ...t, resultProfiling } : t)),
+    })),
+  setResultProfileError: (tabId, message) =>
+    set((s) => ({
+      tabs: s.tabs.map((t) =>
+        t.id === tabId ? { ...t, resultProfileError: message, resultProfiling: false } : t,
       ),
     })),
   setExploreView: (exploreView) => set({ exploreView }),

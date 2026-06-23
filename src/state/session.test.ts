@@ -302,3 +302,36 @@ describe('session: explore view + profile target (M3, shared)', () => {
     expect(after.profileTarget).toEqual({ kind: 'source', table: 'events' })
   })
 })
+
+describe('session: result profile state + invalidation (M3)', () => {
+  it('setResultProfile / setResultProfiling / setResultProfileError act on the right tab', () => {
+    useSession.getState().reset()
+    const s = useSession.getState()
+    s.openOrFocusTab('events')
+    const id = useSession.getState().tabs[0].id
+    s.setResultProfiling(id, true)
+    expect(useSession.getState().tabs[0].resultProfiling).toBe(true)
+    s.setResultProfile(id, profileFixture, 1234)
+    let t = useSession.getState().tabs[0]
+    expect(t.resultProfile).toEqual(profileFixture)
+    expect(t.resultRowCount).toBe(1234)
+    expect(t.resultProfiling).toBe(false)
+    expect(t.resultProfileError).toBeNull()
+    s.setResultProfileError(id, 'bad sql')
+    t = useSession.getState().tabs[0]
+    expect(t.resultProfileError).toBe('bad sql')
+    expect(t.resultProfiling).toBe(false)
+  })
+
+  it('updateTabSql invalidates a cached result profile + rowCount (new SQL -> recompute)', () => {
+    useSession.getState().reset()
+    const s = useSession.getState()
+    s.openOrFocusTab('events')
+    const id = useSession.getState().tabs[0].id
+    s.setResultProfile(id, profileFixture, 1234)
+    s.updateTabSql(id, 'SELECT 2')
+    const t = useSession.getState().tabs[0]
+    expect(t.resultProfile).toBeUndefined()
+    expect(t.resultRowCount).toBeUndefined()
+  })
+})
