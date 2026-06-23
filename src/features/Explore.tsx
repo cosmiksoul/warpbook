@@ -66,7 +66,14 @@ export function Explore({ client }: { client: DuckDBClient }) {
           onRun={run}
         />
       </section>
-      <ResultPanel result={tab.result} meta={tab.meta} error={tab.error} />
+      <ResultPanel
+        result={tab.result}
+        meta={tab.meta}
+        error={tab.error}
+        tabId={tab.id}
+        sql={tab.sql}
+        client={client}
+      />
     </div>
   )
 }

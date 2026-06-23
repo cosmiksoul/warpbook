@@ -1,5 +1,7 @@
 import type { QueryResult } from '../core/arrowToRows'
 import { buildChartSpec } from '../core/chartSpec'
+import type { DuckDBClient } from '../db/duckdbClient'
+import { useProfileActions } from '../features/useProfileActions'
 import { useSession } from '../state/session'
 import { ResultGrid } from './ResultGrid'
 import { Chart } from './Chart'
@@ -9,11 +11,17 @@ interface Props {
   result: QueryResult | null
   meta: { ms: number; rows: number } | null
   error: string | null
+  tabId: string
+  sql: string
+  client: DuckDBClient
 }
 
-export function ResultPanel({ result, meta, error }: Props) {
+export function ResultPanel({ result, meta, error, tabId, sql, client }: Props) {
   const view = useSession((s) => s.exploreView)
   const setView = useSession((s) => s.setExploreView)
+  const profileTarget = useSession((s) => s.profileTarget)
+  const setProfileTarget = useSession((s) => s.setProfileTarget)
+  const { profileResult } = useProfileActions(client)
   const spec = result ? buildChartSpec(result.columns) : null
   const showChart = view === 'chart' && spec && result
 
@@ -26,21 +34,35 @@ export function ResultPanel({ result, meta, error }: Props) {
             {meta.rows} строк · {meta.ms.toFixed(1)} мс
           </span>
         )}
-        {result && (
+        {(result || (view === 'profile' && profileTarget?.kind === 'source')) && (
           <div className="view-toggle">
             <button
               className={view === 'table' ? 'on' : ''}
+              disabled={!result}
+              title={result ? '' : 'нет результата — запусти запрос'}
               onClick={() => setView('table')}
             >
               таблица
             </button>
             <button
               className={view === 'chart' ? 'on' : ''}
-              disabled={!spec}
-              title={spec ? '' : 'нет числовой колонки для графика'}
+              disabled={!result || !spec}
+              title={!result ? 'нет результата — запусти запрос' : spec ? '' : 'нет числовой колонки для графика'}
               onClick={() => setView('chart')}
             >
               график
+            </button>
+            <button
+              className={view === 'profile' ? 'on' : ''}
+              disabled={!result}
+              title={result ? '' : 'нет результата — запусти запрос'}
+              onClick={() => {
+                setProfileTarget({ kind: 'result', tabId })
+                setView('profile')
+                void profileResult(tabId, sql)
+              }}
+            >
+              профиль
             </button>
           </div>
         )}
