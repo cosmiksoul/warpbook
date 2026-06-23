@@ -1,6 +1,8 @@
+import { useState } from 'react'
 import { useSession, type Dataset } from '../state/session'
 import { detectReferencedTables, detectUsedColumns } from '../core/pruning'
 import type { DuckDBClient } from '../db/duckdbClient'
+import { SchemaColumnEditor } from '../components/SchemaColumnEditor'
 import { useSchemaActions } from './useSchemaActions'
 
 function formatBytes(n: number): string {
@@ -15,6 +17,9 @@ export function Rail({ client }: { client: DuckDBClient }) {
   const activeTabId = useSession((s) => s.activeTabId)
   const openOrFocusTab = useSession((s) => s.openOrFocusTab)
   const { applyInferred } = useSchemaActions(client)
+  const stageColumn = useSession((s) => s.stageColumn)
+  const resetColumn = useSession((s) => s.resetColumn)
+  const [editing, setEditing] = useState<{ table: string; origName: string } | null>(null)
 
   const activeTab = tabs.find((t) => t.id === activeTabId) ?? null
 
@@ -95,22 +100,58 @@ export function Rail({ client }: { client: DuckDBClient }) {
               </div>
             )}
             <ul className="schema">
-              {ds.columns.map((c) => (
-                <li
-                  className={used.has(c.name) ? 'schema-col used' : 'schema-col'}
-                  key={c.name}
-                >
-                  <span className="col-name">{c.name}</span>
-                  <span className="col-meta">
-                    <span className="col-type">{c.type}</span>
-                    {c.nullLoss != null && c.nullLoss > 0 && (
-                      <span className="col-warn" title={`${c.nullLoss} → NULL`}>
-                        ⚠ {c.nullLoss}
+              {(() => {
+                const includedCount =
+                  ds.schemaConfig?.filter((c) => c.include).length ?? 0
+                return ds.columns.map((c) => {
+                  const cfg = ds.schemaConfig?.find((x) => x.origName === c.name)
+                  const open =
+                    editing?.table === ds.table && editing?.origName === c.name
+                  // Allow un-including only when >1 column is currently included.
+                  const canDisableInclude = includedCount > 1
+                  return (
+                    <li
+                      className={used.has(c.name) ? 'schema-col used' : 'schema-col'}
+                      key={c.name}
+                    >
+                      <span className="col-name">{c.name}</span>
+                      <span className="col-meta">
+                        <span className="col-type">{c.type}</span>
+                        {c.nullLoss != null && c.nullLoss > 0 && (
+                          <span className="col-warn" title={`${c.nullLoss} → NULL`}>
+                            ⚠ {c.nullLoss}
+                          </span>
+                        )}
+                        {cfg && (
+                          <button
+                            className="col-edit"
+                            aria-label={`правка ${c.name}`}
+                            onClick={() =>
+                              setEditing(
+                                open ? null : { table: ds.table, origName: c.name },
+                              )
+                            }
+                          >
+                            ✎
+                          </button>
+                        )}
                       </span>
-                    )}
-                  </span>
-                </li>
-              ))}
+                      {open && cfg && (
+                        <SchemaColumnEditor
+                          config={cfg}
+                          canDisableInclude={canDisableInclude}
+                          onStage={(next) => stageColumn(ds.table, next)}
+                          onReset={(orig) => {
+                            resetColumn(ds.table, orig)
+                            setEditing(null)
+                          }}
+                          onClose={() => setEditing(null)}
+                        />
+                      )}
+                    </li>
+                  )
+                })
+              })()}
             </ul>
           </div>
         )
