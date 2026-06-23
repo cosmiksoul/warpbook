@@ -47,6 +47,12 @@ interface SessionState {
   setColumnConfig: (table: string, cfgs: ColumnConfig[]) => void
   stageColumn: (table: string, cfg: ColumnConfig) => void
   setSchemaError: (table: string, message: string | null) => void
+  resetColumn: (table: string, origName: string) => void
+  setApplied: (
+    table: string,
+    columns: { name: string; type: string }[],
+    losses: Record<string, number>,
+  ) => void
 }
 
 const initial = {
@@ -145,6 +151,40 @@ export const useSession = create<SessionState>((set) => ({
     set((s) => ({
       datasets: s.datasets.map((d) =>
         d.table === table ? { ...d, schemaError: message } : d,
+      ),
+    })),
+  resetColumn: (table, origName) =>
+    set((s) => ({
+      datasets: s.datasets.map((d) => {
+        if (d.table !== table) return d
+        const suggested = d.suggested?.find((c) => c.name === origName)
+        const restored: ColumnConfig = suggested
+          ? { origName, name: origName, type: suggested.type, include: true }
+          : { origName, name: origName, type: 'VARCHAR', include: true }
+        return {
+          ...d,
+          dirty: true,
+          schemaConfig: (d.schemaConfig ?? []).map((c) =>
+            c.origName === origName ? restored : c,
+          ),
+        }
+      }),
+    })),
+  setApplied: (table, columns, losses) =>
+    set((s) => ({
+      datasets: s.datasets.map((d) =>
+        d.table === table
+          ? {
+              ...d,
+              dirty: false,
+              schemaError: null,
+              columns: columns.map((c) => ({
+                name: c.name,
+                type: c.type,
+                nullLoss: losses[c.name] ?? 0,
+              })),
+            }
+          : d,
       ),
     })),
 }))

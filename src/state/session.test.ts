@@ -187,3 +187,42 @@ describe('session: schema config — setColumnConfig / stageColumn (M2)', () => 
     expect(useSession.getState().datasets[0].schemaError).toBeNull()
   })
 })
+
+describe('session: schema config — resetColumn / setApplied (M2)', () => {
+  it('resetColumn returns a column to its suggested config and marks dirty', () => {
+    useSession.getState().reset()
+    const s = useSession.getState()
+    s.addDataset(csvDs('events'))
+    s.stageColumn('events', { origName: 'rev', name: 'x', type: 'VARCHAR', include: false })
+    s.resetColumn('events', 'rev')
+    const d = useSession.getState().datasets[0]
+    expect(d.schemaConfig?.find((c) => c.origName === 'rev')).toEqual({
+      origName: 'rev',
+      name: 'rev',
+      type: 'DOUBLE',
+      include: true,
+    })
+    expect(d.dirty).toBe(true)
+  })
+
+  it('setApplied updates columns + per-column nullLoss and clears dirty', () => {
+    useSession.getState().reset()
+    const s = useSession.getState()
+    s.addDataset(csvDs('events'))
+    s.stageColumn('events', { origName: 'rev', name: 'rev', type: 'DOUBLE', include: true })
+    s.setApplied(
+      'events',
+      [
+        { name: 'id', type: 'BIGINT' },
+        { name: 'rev', type: 'DOUBLE' },
+      ],
+      { rev: 3 },
+    )
+    const d = useSession.getState().datasets[0]
+    expect(d.dirty).toBe(false)
+    expect(d.columns).toEqual([
+      { name: 'id', type: 'BIGINT', nullLoss: 0 },
+      { name: 'rev', type: 'DOUBLE', nullLoss: 3 },
+    ])
+  })
+})
