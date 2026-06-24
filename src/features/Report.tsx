@@ -3,6 +3,7 @@ import type { DuckDBClient } from '../db/duckdbClient'
 import { useSession } from '../state/session'
 import { TextBlockView } from '../components/TextBlockView'
 import { WidgetBlockView } from '../components/WidgetBlockView'
+import { RehydrationBanner } from '../components/RehydrationBanner'
 import { serializeReport, deserializeReport } from '../core/report'
 
 export function Report({ client }: { client: DuckDBClient }) {
@@ -38,6 +39,7 @@ export function Report({ client }: { client: DuckDBClient }) {
 
   return (
     <div className="report">
+      <RehydrationBanner />
       <div className="report-toolbar">
         <button onClick={() => addTextBlock()}>+ текст</button>
         <button onClick={save}>сохранить</button>
