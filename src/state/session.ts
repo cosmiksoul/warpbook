@@ -3,7 +3,12 @@ import type { QueryResult } from '../core/arrowToRows'
 import type { ColumnConfig } from '../core/schemaTypes'
 import type { ColumnProfile } from '../core/profile'
 import { buildSelectStar } from '../core/sql'
-import type { ReportDoc, WidgetBlock } from '../core/report'
+import {
+  serializeReport,
+  deserializeReport,
+  type ReportDoc,
+  type WidgetBlock,
+} from '../core/report'
 
 export interface Dataset {
   table: string
@@ -106,12 +111,39 @@ const initial = {
   activeBlockId: null as string | null,
 }
 
+const REPORT_KEY = 'quackbook.report'
+
+/**
+ * Load the persisted report STRUCTURE from localStorage (if any). Returns null
+ * when there's nothing / it's bad / there's no localStorage (vitest node env).
+ * NOTE: we hydrate the LIVE store with this AFTER create — `initial.report`
+ * stays the empty doc so reset() clears to empty, not to the persisted doc.
+ */
+function loadPersistedReport(): ReportDoc | null {
+  if (typeof localStorage === 'undefined') return null
+  try {
+    const raw = localStorage.getItem(REPORT_KEY)
+    return raw ? deserializeReport(raw) : null
+  } catch {
+    return null // bad / incompatible -> ignore, start empty
+  }
+}
+
 export const useSession = create<SessionState>((set) => ({
   ...initial,
   addDataset: (dataset) =>
     set((s) => ({ datasets: [...s.datasets, dataset] })),
   setMode: (mode) => set({ mode }),
-  reset: () => set({ ...initial }),
+  reset: () => {
+    if (typeof localStorage !== 'undefined') {
+      try {
+        localStorage.removeItem(REPORT_KEY)
+      } catch {
+        // ignore — storage may be unavailable
+      }
+    }
+    set({ ...initial })
+  },
   openOrFocusTab: (table) =>
     set((s) => {
       const existing = s.tabs.find((t) => t.datasetTable === table)
@@ -379,3 +411,27 @@ export const useSession = create<SessionState>((set) => ({
       }
     }),
 }))
+
+// Hydrate the live store from localStorage (structure only) via loadReport —
+// NOT setState({ report }). loadReport also advances `seq` past the max blk-<n>
+// in the persisted doc, so the next addTextBlock/pinResult after a reload mints
+// a fresh id instead of colliding with a restored blk-N (and breaking React
+// keys / move/remove targeting). It nulls activeBlockId too (fine on fresh
+// load). initial.report stays the empty doc so reset() still clears to empty.
+// This runs BEFORE subscribe() is attached, so it does not re-trigger autosave.
+const persisted = loadPersistedReport()
+if (persisted) useSession.getState().loadReport(persisted)
+
+// Autosave: write whenever the report reference changes (block ops produce a
+// fresh report object). Zustand v5 basic subscribe gives (state, prevState) —
+// no subscribeWithSelector needed. Toast/other slices don't touch report, so
+// they won't trigger a write.
+useSession.subscribe((s, prev) => {
+  if (s.report !== prev.report && typeof localStorage !== 'undefined') {
+    try {
+      localStorage.setItem(REPORT_KEY, serializeReport(s.report))
+    } catch {
+      // ignore — storage may be full / unavailable
+    }
+  }
+})
