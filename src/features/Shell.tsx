@@ -84,7 +84,7 @@ export function Shell({ client }: { client: DuckDBClient }) {
               <Explore client={client} />
             )
           ) : (
-            <Report />
+            <Report client={client} />
           )}
         </main>
       </div>
