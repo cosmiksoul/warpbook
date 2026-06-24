@@ -28,24 +28,39 @@ export function Rail({ client }: { client: DuckDBClient }) {
   const setColumnConfig = useSession((s) => s.setColumnConfig)
   const [editing, setEditing] = useState<{ table: string; origName: string } | null>(null)
 
+  const mode = useSession((s) => s.mode)
+  const report = useSession((s) => s.report)
+  const activeBlockId = useSession((s) => s.activeBlockId)
+
   const activeTab = tabs.find((t) => t.id === activeTabId) ?? null
 
-  // The rail follows the active query: show the schema of every table it
-  // references (a JOIN/UNION => several sections). Before a table is named
-  // (blank/empty tab) fall back to the tab's own dataset, else the first
-  // source, so the rail isn't empty.
-  const referenced = activeTab
+  // The rail follows the ACTIVE QUERY. In report mode that's the active widget
+  // block's sql (click a widget -> rail shows its schema/highlights); in explore
+  // mode it's the active tab's sql. Both feed the same detect* machinery.
+  const activeWidget =
+    mode === 'report'
+      ? report.blocks.find(
+          (b) => b.id === activeBlockId && b.type === 'widget',
+        )
+      : undefined
+  const currentSql =
+    activeWidget && activeWidget.type === 'widget'
+      ? activeWidget.sql
+      : (activeTab?.sql ?? null)
+  const fallbackTable = activeTab?.datasetTable ?? datasets[0]?.table
+
+  // Before a table is named (blank/empty tab, or no active widget) fall back to
+  // the tab's own dataset, else the first source, so the rail isn't empty.
+  const referenced = currentSql
     ? detectReferencedTables(
-        activeTab.sql,
+        currentSql,
         datasets.map((d) => d.table),
       )
     : []
   const shownTables =
     referenced.length > 0
       ? referenced
-      : [activeTab?.datasetTable ?? datasets[0]?.table].filter(
-          (t): t is string => t != null,
-        )
+      : [fallbackTable].filter((t): t is string => t != null)
   const shownDatasets = shownTables
     .map((t) => datasets.find((d) => d.table === t))
     .filter((d): d is Dataset => d != null)
@@ -74,9 +89,9 @@ export function Rail({ client }: { client: DuckDBClient }) {
 
       {shownDatasets.map((ds) => {
         const used = new Set(
-          activeTab
+          currentSql
             ? detectUsedColumns(
-                activeTab.sql,
+                currentSql,
                 ds.columns.map((c) => c.name),
               )
             : [],
