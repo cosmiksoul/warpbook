@@ -229,3 +229,38 @@ body {
   font-size: 10.5px; color: #8da6a2; border-top: 1px solid #122a2e; padding-top: 9px;
 }
 .pstats .k { color: #5c7975; }
+
+/* --- M4 report (notebook) --- */
+.report { display: flex; flex-direction: column; gap: 14px; padding: 16px 18px; overflow: auto; }
+.report-toolbar { display: flex; gap: 8px; }
+.report-toolbar button { background: #11262a; color: #c8d6d2; border: 1px solid #1d363b; border-radius: 7px; padding: 5px 11px; cursor: pointer; }
+.report-toolbar button:hover { background: #1d363b; color: #e9eeea; }
+
+.report-stack { display: flex; flex-direction: column; gap: 14px; max-width: 920px; }
+.report-block { border: 1px solid transparent; border-radius: 9px; padding: 10px 12px; cursor: pointer; }
+.report-block.active { border-color: #2a4a50; background: #0f2327; }
+
+.text-block { line-height: 1.5; color: #d7e2de; }
+.text-block :where(h1,h2,h3) { color: #e9eeea; }
+.text-block-edit { width: 100%; min-height: 96px; background: #0c1c1f; color: #e9eeea; border: 1px solid #1d363b; border-radius: 7px; padding: 8px; font: inherit; resize: vertical; }
+
+.widget-block { display: flex; flex-direction: column; gap: 8px; }
+.widget-head { display: flex; align-items: center; gap: 10px; }
+.widget-title { font-weight: 600; color: #e9eeea; }
+.widget-datasets { display: flex; gap: 4px; }
+.ds-pill { font-size: 11px; background: #11262a; color: #9fb4af; border-radius: 5px; padding: 1px 7px; }
+.widget-sql-toggle, .widget-controls button { background: none; border: none; color: #9fb4af; cursor: pointer; }
+.widget-controls { margin-left: auto; display: flex; gap: 6px; }
+.widget-controls button:hover { color: #e9eeea; }
+.widget-sql { background: #0c1c1f; color: #9fb4af; border-radius: 7px; padding: 8px; overflow: auto; font-size: 12px; }
+.widget-view-toggle { align-self: flex-start; }
+.widget-error { display: flex; flex-direction: column; gap: 4px; }
+.widget-sources-hint { color: #c79a4a; font-size: 12px; }
+.widget-caption { background: transparent; border: none; border-bottom: 1px dashed #1d363b; color: #c8d6d2; padding: 4px 2px; font: inherit; }
+.widget-caption:focus { outline: none; border-bottom-color: #2a4a50; }
+
+.pin-btn { background: #11262a; color: #c8d6d2; border: 1px solid #1d363b; border-radius: 7px; padding: 3px 9px; cursor: pointer; }
+.pin-btn:hover { background: #1d363b; color: #e9eeea; }
+
+.toast { position: fixed; bottom: 22px; left: 50%; transform: translateX(-50%); background: #1d363b; color: #e9eeea; border-radius: 9px; padding: 8px 16px; box-shadow: 0 6px 20px rgba(0,0,0,.4); z-index: 50; }
+.rehydration-banner { background: #2a2412; color: #e9d39a; border: 1px solid #574a1d; border-radius: 9px; padding: 8px 12px; max-width: 920px; }
