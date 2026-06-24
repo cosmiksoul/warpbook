@@ -1,0 +1,141 @@
+import { useEffect, useState } from 'react'
+import type { WidgetBlock } from '../core/report'
+import type { DuckDBClient } from '../db/duckdbClient'
+import { arrowToRows, type QueryResult } from '../core/arrowToRows'
+import { buildChartSpec } from '../core/chartSpec'
+import { useSession } from '../state/session'
+import { ResultGrid } from './ResultGrid'
+import { Chart } from './Chart'
+
+interface Props {
+  block: WidgetBlock
+  client: DuckDBClient
+}
+
+type WidgetState =
+  | { kind: 'loading' }
+  | { kind: 'ok'; result: QueryResult }
+  | { kind: 'error'; message: string }
+
+export function WidgetBlockView({ block, client }: Props) {
+  const setWidgetVizType = useSession((s) => s.setWidgetVizType)
+  const updateWidgetCaption = useSession((s) => s.updateWidgetCaption)
+  const moveBlock = useSession((s) => s.moveBlock)
+  const removeBlock = useSession((s) => s.removeBlock)
+
+  const [state, setState] = useState<WidgetState>({ kind: 'loading' })
+  const [sqlOpen, setSqlOpen] = useState(false)
+
+  // Lazy rerun: each widget runs its own SQL against the in-memory tables on
+  // mount (and when its sql/client change). Result lives in local state — it is
+  // NEVER serialized (spec decision 4). Mirrors Explore.run.
+  useEffect(() => {
+    let cancelled = false
+    client
+      .query(block.sql)
+      .then((table) => {
+        if (cancelled) return
+        setState({ kind: 'ok', result: arrowToRows(table) })
+      })
+      .catch((e) => {
+        if (cancelled) return
+        setState({ kind: 'error', message: String(e) })
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [block.sql, client])
+
+  const result = state.kind === 'ok' ? state.result : null
+  const error = state.kind === 'error' ? state.message : null
+  const loading = state.kind === 'loading'
+
+  const spec = result ? buildChartSpec(result.columns) : null
+  const showChart = block.vizType === 'chart' && spec && result
+
+  return (
+    <div className="widget-block">
+      <div className="widget-head">
+        <span className="widget-title">{block.title}</span>
+        <span className="widget-datasets">
+          {block.datasetNames.map((t) => (
+            <span className="ds-pill" key={t}>
+              {t}
+            </span>
+          ))}
+        </span>
+        <button
+          className="widget-sql-toggle"
+          onClick={() => setSqlOpen((v) => !v)}
+          title="показать/скрыть SQL"
+        >
+          SQL {sqlOpen ? '▾' : '▸'}
+        </button>
+        <span className="widget-controls">
+          <button onClick={() => moveBlock(block.id, 'up')} title="вверх">
+            ↑
+          </button>
+          <button onClick={() => moveBlock(block.id, 'down')} title="вниз">
+            ↓
+          </button>
+          <button onClick={() => removeBlock(block.id)} title="удалить">
+            ✕
+          </button>
+        </span>
+      </div>
+
+      {sqlOpen && <pre className="widget-sql">{block.sql}</pre>}
+
+      <div className="view-toggle widget-view-toggle">
+        <button
+          className={block.vizType === 'table' ? 'on' : ''}
+          onClick={() => setWidgetVizType(block.id, 'table')}
+        >
+          таблица
+        </button>
+        <button
+          className={block.vizType === 'chart' ? 'on' : ''}
+          disabled={!spec}
+          title={spec ? '' : 'нет числовой колонки для графика'}
+          onClick={() => setWidgetVizType(block.id, 'chart')}
+        >
+          график
+        </button>
+      </div>
+
+      {error && (
+        <div className="widget-error">
+          <pre className="result-error">{error}</pre>
+          <p className="widget-sources-hint">
+            источник(и): {block.datasetNames.join(', ')} — подгрузи, если
+            отсутствуют
+          </p>
+        </div>
+      )}
+      {!error && loading && <p className="result-empty">пересчитываю…</p>}
+      {!error && !loading && showChart && (
+        <Chart spec={spec!} rows={result!.rows} />
+      )}
+      {!error && !loading && result && !showChart && (
+        <ResultGrid result={result} />
+      )}
+      {/*
+        Do NOT delete as "dead": this branch fires only for a loaded/rehydrated
+        widget whose SAVED vizType is 'chart' but whose recomputed result has no
+        numeric column. The chart toggle is disabled={!spec}, so a user can never
+        reach vizType==='chart' && !spec by clicking — only a JSON open / reload
+        produces it. (Spec line 71: chart toggle disabled when no numeric col.)
+      */}
+      {!error && !loading && result && block.vizType === 'chart' && !spec && (
+        <p className="result-empty">нет числовой колонки для графика</p>
+      )}
+
+      <input
+        className="widget-caption"
+        placeholder="подпись…"
+        value={block.caption}
+        onChange={(e) => updateWidgetCaption(block.id, e.target.value)}
+      />
+    </div>
+  )
+}
