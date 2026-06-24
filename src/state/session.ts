@@ -59,6 +59,7 @@ interface SessionState {
   seq: number // deterministic id counter (no Math.random/Date.now)
   report: ReportDoc
   activeBlockId: string | null
+  toast: string | null
   // actions
   addDataset: (dataset: Dataset) => void
   setMode: (mode: 'explore' | 'report') => void
@@ -97,6 +98,7 @@ interface SessionState {
   removeBlock: (id: string) => void
   setActiveBlock: (id: string | null) => void
   loadReport: (doc: ReportDoc) => void
+  setToast: (msg: string | null) => void
 }
 
 const initial = {
@@ -109,6 +111,7 @@ const initial = {
   seq: 0,
   report: { version: 1, blocks: [] } as ReportDoc,
   activeBlockId: null as string | null,
+  toast: null as string | null,
 }
 
 const REPORT_KEY = 'quackbook.report'
@@ -397,6 +400,7 @@ export const useSession = create<SessionState>((set) => ({
       activeBlockId: s.activeBlockId === id ? null : s.activeBlockId,
     })),
   setActiveBlock: (id) => set({ activeBlockId: id }),
+  setToast: (toast) => set({ toast }),
   loadReport: (doc) =>
     set((s) => {
       let maxImported = 0

@@ -3,6 +3,7 @@ import { buildChartSpec } from '../core/chartSpec'
 import type { DuckDBClient } from '../db/duckdbClient'
 import { useProfileActions } from '../features/useProfileActions'
 import { useSession } from '../state/session'
+import { detectReferencedTables } from '../core/pruning'
 import { ResultGrid } from './ResultGrid'
 import { Chart } from './Chart'
 import { ProfilePanel } from './ProfilePanel'
@@ -21,6 +22,8 @@ export function ResultPanel({ result, meta, error, tabId, sql, client }: Props) 
   const setView = useSession((s) => s.setExploreView)
   const profileTarget = useSession((s) => s.profileTarget)
   const setProfileTarget = useSession((s) => s.setProfileTarget)
+  const pinResult = useSession((s) => s.pinResult)
+  const setToast = useSession((s) => s.setToast)
   const { profileResult } = useProfileActions(client)
   const spec = result ? buildChartSpec(result.columns) : null
   const showChart = view === 'chart' && spec && result
@@ -65,6 +68,31 @@ export function ResultPanel({ result, meta, error, tabId, sql, client }: Props) 
               профиль
             </button>
           </div>
+        )}
+        {result && (
+          <button
+            className="pin-btn"
+            title="закрепить результат в отчёт"
+            onClick={() => {
+              const st = useSession.getState()
+              const datasetNames = detectReferencedTables(
+                sql,
+                st.datasets.map((d) => d.table),
+              )
+              const title =
+                st.tabs.find((t) => t.id === tabId)?.title ?? 'Запрос'
+              pinResult({
+                title,
+                sql,
+                datasetNames,
+                vizType: view === 'chart' ? 'chart' : 'table',
+                caption: '',
+              })
+              setToast('закреплено в отчёт')
+            }}
+          >
+            📌 закрепить
+          </button>
         )}
       </header>
       {view === 'profile' && <ProfilePanel />}

@@ -471,3 +471,23 @@ describe('session: report (M4)', () => {
     expect(after.activeBlockId).toBeNull()
   })
 })
+
+describe('session: toast (M4)', () => {
+  it('setToast sets and clears; reset clears a non-null toast', () => {
+    const s = useSession.getState()
+    expect(s.toast).toBeNull()
+    s.setToast('закреплено в отчёт')
+    expect(useSession.getState().toast).toBe('закреплено в отчёт')
+    s.setToast(null)
+    expect(useSession.getState().toast).toBeNull()
+    // reset-clears: set a NON-null toast first, then reset, then assert null.
+    // This is the assertion guarding the Step 3 trap — reset() is set({...initial}),
+    // a shallow merge, so it only clears `toast` if `toast` is present in `initial`.
+    // Omitting the `initial` entry (but adding the field + create action) would
+    // pass setToast set/clear yet leave a stale toast after reset; this line fails
+    // in that case.
+    s.setToast('again')
+    s.reset()
+    expect(useSession.getState().toast).toBeNull()
+  })
+})

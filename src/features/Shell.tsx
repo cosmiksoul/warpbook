@@ -6,6 +6,7 @@ import { loadOneFile } from './loadFiles'
 import { Explore } from './Explore'
 import { Report } from './Report'
 import { Rail } from './Rail'
+import { Toast } from '../components/Toast'
 
 export function Shell({ client }: { client: DuckDBClient }) {
   const mode = useSession((s) => s.mode)
@@ -88,6 +89,7 @@ export function Shell({ client }: { client: DuckDBClient }) {
           )}
         </main>
       </div>
+      <Toast />
     </div>
   )
 }
