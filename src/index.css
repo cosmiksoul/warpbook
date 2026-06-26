@@ -278,3 +278,16 @@ body {
 
 .toast { position: fixed; bottom: 22px; left: 50%; transform: translateX(-50%); background: #1d363b; color: #e9eeea; border-radius: 9px; padding: 8px 16px; box-shadow: 0 6px 20px rgba(0,0,0,.4); z-index: 50; }
 .rehydration-banner { background: #2a2412; color: #e9d39a; border: 1px solid #574a1d; border-radius: 9px; padding: 8px 12px; max-width: 920px; }
+
+/* --- M5 a11y / motion / responsive --- */
+:where(button, input, select, textarea, [tabindex], summary):focus-visible {
+  outline: 2px solid #e3a95c;
+  outline-offset: 1px;
+}
+@media (prefers-reduced-motion: reduce) {
+  * { transition: none !important; animation: none !important; }
+}
+@media (max-width: 720px) {
+  .body { flex-direction: column; }
+  .rail { width: auto; flex: none; border-right: 0; border-bottom: 1px solid #1d363b; }
+}
