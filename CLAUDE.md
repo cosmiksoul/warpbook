@@ -62,4 +62,10 @@ Vitest. Задачи переводим в проверяемые цели: «д
 
 ## Команды
 
-TBD — заполнить после решения по каркасу: `dev`, `test`, `build`, `deploy`.
+- `npm ci` — установка (точные пины из package-lock)
+- `npm run dev` — локальная разработка (http://localhost:5173)
+- `npm test` — Vitest (node-окружение)
+- `npm run build` — продакшн-сборка в `dist/` (полный type-check)
+- `npm run preview` — предпросмотр сборки
+- `npm run lint` — ESLint
+- **Деплой:** push в `main` → GitHub Actions публикует на Pages.

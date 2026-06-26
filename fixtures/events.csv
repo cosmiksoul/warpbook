@@ -1,0 +1,11 @@
+country,device,action
+DE,mobile,view
+DE,desktop,click
+DE,mobile,view
+PL,mobile,view
+PL,desktop,view
+US,desktop,click
+US,mobile,view
+US,desktop,view
+US,mobile,click
+FR,mobile,view
