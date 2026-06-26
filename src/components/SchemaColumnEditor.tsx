@@ -66,7 +66,7 @@ export function SchemaColumnEditor({
         >
           {TYPES.map((t) => (
             <option key={t} value={t}>
-              {t}
+              {t === 'VARCHAR' ? 'STRING' : t}
             </option>
           ))}
         </select>
@@ -118,7 +118,7 @@ export function SchemaColumnEditor({
           сбросить
         </button>
         <button className="schema-btn" onClick={save}>
-          применить к колонке
+          применить
         </button>
       </div>
     </div>

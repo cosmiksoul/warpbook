@@ -167,7 +167,7 @@ export function Rail({
                     >
                       <span className="col-name">{c.name}</span>
                       <span className="col-meta">
-                        <span className="col-type">{c.type}</span>
+                        <span className="col-type">{c.type === 'VARCHAR' ? 'STRING' : c.type}</span>
                         {c.nullLoss != null && c.nullLoss > 0 && (
                           <span className="col-warn" title={`${c.nullLoss} → NULL`}>
                             ⚠ {c.nullLoss}
