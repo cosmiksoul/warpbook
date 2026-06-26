@@ -5,6 +5,7 @@ import { TextBlockView } from '../components/TextBlockView'
 import { WidgetBlockView } from '../components/WidgetBlockView'
 import { RehydrationBanner } from '../components/RehydrationBanner'
 import { serializeReport, deserializeReport } from '../core/report'
+import { renderReport, downloadHtml } from './exportReport'
 
 export function Report({ client }: { client: DuckDBClient }) {
   const report = useSession((s) => s.report)
@@ -12,6 +13,8 @@ export function Report({ client }: { client: DuckDBClient }) {
   const addTextBlock = useSession((s) => s.addTextBlock)
   const setActiveBlock = useSession((s) => s.setActiveBlock)
   const loadReport = useSession((s) => s.loadReport)
+  const datasets = useSession((s) => s.datasets)
+  const setToast = useSession((s) => s.setToast)
   const fileRef = useRef<HTMLInputElement>(null)
 
   function save() {
@@ -35,6 +38,15 @@ export function Report({ client }: { client: DuckDBClient }) {
     } catch (err) {
       alert('Не удалось открыть отчёт: ' + String(err))
     }
+  }
+
+  async function exportHtml() {
+    const loaded = datasets.map((d) => d.table)
+    const { html, missingCount } = await renderReport(client, report, loaded)
+    if (missingCount > 0) {
+      setToast(`${missingCount} виджет(ов) без данных — выгружены с пометкой`)
+    }
+    downloadHtml(html, 'quackbook-report.html')
   }
 
   function clearReport() {
@@ -61,6 +73,9 @@ export function Report({ client }: { client: DuckDBClient }) {
           style={{ display: 'none' }}
           onChange={open}
         />
+        {report.blocks.length > 0 && (
+          <button onClick={exportHtml}>экспорт HTML</button>
+        )}
         {report.blocks.length > 0 && (
           <button className="report-clear" onClick={clearReport}>
             очистить
