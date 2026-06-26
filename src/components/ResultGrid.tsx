@@ -14,6 +14,8 @@ function formatCell(value: unknown): string {
 export function ResultGrid({ result }: { result: QueryResult }) {
   const parentRef = useRef<HTMLDivElement>(null)
   const { columns, rows } = result
+  // TanStack Virtual returns non-memoized fns; the hook is stable here. (known, accepted)
+  // eslint-disable-next-line react-hooks/incompatible-library
   const rowVirtualizer = useVirtualizer({
     count: rows.length,
     getScrollElement: () => parentRef.current,
