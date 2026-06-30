@@ -328,6 +328,10 @@ body {
 .report-block.active .widget-block { box-shadow: none; } /* avoid double frame */
 .widget-head { display: flex; align-items: center; gap: 10px; }
 .widget-title { font-weight: 600; color: var(--text); font-size: 16px; }
+.widget-title-edit {
+  font: 600 16px var(--font-ui); background: var(--surface); color: var(--text);
+  border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 2px 6px;
+}
 .widget-datasets { display: flex; gap: 4px; }
 .ds-pill { font-size: 11px; background: var(--surface); color: var(--text-dim); border-radius: 5px; padding: 1px 7px; font-family: var(--font-mono); }
 .widget-sql-toggle, .widget-controls button { background: none; border: none; color: var(--text-dim); cursor: pointer; }

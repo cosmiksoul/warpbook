@@ -20,6 +20,7 @@ type WidgetState =
 export function WidgetBlockView({ block, client }: Props) {
   const setWidgetVizType = useSession((s) => s.setWidgetVizType)
   const updateWidgetCaption = useSession((s) => s.updateWidgetCaption)
+  const updateWidgetTitle = useSession((s) => s.updateWidgetTitle)
   const moveBlock = useSession((s) => s.moveBlock)
   const removeBlock = useSession((s) => s.removeBlock)
 
@@ -37,6 +38,8 @@ export function WidgetBlockView({ block, client }: Props) {
 
   const [state, setState] = useState<WidgetState>({ kind: 'loading' })
   const [sqlOpen, setSqlOpen] = useState(false)
+  const [editingTitle, setEditingTitle] = useState(false)
+  const [titleDraft, setTitleDraft] = useState(block.title)
 
   // Lazy rerun: each widget runs its own SQL against the in-memory tables on
   // mount (and when its sql/client change). Result lives in local state — it is
@@ -68,7 +71,31 @@ export function WidgetBlockView({ block, client }: Props) {
   return (
     <div className="widget-block">
       <div className="widget-head">
-        <span className="widget-title">{block.title}</span>
+        {editingTitle ? (
+          <input
+            className="widget-title-edit"
+            autoFocus
+            value={titleDraft}
+            onChange={(e) => setTitleDraft(e.target.value)}
+            onClick={(e) => e.stopPropagation()}
+            onBlur={() => {
+              if (titleDraft.trim() && titleDraft !== block.title) updateWidgetTitle(block.id, titleDraft.trim())
+              setEditingTitle(false)
+            }}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') (e.target as HTMLInputElement).blur()
+              else if (e.key === 'Escape') { setTitleDraft(block.title); setEditingTitle(false) }
+            }}
+          />
+        ) : (
+          <span
+            className="widget-title"
+            title="кликни, чтобы переименовать"
+            onClick={(e) => { e.stopPropagation(); setTitleDraft(block.title); setEditingTitle(true) }}
+          >
+            {block.title}
+          </span>
+        )}
         <span className="widget-datasets">
           {block.datasetNames.map((t) => (
             <span className="ds-pill" key={t}>
