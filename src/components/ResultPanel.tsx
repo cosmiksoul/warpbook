@@ -1,3 +1,4 @@
+import { downloadResult } from '../features/exportResult'
 import type { QueryResult } from '../core/arrowToRows'
 import { buildChartSpec } from '../core/chartSpec'
 import type { DuckDBClient } from '../db/duckdbClient'
@@ -28,6 +29,14 @@ export function ResultPanel({ result, meta, error, tabId, sql, client }: Props) 
   const { profileResult } = useProfileActions(client)
   const spec = result ? buildChartSpec(result.columns) : null
   const showChart = view === 'chart' && spec && result
+
+  async function exportResult(format: 'csv' | 'parquet') {
+    try {
+      await downloadResult(client, sql, format)
+    } catch (e) {
+      setToast('Экспорт не удался: ' + String(e))
+    }
+  }
 
   return (
     <section className="result-panel">
@@ -94,6 +103,12 @@ export function ResultPanel({ result, meta, error, tabId, sql, client }: Props) 
           >
             <Icon name="pin" /> закрепить
           </button>
+        )}
+        {result && (
+          <div className="export-group">
+            <button className="export-btn" title="скачать полный результат в CSV" onClick={() => void exportResult('csv')}>CSV</button>
+            <button className="export-btn" title="скачать полный результат в Parquet" onClick={() => void exportResult('parquet')}>Parquet</button>
+          </div>
         )}
       </header>
       {view === 'profile' && <ProfilePanel />}
