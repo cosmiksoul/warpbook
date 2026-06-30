@@ -3,9 +3,9 @@ import type { ReactNode } from 'react'
 type IconName =
   | 'logo' | 'explore' | 'report' | 'play' | 'pin' | 'save' | 'types' | 'profile'
 
-const PATHS: Record<IconName, ReactNode> = {
+// logo is rendered separately (filled duck-head mark); these are stroke glyphs.
+const PATHS: Record<Exclude<IconName, 'logo'>, ReactNode> = {
   // simple, recognizable stroke glyphs (Lucide-ish), 24x24 viewBox
-  logo: <path d="M15 6a4 4 0 1 0-4 4h4l4 3v-5a5 5 0 0 0-5-5h-1M7 13c0 3 2 5 5 5h6" />,
   explore: <><circle cx="11" cy="11" r="7" /><path d="m21 21-4.3-4.3" /></>,
   report: <><rect x="4" y="3" width="16" height="18" rx="2" /><path d="M8 8h8M8 12h8M8 16h5" /></>,
   play: <path d="M6 4l14 8-14 8z" />,
@@ -16,6 +16,18 @@ const PATHS: Record<IconName, ReactNode> = {
 }
 
 export function Icon({ name, size = 16 }: { name: IconName; size?: number }) {
+  if (name === 'logo') {
+    // Filled duck-head in profile: round head, blunt rounded beak right, amber
+    // eye. Sits on the amber tile, so currentColor is the dark tile foreground;
+    // the eye is painted back in --accent to read as a knockout.
+    return (
+      <svg width={size} height={size} viewBox="0 0 24 24" aria-hidden="true" style={{ flex: '0 0 auto' }}>
+        <circle cx="11" cy="12" r="6.7" fill="currentColor" />
+        <rect x="15" y="10.4" width="8.4" height="3.4" rx="1.7" fill="currentColor" />
+        <circle cx="12.6" cy="10" r="1.2" style={{ fill: 'var(--accent)' }} />
+      </svg>
+    )
+  }
   return (
     <svg
       width={size}
