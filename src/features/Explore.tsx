@@ -1,7 +1,9 @@
+import { useMemo } from 'react'
 import { useSession } from '../state/session'
 import type { DuckDBClient } from '../db/duckdbClient'
 import { arrowToRows } from '../core/arrowToRows'
 import { SqlEditor } from '../components/SqlEditor'
+import { buildSqlSchema } from '../core/sqlSchema'
 import { ResultPanel } from '../components/ResultPanel'
 import { ProfilePanel } from '../components/ProfilePanel'
 import { TabStrip } from '../components/TabStrip'
@@ -15,6 +17,8 @@ export function Explore({ client }: { client: DuckDBClient }) {
   const setTabError = useSession((s) => s.setTabError)
   const exploreView = useSession((s) => s.exploreView)
   const profileTarget = useSession((s) => s.profileTarget)
+  const datasets = useSession((s) => s.datasets)
+  const schema = useMemo(() => buildSqlSchema(datasets), [datasets])
 
   const tab = tabs.find((t) => t.id === activeTabId) ?? null
 
@@ -65,6 +69,7 @@ export function Explore({ client }: { client: DuckDBClient }) {
           value={tab.sql}
           onChange={(v) => updateTabSql(tab.id, v)}
           onRun={run}
+          schema={schema}
         />
       </section>
       <ResultPanel

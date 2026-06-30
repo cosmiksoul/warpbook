@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react'
-import { EditorState, Prec } from '@codemirror/state'
+import { EditorState, Prec, Compartment } from '@codemirror/state'
 import {
   EditorView,
   keymap,
@@ -14,15 +14,21 @@ interface Props {
   value: string
   onChange: (value: string) => void
   onRun: (sql: string) => void
+  schema?: Record<string, string[]>
 }
 
-export function SqlEditor({ value, onChange, onRun }: Props) {
+export function SqlEditor({ value, onChange, onRun, schema }: Props) {
   const host = useRef<HTMLDivElement>(null)
   const view = useRef<EditorView | null>(null)
   // Keep latest callbacks in a ref so the mount-once extensions never go stale.
   const cb = useRef({ onChange, onRun })
   // eslint-disable-next-line react-hooks/refs
   cb.current = { onChange, onRun }
+
+  const schemaComp = useRef(new Compartment())
+  const schemaRef = useRef(schema)
+  // eslint-disable-next-line react-hooks/refs
+  schemaRef.current = schema
 
   // Mount once. Do NOT depend on `value` (would recreate the editor per keystroke).
   useEffect(() => {
@@ -46,7 +52,7 @@ export function SqlEditor({ value, onChange, onRun }: Props) {
         lineNumbers(),
         highlightActiveLine(),
         history(),
-        sql(),
+        schemaComp.current.of(sql({ schema: schemaRef.current ?? {} })),
         autocompletion(),
         runKey,
         keymap.of([...defaultKeymap, ...historyKeymap, ...completionKeymap]),
@@ -70,6 +76,13 @@ export function SqlEditor({ value, onChange, onRun }: Props) {
     if (value === current) return
     v.dispatch({ changes: { from: 0, to: current.length, insert: value } })
   }, [value])
+
+  // Reconfigure the SQL language with the latest schema when datasets change.
+  useEffect(() => {
+    const v = view.current
+    if (!v) return
+    v.dispatch({ effects: schemaComp.current.reconfigure(sql({ schema: schema ?? {} })) })
+  }, [schema])
 
   return <div className="sql-editor" ref={host} />
 }
