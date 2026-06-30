@@ -65,6 +65,7 @@ interface SessionState {
   reset: () => void
   openOrFocusTab: (table: string) => void
   openBlankTab: () => void
+  seedTabs: (specs: { title: string; sql: string }[]) => void
   closeTab: (id: string) => void
   setActiveTab: (id: string) => void
   renameTab: (id: string, title: string) => void
@@ -177,6 +178,27 @@ export const useSession = create<SessionState>((set) => ({
         error: null,
       }
       return { tabs: [...s.tabs, tab], activeTabId: id, seq: s.seq + 1 }
+    }),
+  seedTabs: (specs) =>
+    set((s) => {
+      let seq = s.seq
+      const created: Tab[] = specs.map((spec) => {
+        seq += 1
+        return {
+          id: `tab-${seq}`,
+          title: spec.title,
+          datasetTable: null,
+          sql: spec.sql,
+          result: null,
+          meta: null,
+          error: null,
+        }
+      })
+      return {
+        tabs: [...s.tabs, ...created],
+        activeTabId: created[0]?.id ?? s.activeTabId,
+        seq,
+      }
     }),
   closeTab: (id) =>
     set((s) => {
