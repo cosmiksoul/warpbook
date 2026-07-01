@@ -23,10 +23,10 @@ beforeAll(async () => {
   // native. The recipes must run against the TYPED tables the app actually shows —
   // loading all-VARCHAR here would test a scenario the demo never produces.
   const pbytes = new Uint8Array(readFileSync(resolve(demo, 'payments.csv')))
-  const ds = await loadOneFile(client, new File([pbytes], 'payments.csv'), [])
+  const ds = await loadOneFile(client, new File([pbytes], 'demo_payments.csv'), [])
   await client.exec(buildMaterializeDDL(ds.table, ds.rawTable!, suggestTypes(ds.suggested!)))
   await client.registerFile('users.parquet', new Uint8Array(readFileSync(resolve(demo, 'users.parquet'))))
-  await client.loadParquet('users.parquet', 'users')
+  await client.loadParquet('users.parquet', 'demo_users')
 }, 60_000)
 
 afterAll(async () => { await db.terminate() })

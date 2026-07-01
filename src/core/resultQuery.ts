@@ -18,9 +18,9 @@ export interface ResultView {
   filters: ColumnFilter[]
 }
 
-export const PAGE_SIZES = [50, 100, 500]
+export const PAGE_SIZES = [10, 20, 50]
 export const CHART_CAP = 5000
-export const DEFAULT_VIEW: ResultView = { page: 1, pageSize: 100, sorts: [], search: '', filters: [] }
+export const DEFAULT_VIEW: ResultView = { page: 1, pageSize: 50, sorts: [], search: '', filters: [] }
 
 /** Escape LIKE wildcards (\ % _) so search text is matched literally; used with ESCAPE '\'. */
 function escapeLike(s: string): string {

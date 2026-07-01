@@ -6,15 +6,18 @@ import type { SortSpec } from '../core/resultQuery'
 
 const ROW_H = 28
 const COL_W = 160
+const NUM_W = 56
 
 export function ResultGrid({
   result,
   sorts,
+  rowOffset = 0,
   onToggleSort,
   onOpenFilter,
 }: {
   result: QueryResult
   sorts: SortSpec[]
+  rowOffset?: number
   onToggleSort: (col: string, additive: boolean) => void
   onOpenFilter: (col: string, rect: DOMRect) => void
 }) {
@@ -29,12 +32,13 @@ export function ResultGrid({
     overscan: 12,
     useFlushSync: false, // React 19: silence flushSync-in-lifecycle warning
   })
-  const gridW = columns.length * COL_W
+  const gridW = NUM_W + columns.length * COL_W
   const sortIndex = (name: string) => sorts.findIndex((s) => s.col === name)
 
   return (
     <div className="grid-scroll" ref={parentRef}>
       <div className="grid-head" style={{ width: gridW }}>
+        <div className="grid-cell grid-th grid-num" style={{ width: NUM_W }}>№</div>
         {columns.map((c) => {
           const si = sortIndex(c.name)
           const dir = si >= 0 ? sorts[si].dir : null
@@ -65,6 +69,7 @@ export function ResultGrid({
               key={vi.key}
               style={{ transform: `translateY(${vi.start}px)`, width: gridW }}
             >
+              <div className="grid-cell grid-num" style={{ width: NUM_W }}>{rowOffset + vi.index + 1}</div>
               {columns.map((c) => {
                 const v = row[c.name]
                 return (

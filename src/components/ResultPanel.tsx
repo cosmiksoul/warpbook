@@ -309,6 +309,7 @@ export function ResultPanel({ meta, error, tabId, sql, client }: Props) {
         <ResultGrid
           result={display}
           sorts={resultView.sorts}
+          rowOffset={tab?.mode === 'paged' ? (resultView.page - 1) * resultView.pageSize : 0}
           onToggleSort={toggleSort}
           onOpenFilter={openFilter}
         />

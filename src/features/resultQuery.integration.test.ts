@@ -32,7 +32,7 @@ describe('useResultActions over real DuckDB', () => {
     const t = useSession.getState().tabs.find((x) => x.id === id)!
     expect(t.mode).toBe('paged')
     expect(t.rowCount).toBe(250)
-    expect(t.window!.rows.length).toBe(100) // default page size
+    expect(t.window!.rows.length).toBe(50) // default page size
     expect(t.columns!.map((c) => c.name)).toEqual(['id', 'grp'])
   })
 

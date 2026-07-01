@@ -17,6 +17,6 @@ describe('sample-report.json', () => {
 
   it('references only the demo tables', () => {
     const doc = deserializeReport(json)
-    expect(neededDatasets(doc).every((t) => t === 'users' || t === 'payments')).toBe(true)
+    expect(neededDatasets(doc).every((t) => t === 'demo_users' || t === 'demo_payments')).toBe(true)
   })
 })

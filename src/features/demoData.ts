@@ -6,9 +6,11 @@ import { EXAMPLE_QUERIES } from '../core/exampleQueries'
 import type { DuckDBClient } from '../db/duckdbClient'
 
 const BASE = import.meta.env.BASE_URL
+// Physical files stay payments.csv / users.parquet; the loaded File is named
+// demo_* so the resulting dataset/table (rail, autocomplete, recipes) is demo_-prefixed.
 const DEMO_FILES = [
-  { path: 'demo/payments.csv', name: 'payments.csv' },
-  { path: 'demo/users.parquet', name: 'users.parquet' },
+  { path: 'demo/payments.csv', name: 'demo_payments.csv' },
+  { path: 'demo/users.parquet', name: 'demo_users.parquet' },
 ]
 
 /** Load the bundled demo files through the normal file pipeline. Idempotent:
