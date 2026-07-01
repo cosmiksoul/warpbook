@@ -144,4 +144,25 @@ describe('useProfileActions.profileResult (result orchestrator)', () => {
     expect(t.resultProfileError).toContain('bad sql')
     expect(t.resultProfiling).toBe(false)
   })
+
+  it('skips re-materialization when tab is already in paged mode (M8 warm path)', async () => {
+    useSession.getState().openOrFocusTab('events')
+    const id = useSession.getState().tabs[0].id
+    // Simulate run() having already materialized the snapshot table.
+    useSession.getState().setResultMeta(id, { columns: [{ name: 'id', type: 'BIGINT' }], rowCount: 42, ms: 1 })
+
+    await useProfileActions(okClient).profileResult(id, 'SELECT 1 AS total')
+
+    // exec must NOT be called — the snapshot table is already present.
+    expect(okClient.exec).not.toHaveBeenCalled()
+    // profileRelation must still have run: first query is SUMMARIZE over the result table.
+    const query = okClient.query as ReturnType<typeof vi.fn>
+    expect(query.mock.calls[0][0]).toBe(`SUMMARIZE "_qb_result_${id}"`)
+    // Profile and rowCount must land on the tab.
+    const t = useSession.getState().tabs[0]
+    expect(t.resultProfile?.[0].name).toBe('id')
+    expect(t.resultRowCount).toBe(42)
+    expect(t.resultProfiling).toBe(false)
+    expect(t.resultProfileError).toBeNull()
+  })
 })

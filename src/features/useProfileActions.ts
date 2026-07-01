@@ -117,9 +117,9 @@ export function useProfileActions(client: DuckDBClient) {
     if (!sql.trim()) return // nothing to materialize
     st.setResultProfiling(tabId, true)
     try {
-      // materialize the query once into a regular (catalog-global) internal
-      // table with DuckDB's real inferred types, then reuse profileRelation.
-      await client.exec(buildResultTempDDL(tabId, sql))
+      // run() (M8) already materializes _qb_result_<tab> for paged results — reuse it.
+      // Only materialize ourselves if the table isn't already present (raw mode / not yet run).
+      if (tab.mode !== 'paged') await client.exec(buildResultTempDDL(tabId, sql))
       const { profiles, rowCount } = await profileRelation(client, resultTempName(tabId))
       useSession.getState().setResultProfile(tabId, profiles, rowCount)
     } catch (e) {
