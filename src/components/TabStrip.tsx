@@ -1,5 +1,6 @@
 import { useRef, useState } from 'react'
 import { useSession } from '../state/session'
+import { Icon } from './Icon'
 
 export function TabStrip() {
   const tabs = useSession((s) => s.tabs)
@@ -32,6 +33,9 @@ export function TabStrip() {
           onClick={() => setActiveTab(t.id)}
           onDoubleClick={() => startEdit(t.id, t.title)}
         >
+          <span className="tab-icon">
+            <Icon name="table" size={13} />
+          </span>
           {editingId === t.id ? (
             <input
               className="tab-rename"
