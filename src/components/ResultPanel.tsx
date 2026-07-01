@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { downloadResult } from '../features/exportResult'
 import { buildChartSpec } from '../core/chartSpec'
 import type { DuckDBClient } from '../db/duckdbClient'
@@ -12,8 +12,15 @@ import { ResultPager } from './ResultPager'
 import { Chart } from './Chart'
 import { ProfilePanel } from './ProfilePanel'
 import { Icon } from './Icon'
-import type { SortSpec } from '../core/resultQuery'
+import type { SortSpec, ColumnFilter } from '../core/resultQuery'
 import { DEFAULT_VIEW } from '../core/resultQuery'
+
+function filterLabel(f: ColumnFilter): string {
+  if (f.type === 'text') return `${f.col} ${f.op} «${f.value}»`
+  if (f.type === 'null') return `${f.col} ${f.op === 'isNull' ? 'is null' : 'not null'}`
+  if (f.type === 'number' || f.type === 'date') return `${f.col} ∈ [${f.min ?? '−∞'}, ${f.max ?? '+∞'}]`
+  return `${f.col} ∈ {${f.values.join(', ')}}`
+}
 
 interface Props {
   meta: { ms: number; rows: number } | null
@@ -39,11 +46,24 @@ export function ResultPanel({ meta, error, tabId, sql, client }: Props) {
   const [martName, setMartName] = useState('')
   const [martKind, setMartKind] = useState<MartKind>('view')
   const [martErr, setMartErr] = useState<string | null>(null)
+  const [searchDraft, setSearchDraft] = useState('')
 
   // display = current page rows (paged) or full result (raw); written by Task 3 flow
   const display = tab?.window ?? null
   // resultView = the paging/sorting/filter config (named to avoid shadowing `view` = exploreView)
   const resultView = tab?.view ?? DEFAULT_VIEW
+
+  // Reset searchDraft when switching tabs so the previous tab's draft doesn't leak
+  // eslint-disable-next-line react-hooks/set-state-in-effect, react-hooks/exhaustive-deps
+  useEffect(() => { setSearchDraft(resultView.search) }, [tabId])
+  // Debounce: commit search to store 250ms after the draft stops changing
+  useEffect(() => {
+    const h = setTimeout(() => {
+      if (searchDraft !== resultView.search) patchView(tabId, { search: searchDraft, page: 1 })
+    }, 250)
+    return () => clearTimeout(h)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchDraft])
   const spec = display ? buildChartSpec(display.columns) : null
   const showChart = view === 'chart' && spec && display
 
@@ -167,6 +187,14 @@ export function ResultPanel({ meta, error, tabId, sql, client }: Props) {
             + витрина
           </button>
         )}
+        {tab?.mode === 'paged' && (
+          <input
+            className="result-search"
+            placeholder="поиск по всем колонкам…"
+            value={searchDraft}
+            onChange={(e) => setSearchDraft(e.target.value)}
+          />
+        )}
       </header>
       {martOpen && (
         <div className="mart-form">
@@ -211,6 +239,23 @@ export function ResultPanel({ meta, error, tabId, sql, client }: Props) {
           </button>
           <span className="mart-hint">латиница / цифры / _</span>
           {martErr && <span className="mart-err">{martErr}</span>}
+        </div>
+      )}
+      {(resultView.filters.length > 0 || resultView.search) && (
+        <div className="filter-chips">
+          {resultView.search && (
+            <span className="chip">
+              поиск: «{resultView.search}»
+              <button onClick={() => patchView(tabId, { search: '', page: 1 })}>×</button>
+            </span>
+          )}
+          {resultView.filters.map((f, i) => (
+            <span className="chip" key={f.col + i}>
+              {filterLabel(f)}
+              <button onClick={() => patchView(tabId, { filters: resultView.filters.filter((_, j) => j !== i), page: 1 })}>×</button>
+            </span>
+          ))}
+          <button className="chip-clear" onClick={() => patchView(tabId, { filters: [], search: '', page: 1 })}>сбросить всё</button>
         </div>
       )}
       {view === 'profile' && <ProfilePanel />}

@@ -466,3 +466,11 @@ body {
 .pager-nav button { background: var(--surface); color: var(--text-dim); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 1px 7px; cursor: pointer; }
 .pager-nav button:disabled { opacity: .4; cursor: default; }
 .pager-jump { width: 56px; background: var(--bg); color: var(--text); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 1px 4px; font-family: var(--font-mono); }
+
+/* --- M8 T6: global search + filter chips --- */
+.result-search { background: var(--bg); color: var(--text); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 3px 8px; font-size: 12px; min-width: 200px; }
+.filter-chips { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0; }
+.chip { display: inline-flex; align-items: center; gap: 4px; background: var(--surface-2); color: var(--text-dim); border: 1px solid var(--border); border-radius: 12px; padding: 2px 4px 2px 9px; font-size: 11.5px; }
+.chip button { border: 0; background: transparent; color: var(--text-faint); cursor: pointer; }
+.chip button:hover { color: var(--danger); }
+.chip-clear { border: 0; background: transparent; color: var(--accent); cursor: pointer; font-size: 11.5px; }
