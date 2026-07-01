@@ -84,6 +84,26 @@ body {
   color: var(--danger);
 }
 
+/* --- first-run boot screen (WASM engine download) --- */
+.boot-screen { display: flex; align-items: center; justify-content: center; height: 100vh; padding: 24px; }
+.boot-card {
+  display: flex; flex-direction: column; gap: 13px; width: min(420px, 100%);
+  padding: 26px 26px 22px; background: var(--surface-2); border: 1px solid var(--border);
+  border-radius: var(--radius); box-shadow: var(--shadow-card);
+}
+.boot-logo { font-size: 18px; }
+.boot-title { font-size: 13px; color: var(--text-dim); }
+.boot-bar { position: relative; height: 8px; border-radius: 999px; background: var(--track); overflow: hidden; }
+.boot-bar-fill {
+  height: 100%; width: 0; border-radius: 999px;
+  background: linear-gradient(90deg, var(--accent-muted), var(--accent));
+  transition: width 0.2s ease;
+}
+.boot-bar.indeterminate .boot-bar-fill { width: 38%; animation: boot-slide 1.1s ease-in-out infinite; }
+@keyframes boot-slide { 0% { transform: translateX(-120%); } 100% { transform: translateX(330%); } }
+.boot-detail { font-family: var(--font-mono); font-size: 12px; color: var(--text); }
+.boot-note { font-size: 11.5px; color: var(--text-faint); line-height: 1.45; }
+
 /* --- M1 shell layout --- */
 .shell { display: flex; flex-direction: column; height: 100vh; }
 .boot { padding: 28px 22px; }

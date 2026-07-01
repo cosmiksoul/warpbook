@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react'
 import { getBrowserDuckDB } from './db/browserDuckDB'
 import { createClient, type DuckDBClient } from './db/duckdbClient'
 import { Shell } from './features/Shell'
+import { BootScreen } from './components/BootScreen'
+import type { BootProgress } from './core/bootProgress'
 
 type InitState = 'loading' | 'ready' | 'error'
 
@@ -9,10 +11,13 @@ export function App() {
   const [initState, setInitState] = useState<InitState>('loading')
   const [error, setError] = useState<string | null>(null)
   const [client, setClient] = useState<DuckDBClient | null>(null)
+  const [progress, setProgress] = useState<BootProgress | null>(null)
 
   useEffect(() => {
     let cancelled = false
-    getBrowserDuckDB()
+    getBrowserDuckDB((loaded, total) => {
+      if (!cancelled) setProgress({ loaded, total })
+    })
       .then((db) => {
         if (cancelled) return
         setClient(createClient(db))
@@ -28,8 +33,7 @@ export function App() {
     }
   }, [])
 
-  if (initState === 'loading')
-    return <p className="status boot">Инициализация DuckDB-WASM…</p>
+  if (initState === 'loading') return <BootScreen progress={progress} />
   if (initState === 'error')
     return <p className="status error boot">Ошибка инициализации: {error}</p>
   return <Shell client={client!} />

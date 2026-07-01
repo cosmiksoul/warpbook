@@ -15,19 +15,31 @@ const MANUAL_BUNDLES: duckdb.DuckDBBundles = {
 }
 
 let dbPromise: Promise<duckdb.AsyncDuckDB> | null = null
+// Held at module scope (not captured in the promise) so the LATEST caller's
+// handler wins — React StrictMode double-invokes the effect and reuses the
+// memoized promise, so the second effect's handler must still receive updates.
+let onProgressRef: ((loaded: number, total: number) => void) | null = null
 
 /**
  * Lazily instantiate ONE shared single-threaded DuckDB-WASM instance.
  * The module-level promise makes React 18/19 StrictMode double-invokes safe.
+ * `onProgress` reports the engine (.wasm) download — real bytes when the server
+ * sends Content-Length, which drives the first-run boot screen's percentage.
  */
-export function getBrowserDuckDB(): Promise<duckdb.AsyncDuckDB> {
+export function getBrowserDuckDB(
+  onProgress?: (loaded: number, total: number) => void,
+): Promise<duckdb.AsyncDuckDB> {
+  if (onProgress) onProgressRef = onProgress
   if (!dbPromise) {
     dbPromise = (async () => {
       const bundle = await duckdb.selectBundle(MANUAL_BUNDLES)
       const worker = new Worker(bundle.mainWorker!)
       const logger = new duckdb.ConsoleLogger()
       const db = new duckdb.AsyncDuckDB(logger, worker)
-      await db.instantiate(bundle.mainModule, bundle.pthreadWorker)
+      await db.instantiate(bundle.mainModule, bundle.pthreadWorker, (p) =>
+        onProgressRef?.(p.bytesLoaded, p.bytesTotal),
+      )
+      onProgressRef = null
       return db
     })()
   }
