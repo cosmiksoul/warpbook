@@ -49,7 +49,7 @@ export function useResultActions(client: DuckDBClient) {
     st.setWindowLoading(tabId, true)
     try {
       const hasFilter = view.search.trim() !== '' || view.filters.length > 0
-      const rowCount = hasFilter ? await countMatches(table, cols, view) : tab.rowCount
+      const rowCount = hasFilter ? await countMatches(table, cols, view) : (tab.meta?.rows ?? tab.rowCount)
       const win = arrowToRows(await client.query(buildWindowSql(table, cols, view)))
       // latest-wins: only apply if no newer fetch started
       if ((useSession.getState().tabs.find((t) => t.id === tabId)?.windowSeq ?? 0) <= seq) {

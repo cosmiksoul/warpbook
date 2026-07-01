@@ -60,7 +60,7 @@ export function ResultPanel({ meta, error, tabId, sql, client }: Props) {
 
   // Reset searchDraft when switching tabs so the previous tab's draft doesn't leak
   // eslint-disable-next-line react-hooks/set-state-in-effect, react-hooks/exhaustive-deps
-  useEffect(() => { setSearchDraft(resultView.search) }, [tabId])
+  useEffect(() => { setSearchDraft(resultView.search) }, [tabId, resultView.search])
   // Debounce: commit search to store 250ms after the draft stops changing
   useEffect(() => {
     const h = setTimeout(() => {

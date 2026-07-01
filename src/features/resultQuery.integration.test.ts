@@ -63,4 +63,18 @@ describe('useResultActions over real DuckDB', () => {
     await dropResult(id)
     await expect(client.query(`SELECT * FROM "_qb_result_${id}"`)).rejects.toThrow()
   })
+
+  it('filter→clear restores the unfiltered total (pager total must not be polluted)', async () => {
+    const { runQuery, fetchWindow } = useResultActions(client)
+    const id = newTab('SELECT * FROM nums')
+    await runQuery(id, 'SELECT * FROM nums')
+    // Apply filter: grp = 0 → 84 rows (0,3,6,...,249 → 84 multiples of 3 in [0,250))
+    useSession.getState().patchView(id, { filters: [{ col: 'grp', type: 'number', min: 0, max: 0 }] })
+    await fetchWindow(id)
+    expect(useSession.getState().tabs.find((x) => x.id === id)!.rowCount).toBe(84)
+    // Clear all filters — rowCount must return to the unfiltered total (250)
+    useSession.getState().patchView(id, { filters: [], search: '', page: 1 })
+    await fetchWindow(id)
+    expect(useSession.getState().tabs.find((x) => x.id === id)!.rowCount).toBe(250)
+  })
 })

@@ -50,6 +50,15 @@ describe('buildWhere', () => {
     }))
     expect(w).toBe(`WHERE ("a"::VARCHAR ILIKE '%q%' ESCAPE '\\') AND ("amount" >= 5)`)
   })
+  it('NaN min is dropped; finite max is kept', () => {
+    const f: ColumnFilter = { col: 'amount', type: 'number', min: NaN, max: 10 }
+    expect(buildWhere(COLS, view({ filters: [f] })))
+      .toBe(`WHERE ("amount" <= 10)`)
+  })
+  it('fully-NaN number filter contributes nothing', () => {
+    const f: ColumnFilter = { col: 'amount', type: 'number', min: NaN, max: NaN }
+    expect(buildWhere(COLS, view({ filters: [f] }))).toBe('')
+  })
 })
 
 describe('buildWindowSql', () => {
@@ -80,7 +89,7 @@ describe('buildEffectiveSql', () => {
     expect(buildEffectiveSql('SELECT * FROM t;', ['a'], view({
       sorts: [{ col: 'a', dir: 'asc' }], search: 'q',
     }))).toBe(
-      `SELECT * FROM (SELECT * FROM t) WHERE ("a"::VARCHAR ILIKE '%q%' ESCAPE '\\') ORDER BY "a" ASC`,
+      `SELECT * FROM (\nSELECT * FROM t\n) WHERE ("a"::VARCHAR ILIKE '%q%' ESCAPE '\\') ORDER BY "a" ASC`,
     )
   })
 })

@@ -54,8 +54,8 @@ function columnPredicate(f: ColumnFilter): string | null {
   if (f.type === 'null') return `(${col} IS ${f.op === 'isNull' ? 'NULL' : 'NOT NULL'})`
   if (f.type === 'number') {
     const parts: string[] = []
-    if (f.min != null) parts.push(`${col} >= ${f.min}`)
-    if (f.max != null) parts.push(`${col} <= ${f.max}`)
+    if (Number.isFinite(f.min)) parts.push(`${col} >= ${f.min}`)
+    if (Number.isFinite(f.max)) parts.push(`${col} <= ${f.max}`)
     return parts.length ? `(${parts.join(' AND ')})` : null
   }
   if (f.type === 'date') {
@@ -100,5 +100,5 @@ export function buildEffectiveSql(userSql: string, columns: string[], view: Resu
   const select = userSql.trim().replace(/;\s*$/, '').trim()
   const where = buildWhere(columns, view)
   const order = buildOrderBy(view.sorts)
-  return [`SELECT * FROM (${select})`, where, order].filter(Boolean).join(' ')
+  return [`SELECT * FROM (\n${select}\n)`, where, order].filter(Boolean).join(' ')
 }
