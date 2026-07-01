@@ -458,3 +458,11 @@ body {
 .th-filter { border: 0; background: transparent; color: var(--text-faint); cursor: pointer; font-size: 10px; padding: 0 2px; opacity: 0; }
 .grid-th:hover .th-filter, .th-filter.on { opacity: 1; }
 .th-filter:hover { color: var(--text); }
+
+/* --- M8 T5: pagination footer --- */
+.grid-pager { display: flex; align-items: center; gap: 14px; padding: 6px 4px 0; font-size: 12px; color: var(--text-dim); flex-wrap: wrap; }
+.grid-pager select { background: var(--surface); color: var(--text); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 2px 4px; }
+.pager-nav { display: inline-flex; align-items: center; gap: 4px; }
+.pager-nav button { background: var(--surface); color: var(--text-dim); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 1px 7px; cursor: pointer; }
+.pager-nav button:disabled { opacity: .4; cursor: default; }
+.pager-jump { width: 56px; background: var(--bg); color: var(--text); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 1px 4px; font-family: var(--font-mono); }

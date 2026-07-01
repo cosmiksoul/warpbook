@@ -8,6 +8,7 @@ import type { MartKind } from '../core/mart'
 import { useSession } from '../state/session'
 import { detectReferencedTables } from '../core/pruning'
 import { ResultGrid } from './ResultGrid'
+import { ResultPager } from './ResultPager'
 import { Chart } from './Chart'
 import { ProfilePanel } from './ProfilePanel'
 import { Icon } from './Icon'
@@ -221,6 +222,13 @@ export function ResultPanel({ meta, error, tabId, sql, client }: Props) {
           sorts={resultView.sorts}
           onToggleSort={toggleSort}
           onOpenFilter={openFilter}
+        />
+      )}
+      {view !== 'profile' && !error && tab?.mode === 'paged' && display && (
+        <ResultPager
+          total={tab.rowCount ?? 0} page={resultView.page} pageSize={resultView.pageSize}
+          onPage={(p) => patchView(tabId, { page: p })}
+          onPageSize={(n) => patchView(tabId, { pageSize: n, page: 1 })}
         />
       )}
       {view !== 'profile' && !error && !display && (
