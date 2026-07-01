@@ -7,6 +7,7 @@ import { SchemaColumnEditor } from '../components/SchemaColumnEditor'
 import { CsvDropzone } from '../components/CsvDropzone'
 import { useSchemaActions } from './useSchemaActions'
 import { useProfileActions } from './useProfileActions'
+import { useMartActions } from './useMartActions'
 import { Icon } from '../components/Icon'
 
 function formatBytes(n: number): string {
@@ -24,6 +25,10 @@ export function Rail({
 }) {
   const allDatasets = useSession((s) => s.datasets)
   const datasets = allDatasets.filter((d) => !isInternalTable(d.table))
+  const isMart = (d: Dataset): boolean => d.kind === 'view' || d.kind === 'table'
+  const sources = datasets.filter((d) => !isMart(d))
+  const marts = datasets.filter(isMart)
+  const { refreshMart, dropMart } = useMartActions(client)
   const tabs = useSession((s) => s.tabs)
   const activeTabId = useSession((s) => s.activeTabId)
   const openOrFocusTab = useSession((s) => s.openOrFocusTab)
@@ -55,14 +60,14 @@ export function Rail({
     mode === 'report'
       ? (activeWidget && activeWidget.type === 'widget' ? activeWidget.sql : null)
       : (activeTab?.sql ?? null)
-  const fallbackTable = activeTab?.datasetTable ?? datasets[0]?.table
+  const fallbackTable = activeTab?.datasetTable ?? sources[0]?.table
 
   // Before a table is named (blank/empty tab, or no active widget) fall back to
   // the tab's own dataset, else the first source, so the rail isn't empty.
   const referenced = currentSql
     ? detectReferencedTables(
         currentSql,
-        datasets.map((d) => d.table),
+        sources.map((d) => d.table),
       )
     : []
   const shownTables =
@@ -79,7 +84,7 @@ export function Rail({
       <CsvDropzone onFiles={onFiles} />
       <div className="rail-section-label">Источники</div>
       <ul className="sources">
-        {datasets.map((d) => (
+        {sources.map((d) => (
           <li key={d.table}>
             <button
               className={shown.has(d.table) ? 'source active' : 'source'}
@@ -91,10 +96,51 @@ export function Rail({
             </button>
           </li>
         ))}
-        {datasets.length === 0 && (
+        {sources.length === 0 && (
           <li className="sources-empty">Брось CSV / Parquet</li>
         )}
       </ul>
+
+      {marts.length > 0 && (
+        <>
+          <div className="rail-section-label">Витрины</div>
+          <ul className="sources marts">
+            {marts.map((m) => (
+              <li className="mart-row" key={m.table}>
+                <div className="mart-head">
+                  <span className="source-kind">{m.kind}</span>
+                  <span className="source-name">{m.table}</span>
+                  <div className="mart-actions">
+                    <button
+                      className="mart-act"
+                      title="профиль витрины"
+                      onClick={() => {
+                        setProfileTarget({ kind: 'source', table: m.table })
+                        setExploreView('profile')
+                        void profile(m.table)
+                      }}
+                    >
+                      <Icon name="profile" />
+                    </button>
+                    {m.kind === 'table' && (
+                      <button className="mart-act" title="обновить снапшот" onClick={() => void refreshMart(m.table)}>↻</button>
+                    )}
+                    <button className="mart-act mart-del" title="удалить витрину" onClick={() => void dropMart(m.table)}>✕</button>
+                  </div>
+                </div>
+                <ul className="mart-cols">
+                  {m.columns.map((c) => (
+                    <li className="mart-col" key={c.name}>
+                      <span className="col-name">{c.name}</span>
+                      <span className="col-type">{c.type === 'VARCHAR' ? 'STRING' : c.type}</span>
+                    </li>
+                  ))}
+                </ul>
+              </li>
+            ))}
+          </ul>
+        </>
+      )}
 
       {shownDatasets.map((ds) => {
         const used = new Set(
