@@ -199,7 +199,7 @@ body {
 .tab .tab-close { opacity: 0; }
 .tab:hover .tab-close, .tab.on .tab-close { opacity: 1; }
 .tab-close:hover { color: var(--danger); }
-.tab-add { border: 1px solid var(--border); background: var(--surface); border-radius: var(--radius-sm); padding: 3px 9px; }
+.tab-add { border: 1px solid var(--border); background: var(--surface); border-radius: var(--radius-sm); padding: 0 10px; align-self: stretch; display: inline-flex; align-items: center; justify-content: center; }
 .schema-col.used { opacity: 1; border-left-color: var(--accent); background: var(--surface); }
 .schema-col.used .col-name { color: var(--text); font-weight: 600; }
 .rail-note { color: var(--text-faint); font-size: 11px; margin-top: 10px; line-height: 1.4; }
