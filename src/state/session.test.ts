@@ -474,6 +474,18 @@ describe('session: report (M4)', () => {
   })
 })
 
+describe('session: marts — removeDataset (M7a)', () => {
+  it('removeDataset drops the matching dataset and keeps the rest', () => {
+    const s = useSession.getState()
+    s.addDataset({ table: 'a', fileName: 'a.csv', bytes: 1, kind: 'csv', columns: [] })
+    s.addDataset({
+      table: 'm', fileName: 'm', bytes: 0, kind: 'view', columns: [], martSql: 'SELECT 1',
+    })
+    s.removeDataset('a')
+    expect(useSession.getState().datasets.map((d) => d.table)).toEqual(['m'])
+  })
+})
+
 describe('session: renameTab (M5)', () => {
   it('renameTab changes a tab title and leaves others untouched', () => {
     const s = useSession.getState()

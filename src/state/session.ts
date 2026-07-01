@@ -14,8 +14,11 @@ export interface Dataset {
   table: string
   fileName: string
   bytes: number
-  kind: 'csv' | 'parquet'
+  kind: 'csv' | 'parquet' | 'view' | 'table'
   columns: { name: string; type: string; nullLoss?: number }[]
+  // --- M7a: a mart (kind 'view'|'table') is a saved query; martSql is its
+  // source SELECT (used to refresh a snapshot TABLE). Files have no martSql.
+  martSql?: string
   // --- M2, only for kind === 'csv' ---
   rawTable?: string
   suggested?: { name: string; type: ColumnConfig['type'] }[]
@@ -61,6 +64,7 @@ interface SessionState {
   toast: string | null
   // actions
   addDataset: (dataset: Dataset) => void
+  removeDataset: (table: string) => void
   setMode: (mode: 'explore' | 'report') => void
   reset: () => void
   openOrFocusTab: (table: string) => void
@@ -137,6 +141,8 @@ export const useSession = create<SessionState>((set) => ({
   ...initial,
   addDataset: (dataset) =>
     set((s) => ({ datasets: [...s.datasets, dataset] })),
+  removeDataset: (table) =>
+    set((s) => ({ datasets: s.datasets.filter((d) => d.table !== table) })),
   setMode: (mode) => set({ mode }),
   reset: () => {
     if (typeof localStorage !== 'undefined') {
