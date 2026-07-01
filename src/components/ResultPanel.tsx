@@ -1,8 +1,11 @@
+import { useState } from 'react'
 import { downloadResult } from '../features/exportResult'
 import type { QueryResult } from '../core/arrowToRows'
 import { buildChartSpec } from '../core/chartSpec'
 import type { DuckDBClient } from '../db/duckdbClient'
 import { useProfileActions } from '../features/useProfileActions'
+import { useMartActions } from '../features/useMartActions'
+import type { MartKind } from '../core/mart'
 import { useSession } from '../state/session'
 import { detectReferencedTables } from '../core/pruning'
 import { ResultGrid } from './ResultGrid'
@@ -27,6 +30,11 @@ export function ResultPanel({ result, meta, error, tabId, sql, client }: Props) 
   const pinResult = useSession((s) => s.pinResult)
   const setToast = useSession((s) => s.setToast)
   const { profileResult } = useProfileActions(client)
+  const { createMart } = useMartActions(client)
+  const [martOpen, setMartOpen] = useState(false)
+  const [martName, setMartName] = useState('')
+  const [martKind, setMartKind] = useState<MartKind>('view')
+  const [martErr, setMartErr] = useState<string | null>(null)
   const spec = result ? buildChartSpec(result.columns) : null
   const showChart = view === 'chart' && spec && result
 
@@ -36,6 +44,18 @@ export function ResultPanel({ result, meta, error, tabId, sql, client }: Props) 
     } catch (e) {
       setToast('Экспорт не удался: ' + String(e))
     }
+  }
+
+  async function submitMart() {
+    const err = await createMart(martName, sql, martKind)
+    if (err) {
+      setMartErr(err)
+      return
+    }
+    setToast(`витрина «${martName.trim()}» создана`)
+    setMartOpen(false)
+    setMartName('')
+    setMartErr(null)
   }
 
   return (
@@ -111,7 +131,64 @@ export function ResultPanel({ result, meta, error, tabId, sql, client }: Props) 
             <button className="export-btn" title="скачать полный результат в Parquet" onClick={() => void exportResult('parquet')}>Parquet</button>
           </div>
         )}
+        {result && (
+          <button
+            className="export-btn mart-open"
+            title="сохранить результат как витрину (VIEW/TABLE)"
+            onClick={() => {
+              setMartOpen((v) => !v)
+              setMartErr(null)
+            }}
+          >
+            + витрина
+          </button>
+        )}
       </header>
+      {martOpen && (
+        <div className="mart-form">
+          <input
+            className="mart-name"
+            autoFocus
+            placeholder="имя_витрины"
+            value={martName}
+            onChange={(e) => {
+              setMartName(e.target.value)
+              setMartErr(null)
+            }}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') void submitMart()
+            }}
+          />
+          <div className="mart-kind">
+            <button
+              className={martKind === 'view' ? 'on' : ''}
+              onClick={() => setMartKind('view')}
+              title="живая — пересчитывается при обращении"
+            >
+              VIEW
+            </button>
+            <button
+              className={martKind === 'table' ? 'on' : ''}
+              onClick={() => setMartKind('table')}
+              title="снапшот — фиксирует результат"
+            >
+              TABLE
+            </button>
+          </div>
+          <button className="mart-create" onClick={() => void submitMart()}>создать</button>
+          <button
+            className="mart-cancel"
+            onClick={() => {
+              setMartOpen(false)
+              setMartErr(null)
+            }}
+          >
+            отмена
+          </button>
+          <span className="mart-hint">латиница / цифры / _</span>
+          {martErr && <span className="mart-err">{martErr}</span>}
+        </div>
+      )}
       {view === 'profile' && <ProfilePanel />}
       {view !== 'profile' && error && <pre className="result-error">{error}</pre>}
       {view !== 'profile' && !error && showChart && <Chart spec={spec!} rows={result!.rows} />}

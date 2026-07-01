@@ -413,3 +413,14 @@ body {
 .export-label { font-size: 10.5px; text-transform: uppercase; letter-spacing: .05em; color: var(--text-faint); }
 .export-btn { background: var(--surface); color: var(--text-dim); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 3px 9px; cursor: pointer; font-size: 12px; }
 .export-btn:hover { background: var(--surface-2); color: var(--text); }
+
+/* --- M7a: «+ витрина» create form (result panel) --- */
+.mart-form { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; margin-top: 10px; padding: 10px 12px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-sm); }
+.mart-name { background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius-sm); color: var(--text); padding: 4px 8px; font-size: 13px; font-family: var(--font-mono); min-width: 160px; }
+.mart-kind { display: inline-flex; gap: 2px; background: var(--bg); border-radius: var(--radius-sm); padding: 3px; }
+.mart-kind button { border: 0; background: transparent; color: var(--text-dim); cursor: pointer; padding: 2px 9px; font-size: 11px; border-radius: 4px; letter-spacing: .04em; }
+.mart-kind button.on { background: var(--surface-2); color: var(--text); }
+.mart-create { background: var(--accent); color: #15201a; border: 1px solid var(--accent); border-radius: var(--radius-sm); font-weight: 600; padding: 4px 12px; cursor: pointer; }
+.mart-cancel { background: var(--surface-2); color: var(--text-dim); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 4px 10px; cursor: pointer; }
+.mart-hint { color: var(--text-faint); font-size: 10.5px; }
+.mart-err { color: var(--danger); font-size: 12px; }
