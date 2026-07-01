@@ -1,7 +1,7 @@
-import { useMemo } from 'react'
+import { useEffect, useMemo, useRef } from 'react'
 import { useSession } from '../state/session'
 import type { DuckDBClient } from '../db/duckdbClient'
-import { arrowToRows } from '../core/arrowToRows'
+import { useResultActions } from './useResultActions'
 import { SqlEditor } from '../components/SqlEditor'
 import { buildSqlSchema } from '../core/sqlSchema'
 import { ResultPanel } from '../components/ResultPanel'
@@ -13,29 +13,33 @@ export function Explore({ client }: { client: DuckDBClient }) {
   const tabs = useSession((s) => s.tabs)
   const activeTabId = useSession((s) => s.activeTabId)
   const updateTabSql = useSession((s) => s.updateTabSql)
-  const setTabResult = useSession((s) => s.setTabResult)
-  const setTabError = useSession((s) => s.setTabError)
   const exploreView = useSession((s) => s.exploreView)
   const profileTarget = useSession((s) => s.profileTarget)
   const datasets = useSession((s) => s.datasets)
   const schema = useMemo(() => buildSqlSchema(datasets), [datasets])
 
   const tab = tabs.find((t) => t.id === activeTabId) ?? null
+  const { runQuery, fetchWindow, dropResult } = useResultActions(client)
 
   async function run(sql: string) {
     if (!tab) return
-    const t0 = performance.now()
-    try {
-      const table = await client.query(sql)
-      const result = arrowToRows(table)
-      setTabResult(tab.id, result, {
-        ms: performance.now() - t0,
-        rows: result.numRows,
-      })
-    } catch (e) {
-      setTabError(tab.id, String(e))
-    }
+    await runQuery(tab.id, sql)
   }
+
+  // Refetch the window whenever the active tab's view changes (page/sort/search/filter).
+  const view = tab?.view
+  useEffect(() => {
+    if (tab && tab.mode === 'paged') void fetchWindow(tab.id)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tab?.id, view?.page, view?.pageSize, JSON.stringify(view?.sorts), view?.search, JSON.stringify(view?.filters)])
+
+  // Drop result tables for tabs that were closed.
+  const knownTabs = useRef<Set<string>>(new Set())
+  useEffect(() => {
+    const now = new Set(tabs.map((t) => t.id))
+    for (const id of knownTabs.current) if (!now.has(id)) void dropResult(id)
+    knownTabs.current = now
+  }, [tabs, dropResult])
 
   if (!tab) {
     return (
