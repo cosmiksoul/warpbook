@@ -14,8 +14,8 @@ export function plotFigure(
     : rows
   const mark =
     spec.kind === 'bar'
-      ? Plot.barY(data, { x: spec.x, y: spec.y, sort: { x: '-y' } })
-      : Plot.lineY(data, { x: spec.x, y: spec.y })
+      ? Plot.barY(data, { x: spec.x, y: spec.y, sort: { x: '-y' }, fill: '#22d3ee' })
+      : Plot.lineY(data, { x: spec.x, y: spec.y, stroke: '#22d3ee', strokeWidth: 2 })
   return Plot.plot({
     marks: [mark, Plot.ruleY([0])],
     x: { label: spec.x },
