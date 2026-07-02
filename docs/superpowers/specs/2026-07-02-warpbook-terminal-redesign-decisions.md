@@ -23,9 +23,19 @@ Dark terminal. **Cyan is the dominant accent**; **magenta is a restrained, funct
 
 The single most important directional note; it governs every visual choice below.
 
-**Push MORE toward terminal:** lots of black (flatter, blacker `--bg`, fewer panel shades), simple hard shapes only — rectangles, 1px borders, **radius 0**, **no drop shadows, no gradient fills** (the dithered swirl + focus/hover glow are the only "lit" elements). Information-first density, not whitespace luxury.
+**Push MORE toward terminal:** lots of black (flatter, blacker `--bg`, fewer panel shades), simple hard shapes only — rectangles, 1px borders, **radius 0**, **no drop shadows, no gradient fills** (the dithered swirl + focus/hover glow are the only "lit" elements).
 
 **BUT do not slavishly redraw a terminal.** It is **web-punk — the midpoint between Web 1.0 and a terminal.** Take the *feeling*, not a literal xterm costume.
+
+### The two north-star environments (they share one language)
+
+Confirmed 2026-07-02: the aesthetic we imitate (Nous psyche) and the environment the user actually works in (the Claude Code / this-session TUI) are the **same family** — use both as north stars. The four qualities to hit, in the user's words:
+
+- **Crisp lines (линии чёткие):** thin 1px hairline borders and rules, plentiful and structural — like nous-psyche's many boxes and the terminal's divider rules. Sharp, not heavy, not glowing everywhere.
+- **Muted-but-readable fades (фейды заглушённые но читаемые):** secondary/dim text is subdued yet clearly legible — like the terminal's gray status line ("Op 4.8 | quackbook…") and "Mulling…". Dim ≠ unreadable; tune `--dim`/`--faint` to stay legible.
+- **Bright contrast from the accent (контрасты яркие):** contrast comes from a **muted base vs. a bright, saturated, semantic accent** — exactly the dev terminal's magenta=error / purple=mode / green=ok / yellow=progress. Maps to our cyan(primary) + magenta(secondary) + amber(warn). Accents POP; base stays muted. Accents used sparingly and semantically.
+- **Air (отступы с воздухом):** generous, breathing padding in boxes and between sections — like nous-psyche's roomy cards. **This supersedes the earlier "density, not whitespace" note** — we DO want air; the black + crisp lines + air together read as "fast" and "sexy". Not cramped.
+- **Fonts:** mono for data/UI + serif for headings (IBM Plex) — as decided.
 
 - **Web 1.0 DNA:** raw structural honesty — underlined links, hard `─` rules / box-drawing dividers, dotted focus outlines, table/directory-listing density, mono labels, UPPERCASE, "SEED / LAST-UPDATED" stamps. Handmade, not corporate-polished.
 - **Terminal DNA:** mono everywhere, black + phosphor-cyan, prompt markers `>` / `▸`, blink-cursor accents, status line, segmented `▮▮▮` bars.
