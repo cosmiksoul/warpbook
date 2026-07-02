@@ -1,4 +1,5 @@
 import { Icon } from './Icon'
+import { WarpShader } from './WarpShader'
 import { bootPercent, formatMb, type BootProgress } from '../core/bootProgress'
 
 /**
@@ -11,6 +12,7 @@ export function BootScreen({ progress }: { progress: BootProgress | null }) {
   const pct = bootPercent(progress)
   return (
     <div className="boot-screen">
+      <WarpShader intensity={1} />
       <div className="boot-card">
         <span className="logo boot-logo"><Icon name="logo" size={22} /> warpbook</span>
         <div className="boot-title">Запуск движка DuckDB-WASM…</div>
