@@ -12,17 +12,17 @@ import { syntaxHighlighting, HighlightStyle } from '@codemirror/language'
 import { tags as t } from '@lezer/highlight'
 import { autocompletion, completionKeymap } from '@codemirror/autocomplete'
 
-// SQL token colors, tuned to the app's warm-amber-on-teal palette (index.css tokens).
+// SQL token colors, tuned to the cyan/magenta terminal-neon palette (index.css tokens).
 const qbHighlight = HighlightStyle.define([
-  { tag: t.keyword, color: '#e3a95c', fontWeight: '600' },
-  { tag: [t.typeName, t.typeOperator], color: '#cf933f' },
-  { tag: [t.string, t.special(t.string)], color: '#9dc98f' },
-  { tag: [t.number, t.integer, t.float], color: '#74c0c8' },
-  { tag: [t.bool, t.null, t.atom], color: '#e8826a' },
-  { tag: t.function(t.variableName), color: '#e6c48f' },
-  { tag: [t.comment, t.lineComment, t.blockComment], color: '#5f7d78', fontStyle: 'italic' },
-  { tag: [t.operator, t.compareOperator, t.logicOperator, t.arithmeticOperator], color: '#8fa8a3' },
-  { tag: [t.punctuation, t.separator, t.paren, t.bracket], color: '#7c9490' },
+  { tag: t.keyword, color: '#22d3ee', fontWeight: '600' },
+  { tag: [t.typeName, t.typeOperator], color: '#5fe0ea' },
+  { tag: [t.string, t.special(t.string)], color: '#e0b64a' },
+  { tag: [t.number, t.integer, t.float], color: '#e849c4' },
+  { tag: [t.bool, t.null, t.atom], color: '#ff5c72' },
+  { tag: t.function(t.variableName), color: '#8ad6ff' },
+  { tag: [t.comment, t.lineComment, t.blockComment], color: '#4f6377', fontStyle: 'italic' },
+  { tag: [t.operator, t.compareOperator, t.logicOperator, t.arithmeticOperator], color: '#8aa0b5' },
+  { tag: [t.punctuation, t.separator, t.paren, t.bracket], color: '#6b7f9a' },
 ])
 
 // Dark editor chrome (gutter/cursor/selection/active line) matching the theme.
@@ -31,7 +31,7 @@ const qbEditorTheme = EditorView.theme(
     '&': { color: 'var(--text)', backgroundColor: 'transparent' },
     '.cm-content': { caretColor: 'var(--accent)', fontFamily: 'var(--font-mono)' },
     '.cm-cursor, .cm-dropCursor': { borderLeftColor: 'var(--accent)' },
-    '& ::selection': { backgroundColor: 'rgba(227,169,92,.20)' },
+    '& ::selection': { backgroundColor: 'rgba(34,211,238,.22)' },
     '.cm-activeLine': { backgroundColor: 'rgba(255,255,255,.03)' },
     '.cm-gutters': { backgroundColor: 'transparent', color: 'var(--text-faint)', border: 'none' },
     '.cm-activeLineGutter': { backgroundColor: 'rgba(255,255,255,.03)', color: 'var(--text-dim)' },
