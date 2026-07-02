@@ -134,7 +134,11 @@ export function WarpShader({ intensity = 1, className }: { intensity?: number; c
       gl.deleteProgram(prog)
       gl.deleteShader(vs)
       gl.deleteShader(fs)
-      gl.getExtension('WEBGL_lose_context')?.loseContext()
+      // NB: do NOT call WEBGL_lose_context.loseContext() here — under React
+      // StrictMode (dev) the effect mounts twice on the SAME canvas, and a
+      // force-lost context poisons the remount (getContext returns the lost
+      // context → compile fails → silent fallback). The context is freed by GC
+      // when the canvas unmounts; real context loss is handled by onLost.
     }
   }, [intensity])
 
