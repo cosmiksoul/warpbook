@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useSession } from '../state/session'
 import type { DuckDBClient } from '../db/duckdbClient'
-import { buildDropTable, rawTableName } from '../core/sql'
+import { buildResetStatements } from '../core/resetPlan'
 import { loadOneFile } from './loadFiles'
 import { Explore } from './Explore'
 import { Report } from './Report'
@@ -34,14 +34,13 @@ export function Shell({ client }: { client: DuckDBClient }) {
   }
 
   async function handleReset() {
-    for (const d of useSession.getState().datasets) {
+    const st = useSession.getState()
+    const stmts = buildResetStatements(st.datasets, st.tabs.map((t) => t.id))
+    for (const sql of stmts) {
       try {
-        await client.query(buildDropTable(d.table))
-        if (d.kind === 'csv') {
-          await client.query(buildDropTable(rawTableName(d.table)))
-        }
+        await client.exec(sql)
       } catch {
-        // ignore — table may already be gone
+        // ignore — object may already be gone
       }
     }
     reset()
