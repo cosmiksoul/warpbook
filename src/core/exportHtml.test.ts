@@ -32,6 +32,16 @@ describe('buildReportHtml — shell + text', () => {
     const html = buildReportHtml(doc, {})
     expect(html).not.toContain('<img src=x')
   })
+
+  it('нейтрализует javascript: ссылку в текстовом блоке (XSS)', () => {
+    const doc: ReportDoc = {
+      version: 1,
+      blocks: [{ type: 'text', id: 'blk-1', markdown: '[click](javascript:alert(1))' }],
+    }
+    const html = buildReportHtml(doc, {})
+    expect(html).not.toContain('javascript:')
+    expect(html).toContain('href="#"')
+  })
 })
 
 import type { RenderedWidget } from './exportHtml'
