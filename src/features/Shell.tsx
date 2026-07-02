@@ -49,7 +49,7 @@ export function Shell({ client }: { client: DuckDBClient }) {
   return (
     <div className="shell">
       <header className="topbar">
-        <span className="logo"><Icon name="logo" size={18} /> quackbook</span>
+        <span className="logo"><Icon name="logo" size={18} /> warpbook</span>
         <nav className="mode-toggle">
           <button className={mode === 'explore' ? 'on' : ''} onClick={() => setMode('explore')}>
             <Icon name="explore" /> исследование
@@ -59,7 +59,7 @@ export function Shell({ client }: { client: DuckDBClient }) {
           </button>
         </nav>
         <div className="topbar-right">
-          <button className="about-btn" title="о quackbook" aria-label="о quackbook" onClick={() => setAboutOpen(true)}>?</button>
+          <button className="about-btn" title="о warpbook" aria-label="о warpbook" onClick={() => setAboutOpen(true)}>?</button>
           <span className="pill-local">● local</span>
           <button className="reset-btn" onClick={handleReset}>
             Reset

@@ -23,7 +23,7 @@ export function Report({ client }: { client: DuckDBClient }) {
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
     a.href = url
-    a.download = 'quackbook-report.json'
+    a.download = 'warpbook-report.json'
     a.click()
     URL.revokeObjectURL(url)
   }
@@ -46,7 +46,7 @@ export function Report({ client }: { client: DuckDBClient }) {
     if (missingCount > 0) {
       setToast(`${missingCount} виджет(ов) без данных — выгружены с пометкой`)
     }
-    downloadHtml(html, 'quackbook-report.html')
+    downloadHtml(html, 'warpbook-report.html')
   }
 
   async function exportPdf() {

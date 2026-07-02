@@ -100,7 +100,7 @@ export function buildReportHtml(
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>quackbook — отчёт</title>
+<title>warpbook — отчёт</title>
 <style>${STYLE}</style>
 </head>
 <body>

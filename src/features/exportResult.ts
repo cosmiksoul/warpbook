@@ -17,7 +17,7 @@ export async function downloadResult(
   const url = URL.createObjectURL(blob)
   const a = document.createElement('a')
   a.href = url
-  a.download = `quackbook-result.${format}`
+  a.download = `warpbook-result.${format}`
   document.body.appendChild(a) // Firefox needs the anchor in the DOM
   a.click()
   a.remove()

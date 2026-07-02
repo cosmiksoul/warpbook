@@ -12,7 +12,7 @@ export function BootScreen({ progress }: { progress: BootProgress | null }) {
   return (
     <div className="boot-screen">
       <div className="boot-card">
-        <span className="logo boot-logo"><Icon name="logo" size={22} /> quackbook</span>
+        <span className="logo boot-logo"><Icon name="logo" size={22} /> warpbook</span>
         <div className="boot-title">Запуск движка DuckDB-WASM…</div>
         <div className={'boot-bar' + (pct === null ? ' indeterminate' : '')}>
           <div className="boot-bar-fill" style={pct === null ? undefined : { width: `${pct}%` }} />

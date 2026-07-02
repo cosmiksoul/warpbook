@@ -9,9 +9,9 @@ export function AboutModal({ onClose }: { onClose: () => void }) {
 
   return (
     <div className="modal-overlay" onClick={onClose}>
-      <div className="modal" role="dialog" aria-modal="true" aria-label="О quackbook" onClick={(e) => e.stopPropagation()}>
+      <div className="modal" role="dialog" aria-modal="true" aria-label="О warpbook" onClick={(e) => e.stopPropagation()}>
         <button className="modal-x" aria-label="закрыть" onClick={onClose}>✕</button>
-        <h2>quackbook</h2>
+        <h2>warpbook</h2>
         <p>Браузерный аналитический ноутбук: данные → SQL и профиль значений → нарративный отчёт с экспортом. Без бэкенда.</p>
         <h3>Как устроено</h3>
         <p>DuckDB-WASM в Web Worker (Apache Arrow). Всё исполняется в браузере, статика на GitHub Pages — данные никуда не уходят.</p>
