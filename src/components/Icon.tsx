@@ -3,7 +3,7 @@ import type { ReactNode } from 'react'
 type IconName =
   | 'logo' | 'explore' | 'report' | 'play' | 'pin' | 'types' | 'profile' | 'table'
 
-// logo is rendered separately (filled duck-head mark); these are stroke glyphs.
+// logo is rendered separately (warp-portal concentric rings); these are stroke glyphs.
 const PATHS: Record<Exclude<IconName, 'logo'>, ReactNode> = {
   // simple, recognizable stroke glyphs (Lucide-ish), 24x24 viewBox
   explore: <><circle cx="11" cy="11" r="7" /><path d="m21 21-4.3-4.3" /></>,
@@ -17,14 +17,16 @@ const PATHS: Record<Exclude<IconName, 'logo'>, ReactNode> = {
 
 export function Icon({ name, size = 16 }: { name: IconName; size?: number }) {
   if (name === 'logo') {
-    // Filled duck-head in profile: round head, blunt rounded beak right, amber
-    // eye. Sits on the amber tile, so currentColor is the dark tile foreground;
-    // the eye is painted back in --accent to read as a knockout.
+    // Warp-portal: концентрические кольца, сгущающиеся к центру (эхо тоннеля
+    // шейдера). Внешние — циан (--accent), внутренние — магента (--accent-2),
+    // яркая точка-колодец в центре. Двухтональность = намёк на chromatic split.
     return (
-      <svg width={size} height={size} viewBox="0 0 24 24" aria-hidden="true" style={{ flex: '0 0 auto' }}>
-        <circle cx="11" cy="12" r="6.7" fill="currentColor" />
-        <rect x="15" y="10.4" width="8.4" height="3.4" rx="1.7" fill="currentColor" />
-        <circle cx="12.6" cy="10" r="1.2" style={{ fill: 'var(--accent)' }} />
+      <svg width={size} height={size} viewBox="0 0 24 24" fill="none" aria-hidden="true" style={{ flex: '0 0 auto' }}>
+        <circle cx="12" cy="12" r="10.2" stroke="var(--accent)" strokeWidth="1.5" opacity="0.9" />
+        <circle cx="12" cy="12" r="7.4" stroke="var(--accent)" strokeWidth="1.5" opacity="0.8" />
+        <circle cx="12" cy="12" r="5" stroke="var(--accent-2)" strokeWidth="1.5" opacity="0.85" />
+        <circle cx="12" cy="12" r="3" stroke="var(--accent-2)" strokeWidth="1.5" />
+        <circle cx="12" cy="12" r="1.1" fill="var(--accent)" />
       </svg>
     )
   }

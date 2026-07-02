@@ -114,7 +114,7 @@ body {
   padding: 10px 16px; border-bottom: 1px solid var(--border);
 }
 .logo { display: inline-flex; align-items: center; gap: 8px; font-weight: 700; color: var(--accent); }
-.logo svg { background: var(--accent); color: var(--bg); border-radius: var(--radius-sm); padding: 4px; box-sizing: content-box; }
+.logo svg { border-radius: var(--radius-sm); filter: drop-shadow(0 0 6px rgba(34,211,238,.5)); }
 .mode-toggle { display: flex; gap: 4px; background: var(--surface); border-radius: var(--radius-sm); padding: 3px; }
 .mode-toggle button {
   display: inline-flex; align-items: center; gap: 6px;
