@@ -489,7 +489,7 @@ body {
 .mart-kind { display: inline-flex; gap: 2px; background: var(--bg); border-radius: var(--radius-sm); padding: 3px; }
 .mart-kind button { border: 0; background: transparent; color: var(--text-dim); cursor: pointer; padding: 2px 9px; font-size: 11px; border-radius: 4px; letter-spacing: .04em; }
 .mart-kind button.on { background: var(--surface-2); color: var(--text); }
-.mart-create { background: var(--accent); color: #15201a; border: 1px solid var(--accent); border-radius: var(--radius-sm); font-weight: 600; padding: 4px 12px; cursor: pointer; }
+.mart-create { background: var(--accent); color: #051016; border: 1px solid var(--accent); border-radius: var(--radius-sm); font-weight: 600; padding: 4px 12px; cursor: pointer; }
 .mart-cancel { background: var(--surface-2); color: var(--text-dim); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 4px 10px; cursor: pointer; }
 .mart-hint { color: var(--text-faint); font-size: 10.5px; }
 .mart-err { color: var(--danger); font-size: 12px; }
@@ -541,7 +541,7 @@ body {
 .cf-list label { display: flex; align-items: center; gap: 6px; color: var(--text-dim); }
 .cf-range { display: flex; flex-direction: column; gap: 6px; }
 .cf-nulls, .cf-actions { display: flex; gap: 6px; }
-.cf-actions button:first-child { background: var(--accent); color: #15201a; border: 1px solid var(--accent); border-radius: var(--radius-sm); padding: 3px 10px; cursor: pointer; }
+.cf-actions button:first-child { background: var(--accent); color: #051016; border: 1px solid var(--accent); border-radius: var(--radius-sm); padding: 3px 10px; cursor: pointer; }
 .cf-actions button:last-child, .cf-nulls button { background: var(--surface-2); color: var(--text-dim); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 3px 8px; cursor: pointer; }
 
 /* --- M8 T8: chart cap note --- */
