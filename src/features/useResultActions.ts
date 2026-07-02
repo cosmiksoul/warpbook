@@ -10,30 +10,38 @@ export function useResultActions(client: DuckDBClient) {
     return Number(rows[0]?.n ?? 0)
   }
 
+  /** Владелец записи в стор — только последний выданный run/fetch этого таба. */
+  function ownsRun(tabId: string, seq: number): boolean {
+    return (useSession.getState().tabs.find((t) => t.id === tabId)?.windowSeq ?? 0) === seq
+  }
+
   // Materialize the result snapshot, count, load page 1. Non-SELECT -> raw fallback.
   async function runQuery(tabId: string, sql: string): Promise<void> {
-    const seq = useSession.getState().nextWindowSeq()
+    const st = useSession.getState()
+    const seq = st.nextWindowSeq()
+    st.stampWindowSeq(tabId, seq) // застолбить run ДО первого await
     const t0 = performance.now()
     const table = resultTempName(tabId)
     try {
       await client.exec(buildResultTempDDL(tabId, sql))
     } catch {
-      // Not materializable (non-SELECT: PRAGMA/EXPLAIN/DDL) -> current direct path.
+      // Not materializable (non-SELECT: PRAGMA/EXPLAIN/DDL) -> direct path.
       try {
         const raw = arrowToRows(await client.query(sql))
-        if (useSession.getState().nextWindowSeq() >= seq) useSession.getState().setRawResult(tabId, raw, performance.now() - t0)
+        if (ownsRun(tabId, seq)) useSession.getState().setRawResult(tabId, raw, performance.now() - t0)
       } catch (e) {
-        useSession.getState().setTabError(tabId, String(e))
+        if (ownsRun(tabId, seq)) useSession.getState().setTabError(tabId, String(e))
       }
       return
     }
     try {
       const columns: ResultColumn[] = await client.describeTable(table)
       const rowCount = await countMatches(table, columns.map((c) => c.name))
+      if (!ownsRun(tabId, seq)) return
       useSession.getState().setResultMeta(tabId, { columns, rowCount, ms: performance.now() - t0 })
       await fetchWindow(tabId, seq)
     } catch (e) {
-      useSession.getState().setTabError(tabId, String(e))
+      if (ownsRun(tabId, seq)) useSession.getState().setTabError(tabId, String(e))
     }
   }
 
@@ -43,21 +51,17 @@ export function useResultActions(client: DuckDBClient) {
     const tab = st.tabs.find((t) => t.id === tabId)
     if (!tab || tab.mode !== 'paged' || !tab.columns) return
     const seq = seqIn ?? st.nextWindowSeq()
+    if (seqIn === undefined) st.stampWindowSeq(tabId, seq) // standalone fetch тоже столбит
     const table = resultTempName(tabId)
     const cols = tab.columns.map((c) => c.name)
     const view = tab.view ?? DEFAULT_VIEW
-    st.setWindowLoading(tabId, true)
     try {
       const hasFilter = view.search.trim() !== '' || view.filters.length > 0
       const rowCount = hasFilter ? await countMatches(table, cols, view) : (tab.meta?.rows ?? tab.rowCount)
       const win = arrowToRows(await client.query(buildWindowSql(table, cols, view)))
-      // latest-wins: only apply if no newer fetch started
-      if ((useSession.getState().tabs.find((t) => t.id === tabId)?.windowSeq ?? 0) <= seq) {
-        useSession.setState((s) => ({ tabs: s.tabs.map((t) => (t.id === tabId ? { ...t, windowSeq: seq } : t)) }))
-        useSession.getState().setWindow(tabId, win, { rowCount })
-      }
+      if (ownsRun(tabId, seq)) useSession.getState().setWindow(tabId, win, { rowCount })
     } catch (e) {
-      useSession.getState().setTabError(tabId, String(e))
+      if (ownsRun(tabId, seq)) useSession.getState().setTabError(tabId, String(e))
     }
   }
 

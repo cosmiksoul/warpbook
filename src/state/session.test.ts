@@ -547,10 +547,12 @@ describe('session: M8 windowed result model', () => {
     expect(useSession.getState().tabs.find((x) => x.id === id)!.view).toEqual(DEFAULT_VIEW)
   })
 
-  it('nextWindowSeq increments the store seq and returns it (race guard)', () => {
+  it('nextWindowSeq increments its own fetch counter, not the id seq', () => {
     const s = useSession.getState()
+    const idSeqBefore = s.seq
     const a = s.nextWindowSeq()
     const b = useSession.getState().nextWindowSeq()
     expect(b).toBe(a + 1)
+    expect(useSession.getState().seq).toBe(idSeqBefore) // id-счётчик не тронут
   })
 })

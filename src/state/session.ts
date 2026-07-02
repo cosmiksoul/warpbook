@@ -68,6 +68,7 @@ interface SessionState {
   exploreView: 'table' | 'chart' | 'profile'
   profileTarget: ProfileTarget
   seq: number // deterministic id counter (no Math.random/Date.now)
+  fetchSeq: number // счётчик fetch/run seq — ОТДЕЛЬНО от id-счётчика
   report: ReportDoc
   activeBlockId: string | null
   toast: string | null
@@ -92,6 +93,7 @@ interface SessionState {
   resetView: (id: string) => void
   setWindowLoading: (id: string, loading: boolean) => void
   nextWindowSeq: () => number
+  stampWindowSeq: (id: string, seq: number) => void
   setColumnConfig: (table: string, cfgs: ColumnConfig[]) => void
   stageColumn: (table: string, cfg: ColumnConfig) => void
   setSchemaError: (table: string, message: string | null) => void
@@ -130,6 +132,7 @@ const initial = {
   exploreView: 'table' as const,
   profileTarget: null as ProfileTarget,
   seq: 0,
+  fetchSeq: 0,
   report: { version: 1, blocks: [] } as ReportDoc,
   activeBlockId: null as string | null,
   toast: null as string | null,
@@ -294,7 +297,9 @@ export const useSession = create<SessionState>((set, get) => ({
     set((s) => ({ tabs: s.tabs.map((t) => (t.id === id ? { ...t, view: DEFAULT_VIEW } : t)) })),
   setWindowLoading: (id, loading) =>
     set((s) => ({ tabs: s.tabs.map((t) => (t.id === id ? { ...t, windowLoading: loading } : t)) })),
-  nextWindowSeq: () => { const n = get().seq + 1; set({ seq: n }); return n },
+  nextWindowSeq: () => { const n = get().fetchSeq + 1; set({ fetchSeq: n }); return n },
+  stampWindowSeq: (id, seq) =>
+    set((s) => ({ tabs: s.tabs.map((t) => (t.id === id ? { ...t, windowSeq: seq } : t)) })),
   setColumnConfig: (table, cfgs) =>
     set((s) => ({
       datasets: s.datasets.map((d) =>
