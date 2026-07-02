@@ -91,6 +91,12 @@ export function resultTempName(tabId: string): string {
   return `${RESULT_PREFIX}${tabId}`
 }
 
+/** Strip ONE trailing `;` (+ whitespace): wrapping `... AS <select>;` with the
+ *  semicolon inside is invalid SQL. */
+export function stripTrailingSemicolon(sql: string): string {
+  return sql.trim().replace(/;\s*$/, '').trim()
+}
+
 /**
  * DDL: materialize a tab's query result into a REGULAR (catalog-global) internal
  * table so it can be profiled by name (reusing profileRelation). NOT a TEMP
@@ -102,6 +108,6 @@ export function resultTempName(tabId: string): string {
  * CREATE ... AS <select>; with the semicolon inside would be invalid.
  */
 export function buildResultTempDDL(tabId: string, sql: string): string {
-  const select = sql.trim().replace(/;\s*$/, '').trim()
+  const select = stripTrailingSemicolon(sql)
   return `CREATE OR REPLACE TABLE ${quoteIdent(resultTempName(tabId))} AS ${select}`
 }

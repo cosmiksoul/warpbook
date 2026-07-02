@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { buildCloneTable, buildDescribe, buildDropTable, buildLoadCsv, buildLoadCsvRaw, buildLoadParquet, buildResultTempDDL, buildSelectAll, buildSelectStar, buildSniffCsv, isInternalTable, quoteIdent, quoteLiteral, rawTableName, resultTempName, tableNameFromFilename, uniqueTableName } from './sql'
+import { buildCloneTable, buildDescribe, buildDropTable, buildLoadCsv, buildLoadCsvRaw, buildLoadParquet, buildResultTempDDL, buildSelectAll, buildSelectStar, buildSniffCsv, isInternalTable, quoteIdent, quoteLiteral, rawTableName, resultTempName, stripTrailingSemicolon, tableNameFromFilename, uniqueTableName } from './sql'
 
 describe('quoteIdent', () => {
   it('double-quotes an identifier', () => {
@@ -149,6 +149,16 @@ describe('isInternalTable (result tables)', () => {
   })
   it('still treats user tables as not internal', () => {
     expect(isInternalTable('result_x')).toBe(false)
+  })
+})
+
+describe('stripTrailingSemicolon', () => {
+  it('strips a trailing semicolon and whitespace', () => {
+    expect(stripTrailingSemicolon('SELECT 1;')).toBe('SELECT 1')
+    expect(stripTrailingSemicolon('  SELECT 1 ;  ')).toBe('SELECT 1')
+  })
+  it('leaves a clean query untouched', () => {
+    expect(stripTrailingSemicolon('SELECT 1')).toBe('SELECT 1')
   })
 })
 

@@ -1,12 +1,6 @@
-import { quoteIdent, isInternalTable } from './sql'
+import { quoteIdent, isInternalTable, stripTrailingSemicolon } from './sql'
 
 export type MartKind = 'view' | 'table'
-
-/** Strip a trailing `;` (+ surrounding whitespace): `CREATE … AS <select>;`
- *  with the semicolon inside is invalid SQL. */
-function stripTrailingSemicolon(sql: string): string {
-  return sql.trim().replace(/;\s*$/, '').trim()
-}
 
 /** DDL: (re)create a mart as a live VIEW or a snapshot TABLE over a query. */
 export function buildCreateMart(name: string, sql: string, kind: MartKind): string {

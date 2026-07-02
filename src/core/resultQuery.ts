@@ -1,4 +1,4 @@
-import { quoteIdent, quoteLiteral } from './sql'
+import { quoteIdent, quoteLiteral, stripTrailingSemicolon } from './sql'
 
 export type SortDir = 'asc' | 'desc'
 export interface SortSpec { col: string; dir: SortDir }
@@ -97,7 +97,7 @@ export function buildCountSql(table: string, columns: string[], view: ResultView
 
 /** Portable copy-as-SQL: wrap the user's original query + the active view's where/order. */
 export function buildEffectiveSql(userSql: string, columns: string[], view: ResultView): string {
-  const select = userSql.trim().replace(/;\s*$/, '').trim()
+  const select = stripTrailingSemicolon(userSql)
   const where = buildWhere(columns, view)
   const order = buildOrderBy(view.sorts)
   return [`SELECT * FROM (\n${select}\n)`, where, order].filter(Boolean).join(' ')

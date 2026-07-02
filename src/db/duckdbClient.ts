@@ -8,6 +8,7 @@ import {
   buildLoadParquet,
   buildSniffCsv,
   rawTableName,
+  stripTrailingSemicolon,
 } from '../core/sql'
 
 export interface DuckDBClient {
@@ -72,7 +73,7 @@ export function createClient(db: AsyncDuckDB): DuckDBClient {
     async exportQuery(sql, format) {
       const ext = format === 'parquet' ? 'parquet' : 'csv'
       const fname = `qb-export.${ext}`
-      const select = sql.trim().replace(/;\s*$/, '').trim()
+      const select = stripTrailingSemicolon(sql)
       const fmt = format === 'parquet' ? 'PARQUET' : 'CSV, HEADER'
       await run(`COPY (${select}) TO '${fname}' (FORMAT ${fmt})`)
       const buf = await db.copyFileToBuffer(fname)
