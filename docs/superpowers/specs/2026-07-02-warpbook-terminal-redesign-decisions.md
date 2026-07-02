@@ -19,6 +19,20 @@ Dark terminal. **Cyan is the dominant accent**; **magenta is a restrained, funct
 - hover states (nav tab, source row, result row) — cyan = active, magenta = hover,
 - SQL syntax: numbers (a tasteful terminal spot accent).
 
+## Design feel — the governing vibe (refinement 2026-07-02)
+
+The single most important directional note; it governs every visual choice below.
+
+**Push MORE toward terminal:** lots of black (flatter, blacker `--bg`, fewer panel shades), simple hard shapes only — rectangles, 1px borders, **radius 0**, **no drop shadows, no gradient fills** (the dithered swirl + focus/hover glow are the only "lit" elements). Information-first density, not whitespace luxury.
+
+**BUT do not slavishly redraw a terminal.** It is **web-punk — the midpoint between Web 1.0 and a terminal.** Take the *feeling*, not a literal xterm costume.
+
+- **Web 1.0 DNA:** raw structural honesty — underlined links, hard `─` rules / box-drawing dividers, dotted focus outlines, table/directory-listing density, mono labels, UPPERCASE, "SEED / LAST-UPDATED" stamps. Handmade, not corporate-polished.
+- **Terminal DNA:** mono everywhere, black + phosphor-cyan, prompt markers `>` / `▸`, blink-cursor accents, status line, segmented `▮▮▮` bars.
+- **The synthesis reads as _fast_ and _"sexy"_** (user's words): high-contrast, instant, confident, curated restraint — with the dithered swirl as the single hero flourish.
+
+**Explicitly avoid:** fake CRT curvature, heavy scanlines everywhere, literal xterm cosplay, rounded corners, drop shadows, gradient button fills, skeuomorphism. Sexy ≠ ugly-retro; it's curated and high-contrast.
+
 ## Decisions (all confirmed by user — "да, вполне")
 
 1. **Typography:** IBM Plex **Serif** (headings / display) + IBM Plex **Mono** (all UI chrome + body text). Body stays mono (terminal purity; welcome lead is short). Self-hosted woff2 (not npm deps → invariant holds).
