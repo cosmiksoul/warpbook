@@ -1,6 +1,7 @@
 import { useState, type CSSProperties, type PointerEvent as ReactPointerEvent } from 'react'
 import { useSession, type Dataset } from '../state/session'
 import { detectReferencedTables, detectUsedColumns } from '../core/pruning'
+import { buildDropDatasetStatements } from '../core/resetPlan'
 import { isInternalTable } from '../core/sql'
 import type { DuckDBClient } from '../db/duckdbClient'
 import { SchemaColumnEditor } from '../components/SchemaColumnEditor'
@@ -71,6 +72,19 @@ export function Rail({
   const report = useSession((s) => s.report)
   const activeBlockId = useSession((s) => s.activeBlockId)
 
+  // Зеркало dropMart: идемпотентные DROP-ы (IF EXISTS), из стора убираем
+  // в любом случае. Для csv уходит и immutable raw-таблица.
+  async function removeSource(d: Dataset) {
+    for (const sql of buildDropDatasetStatements(d)) {
+      try {
+        await client.exec(sql)
+      } catch {
+        // объекта может уже не быть — не мешаем удалению из стора
+      }
+    }
+    useSession.getState().removeDataset(d.table)
+  }
+
   const activeTab = tabs.find((t) => t.id === activeTabId) ?? null
 
   // The rail follows the ACTIVE QUERY. In report mode that's the active widget
@@ -113,7 +127,7 @@ export function Rail({
       <div className="rail-section-label">Источники</div>
       <ul className="sources">
         {sources.map((d) => (
-          <li key={d.table}>
+          <li className="source-row" key={d.table}>
             <button
               className={shown.has(d.table) ? 'source active' : 'source'}
               onClick={() => openOrFocusTab(d.table)}
@@ -121,6 +135,13 @@ export function Rail({
               <span className="source-kind">{d.kind === 'csv' ? 'csv' : 'pq'}</span>
               <span className="source-name">{d.fileName}</span>
               <span className="source-size">{formatBytes(d.bytes)}</span>
+            </button>
+            <button
+              className="mart-act mart-del"
+              title={`удалить источник ${d.fileName}`}
+              onClick={() => void removeSource(d)}
+            >
+              ✕
             </button>
           </li>
         ))}

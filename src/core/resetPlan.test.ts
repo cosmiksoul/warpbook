@@ -1,5 +1,29 @@
 import { describe, expect, it } from 'vitest'
-import { buildResetStatements } from './resetPlan'
+import { buildDropDatasetStatements, buildResetStatements } from './resetPlan'
+
+describe('buildDropDatasetStatements', () => {
+  it('csv -> таблица + её immutable raw', () => {
+    expect(buildDropDatasetStatements({ table: 'events', kind: 'csv' })).toEqual([
+      'DROP TABLE IF EXISTS "events"',
+      'DROP TABLE IF EXISTS "_qb_raw_events"',
+    ])
+  })
+
+  it('parquet -> только таблица', () => {
+    expect(buildDropDatasetStatements({ table: 'metrics', kind: 'parquet' })).toEqual([
+      'DROP TABLE IF EXISTS "metrics"',
+    ])
+  })
+
+  it('витрины -> DROP своего вида', () => {
+    expect(buildDropDatasetStatements({ table: 'rev', kind: 'view' })).toEqual([
+      'DROP VIEW IF EXISTS "rev"',
+    ])
+    expect(buildDropDatasetStatements({ table: 'snap', kind: 'table' })).toEqual([
+      'DROP TABLE IF EXISTS "snap"',
+    ])
+  })
+})
 
 describe('buildResetStatements', () => {
   it('drops file tables (+raw for csv), marts by their kind, and per-tab result snapshots', () => {

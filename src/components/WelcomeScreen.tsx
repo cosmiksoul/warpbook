@@ -9,6 +9,7 @@ import { useSchemaActions } from '../features/useSchemaActions'
 export function WelcomeScreen({ client }: { client: DuckDBClient }) {
   const { applyInferred } = useSchemaActions(client)
   const setMode = useSession((s) => s.setMode)
+  const dismissWelcome = useSession((s) => s.dismissWelcome)
   const [busy, setBusy] = useState(false)
 
   async function onReport() {
@@ -46,10 +47,14 @@ export function WelcomeScreen({ client }: { client: DuckDBClient }) {
           <li className="step-row"><span className="step-n">02</span><span><b>Исследование.</b> SQL → таблица, график, профиль значений.</span></li>
           <li className="step-row"><span className="step-n">03</span><span><b>Отчёт.</b> Закрепи виджеты, впиши текст, выгрузи в HTML/PDF.</span></li>
         </ol>
+        <div className="welcome-gallery-label">Учебные датасеты</div>
         <SampleGallery client={client} />
         <div className="welcome-actions">
           <button className="welcome-cta ghost" disabled={busy} onClick={onReport}>
             {busy ? 'Грузим…' : 'Открыть пример отчёта'}
+          </button>
+          <button className="welcome-skip" disabled={busy} onClick={dismissWelcome}>
+            Пропустить
           </button>
         </div>
       </div>

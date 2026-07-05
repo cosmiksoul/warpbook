@@ -7,20 +7,23 @@ interface ResetDataset {
 }
 
 /**
- * Полная очистка каталога DuckDB на Reset: таблицы файлов (+ immutable raw для
- * csv), витрины — своим DROP (VIEW нельзя дропнуть как TABLE), и материализованные
- * снапшоты результатов всех открытых табов. Каждый statement идемпотентен (IF EXISTS).
+ * DROP-ы одного датасета: таблица файла (+ immutable raw для csv), витрина —
+ * своим DROP (VIEW нельзя дропнуть как TABLE). Каждый statement идемпотентен
+ * (IF EXISTS). Используется Reset-ом и удалением источника из рейла.
+ */
+export function buildDropDatasetStatements(d: ResetDataset): string[] {
+  if (d.kind === 'view' || d.kind === 'table') return [buildDropMart(d.table, d.kind)]
+  const stmts = [buildDropTable(d.table)]
+  if (d.kind === 'csv') stmts.push(buildDropTable(rawTableName(d.table)))
+  return stmts
+}
+
+/**
+ * Полная очистка каталога DuckDB на Reset: все датасеты + материализованные
+ * снапшоты результатов всех открытых табов.
  */
 export function buildResetStatements(datasets: ResetDataset[], tabIds: string[]): string[] {
-  const stmts: string[] = []
-  for (const d of datasets) {
-    if (d.kind === 'view' || d.kind === 'table') {
-      stmts.push(buildDropMart(d.table, d.kind))
-    } else {
-      stmts.push(buildDropTable(d.table))
-      if (d.kind === 'csv') stmts.push(buildDropTable(rawTableName(d.table)))
-    }
-  }
+  const stmts = datasets.flatMap(buildDropDatasetStatements)
   for (const id of tabIds) stmts.push(buildDropTable(resultTempName(id)))
   return stmts
 }

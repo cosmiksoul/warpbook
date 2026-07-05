@@ -169,6 +169,8 @@ body {
   color: var(--text-faint); margin: 14px 0 8px;
 }
 .sources { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 6px; }
+.source-row { display: flex; align-items: center; gap: 2px; }
+.source-row .source { flex: 1; min-width: 0; }
 .source {
   display: flex; align-items: center; gap: 8px; width: 100%;
   border: 1px solid var(--border-soft); background: transparent; color: var(--text-dim); cursor: pointer;
@@ -469,7 +471,7 @@ body {
 .run-btn, .pin-btn, .report-toolbar button, .schema-btn {
   display: inline-flex; align-items: center; gap: 6px;
 }
-.run-btn, .reset-btn, .welcome-cta, .schema-btn, .export-btn, .pin-btn,
+.run-btn, .reset-btn, .welcome-cta, .welcome-skip, .schema-btn, .export-btn, .pin-btn,
 .report-toolbar button, .mart-create, .mart-cancel, .profbtn,
 .view-toggle button, .mart-kind button {
   font-family: var(--font-mono); text-transform: uppercase; letter-spacing: .05em;
@@ -518,12 +520,23 @@ body {
 .welcome-cta:disabled { opacity: .55; cursor: default; box-shadow: none; }
 .welcome-cta.ghost { border-color: var(--border); color: var(--text-dim); box-shadow: none; }
 .welcome-cta.ghost:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); box-shadow: 0 0 12px rgba(34,211,238,.2); }
+.welcome-skip {
+  border: 1px solid transparent; background: transparent; color: var(--text-faint);
+  padding: 10px 12px; cursor: pointer; font-weight: 500;
+}
+.welcome-skip:hover:not(:disabled) { color: var(--text-dim); }
+.welcome-skip:disabled { opacity: .55; cursor: default; }
 
 /* Витрина сэмплов (welcome + модал) */
+.welcome-gallery-label {
+  margin-top: 18px; text-align: left;
+  text-transform: uppercase; font-size: 10.5px; letter-spacing: .16em;
+  color: var(--text-faint);
+}
+.welcome-gallery-label + .sample-grid { margin-top: 8px; }
 .sample-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 18px 0 14px; text-align: left; }
 .sample-card { display: flex; flex-direction: column; gap: 6px; padding: 12px 14px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-sm); cursor: pointer; font: inherit; color: var(--text); }
 .sample-card:hover:not(:disabled) { border-color: var(--accent); }
-.sample-card.featured { grid-column: 1 / -1; }
 .sample-card.loaded { opacity: .6; cursor: default; }
 .sample-head { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
 .sample-title { font-weight: 600; }

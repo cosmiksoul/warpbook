@@ -77,11 +77,13 @@ interface SessionState {
   report: ReportDoc
   activeBlockId: string | null
   toast: string | null
+  welcomeDismissed: boolean
   // actions
   pushHistory: (sql: string) => void
   addDataset: (dataset: Dataset) => void
   removeDataset: (table: string) => void
   setMode: (mode: 'explore' | 'report') => void
+  dismissWelcome: () => void
   reset: () => void
   openOrFocusTab: (table: string) => void
   openBlankTab: () => void
@@ -139,6 +141,7 @@ const initial = {
   report: { version: 1, blocks: [] } as ReportDoc,
   activeBlockId: null as string | null,
   toast: null as string | null,
+  welcomeDismissed: false, // в initial: Reset возвращает welcome-экран
 }
 
 const REPORT_KEY = 'quackbook.report'
@@ -190,6 +193,7 @@ export const useSession = create<SessionState>((set, get) => ({
   removeDataset: (table) =>
     set((s) => ({ datasets: s.datasets.filter((d) => d.table !== table) })),
   setMode: (mode) => set({ mode }),
+  dismissWelcome: () => set({ welcomeDismissed: true }),
   reset: () => {
     if (typeof localStorage !== 'undefined') {
       try {

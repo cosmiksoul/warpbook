@@ -16,6 +16,7 @@ export function Shell({ client }: { client: DuckDBClient }) {
   const mode = useSession((s) => s.mode)
   const setMode = useSession((s) => s.setMode)
   const datasets = useSession((s) => s.datasets)
+  const welcomeDismissed = useSession((s) => s.welcomeDismissed)
   const addDataset = useSession((s) => s.addDataset)
   const reset = useSession((s) => s.reset)
 
@@ -72,7 +73,7 @@ export function Shell({ client }: { client: DuckDBClient }) {
         <Rail client={client} onFiles={handleFiles} />
         <main className="workspace">
           {mode === 'explore' ? (
-            datasets.length === 0 ? (
+            datasets.length === 0 && !welcomeDismissed ? (
               <WelcomeScreen client={client} />
             ) : (
               <Explore client={client} />
