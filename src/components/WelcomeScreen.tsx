@@ -47,8 +47,6 @@ export function WelcomeScreen({ client }: { client: DuckDBClient }) {
           <li className="step-row"><span className="step-n">02</span><span><b>Исследование.</b> SQL → таблица, график, профиль значений.</span></li>
           <li className="step-row"><span className="step-n">03</span><span><b>Отчёт.</b> Закрепи виджеты, впиши текст, выгрузи в HTML/PDF.</span></li>
         </ol>
-        <div className="welcome-gallery-label">Учебные датасеты</div>
-        <SampleGallery client={client} />
         <div className="welcome-actions">
           <button className="welcome-cta ghost" disabled={busy} onClick={onReport}>
             {busy ? 'Грузим…' : 'Открыть пример отчёта'}
@@ -57,6 +55,8 @@ export function WelcomeScreen({ client }: { client: DuckDBClient }) {
             Сразу в редактор
           </button>
         </div>
+        <div className="welcome-gallery-label">Учебные датасеты</div>
+        <SampleGallery client={client} />
       </div>
     </div>
   )
