@@ -131,7 +131,7 @@ body {
   border: 1px solid var(--border); background: transparent; color: var(--text-dim);
   padding: 5px 12px; border-radius: var(--radius-sm); cursor: pointer; font-size: 13px;
 }
-.reset-btn:hover { border-color: var(--accent); color: var(--accent); }
+.reset-btn:hover { border-color: var(--accent-2); color: var(--accent-2); }
 .run-btn {
   border-color: var(--accent); color: var(--accent); font-weight: 500;
   box-shadow: 0 0 15px rgba(34,211,238,.32), inset 0 0 18px rgba(34,211,238,.10);
