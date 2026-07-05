@@ -11,11 +11,14 @@ export function Report({ client }: { client: DuckDBClient }) {
   const report = useSession((s) => s.report)
   const activeBlockId = useSession((s) => s.activeBlockId)
   const addTextBlock = useSession((s) => s.addTextBlock)
+  const addQueryBlock = useSession((s) => s.addQueryBlock)
+  const runAll = useSession((s) => s.runAll)
   const setActiveBlock = useSession((s) => s.setActiveBlock)
   const loadReport = useSession((s) => s.loadReport)
   const datasets = useSession((s) => s.datasets)
   const setToast = useSession((s) => s.setToast)
   const fileRef = useRef<HTMLInputElement>(null)
+  const hasWidgets = report.blocks.some((b) => b.type === 'widget')
 
   function save() {
     const json = serializeReport(report)
@@ -75,8 +78,14 @@ export function Report({ client }: { client: DuckDBClient }) {
         <div className="toolbar-left">
           <button onClick={() => addTextBlock()}>+ текст</button>
           <button onClick={() => addTextBlock('```sql\n-- код\n```')}>+ код</button>
+          <button onClick={addQueryBlock}>+ запрос</button>
         </div>
         <div className="toolbar-right">
+          {hasWidgets && (
+            <button className="run-all" onClick={runAll} title="пересчитать все ячейки сверху вниз">
+              ▸ выполнить всё
+            </button>
+          )}
           {report.blocks.length > 0 && (
             <div className="tb-group">
               <span className="export-label">экспорт в</span>

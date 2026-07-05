@@ -428,6 +428,8 @@ body {
 .report-toolbar .tb-group { display: inline-flex; align-items: center; gap: 6px; }
 .report-toolbar .report-clear { color: var(--warn); border-color: rgba(224,182,74,.4); }
 .report-toolbar .report-clear:hover { background: rgba(224,182,74,.08); color: var(--warn-bright); }
+.report-toolbar .run-all { border-color: var(--accent); color: var(--accent); }
+.report-toolbar .run-all:hover { border-color: var(--accent-2); color: var(--accent-2); }
 
 .report-stack { display: flex; flex-direction: column; gap: 14px; max-width: 920px; }
 .report-block { position: relative; border: 1px solid transparent; border-radius: var(--radius); padding: 12px 14px; cursor: pointer; transition: box-shadow .15s, border-color .15s; }
