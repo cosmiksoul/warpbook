@@ -156,8 +156,11 @@ export function Rail({
         return (
           <div className="schema-block" key={ds.table}>
             <div className="rail-section-label schema-head">
-              <span>
-                Схема · {ds.fileName}{' '}
+              <span className="schema-title">
+                <span>Схема ·</span>
+                <span className="schema-file" title={ds.fileName}>
+                  {ds.fileName}
+                </span>
                 <span className="schema-count">
                   {used.size}/{ds.columns.length}
                 </span>

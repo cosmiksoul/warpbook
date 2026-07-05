@@ -176,9 +176,11 @@ body {
 .col-type { color: var(--text-faint); font-size: 10.5px; }
 .workspace { flex: 1; min-width: 0; display: flex; flex-direction: column; padding: 16px; gap: 16px; overflow: auto; }
 .explore { display: flex; flex-direction: column; gap: 16px; min-height: 0; flex: 1; }
-.panel-head { display: flex; align-items: center; gap: 12px; margin-bottom: 8px; }
+/* Wrap, not squish: on narrow widths toolbar controls drop to the next row
+   as whole units instead of compressing into vertical text / overflow. */
+.panel-head { display: flex; align-items: center; flex-wrap: wrap; gap: 8px 12px; margin-bottom: 8px; }
 .panel-title { font-weight: 500; font-size: 11px; text-transform: uppercase; letter-spacing: .14em; color: var(--text-dim); }
-.panel-meta { margin-left: auto; color: var(--text-dim); font-size: 12px; font-family: var(--font-mono); }
+.panel-meta { margin-left: auto; color: var(--text-dim); font-size: 12px; font-family: var(--font-mono); white-space: nowrap; flex: none; }
 .query-panel, .result-panel {
   background: var(--surface-2); border: 1px solid var(--border);
   border-radius: var(--radius); box-shadow: var(--shadow-card); padding: 12px 14px;
@@ -271,7 +273,7 @@ body {
 .schema-col.used { opacity: 1; border-left-color: var(--accent); background: var(--surface); }
 .schema-col.used .col-name { color: var(--text); font-weight: 600; }
 .rail-note { color: var(--text-faint); font-size: 11px; margin-top: 10px; line-height: 1.4; }
-.view-toggle { display: flex; gap: 2px; background: var(--surface); border-radius: var(--radius-sm); padding: 3px; }
+.view-toggle { display: flex; gap: 2px; background: var(--surface); border-radius: var(--radius-sm); padding: 3px; flex: none; }
 .view-toggle button {
   border: 0; background: transparent; color: var(--text-dim); cursor: pointer;
   padding: 4px 10px; border-radius: 0; font-size: 12px;
@@ -282,6 +284,10 @@ body {
 
 /* --- M2 schema typing --- */
 .schema-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+/* Long file names ellipsize instead of wrapping the rail label to three lines
+   (and pushing the actions past the 260px rail → horizontal scrollbar). */
+.schema-head .schema-title { display: flex; align-items: baseline; gap: .45em; min-width: 0; white-space: nowrap; }
+.schema-head .schema-file { flex: 0 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
 .schema-btn {
   border: 1px solid var(--border); background: transparent; color: var(--text);
   padding: 2px 9px; border-radius: var(--radius-sm); cursor: pointer; font-size: 11px;
@@ -323,7 +329,7 @@ body {
   border: 0; background: transparent; color: var(--text-dim); cursor: pointer;
   font-size: 12px; text-decoration: underline;
 }
-.schema-actions { display: inline-flex; gap: 6px; }
+.schema-actions { display: inline-flex; gap: 6px; flex: none; }
 
 /* --- M3 profile --- */
 .profbtn {
@@ -372,14 +378,14 @@ body {
 .report { display: flex; flex-direction: column; gap: 14px; padding: 0 18px 16px; overflow: auto; flex: 1; min-height: 0; }
 .report-toolbar {
   position: sticky; top: 0; z-index: 5; align-items: center;
-  display: flex; gap: 16px;
+  display: flex; flex-wrap: wrap; gap: 10px 16px;
   margin: 0 -18px; padding: 14px 18px 10px;
   background: var(--bg); border-bottom: 1px solid var(--border);
 }
 .report-toolbar button { background: transparent; color: var(--text-dim); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 3px 9px; font-size: 12px; cursor: pointer; }
 .report-toolbar button:hover { background: transparent; border-color: var(--accent); color: var(--accent); }
 .report-toolbar .toolbar-left { display: flex; align-items: center; gap: 6px; }
-.report-toolbar .toolbar-right { margin-left: auto; display: flex; align-items: center; gap: 16px; }
+.report-toolbar .toolbar-right { margin-left: auto; display: flex; align-items: center; flex-wrap: wrap; gap: 10px 16px; }
 .report-toolbar .tb-group { display: inline-flex; align-items: center; gap: 6px; }
 .report-toolbar .report-clear { color: var(--warn); border-color: rgba(224,182,74,.4); }
 .report-toolbar .report-clear:hover { background: rgba(224,182,74,.08); color: var(--warn-bright); }
@@ -405,13 +411,13 @@ body {
 .widget-block { display: flex; flex-direction: column; gap: 8px; background: var(--surface-2); border: 1px solid var(--border);
   border-radius: var(--radius); box-shadow: var(--shadow-card); padding: 12px 14px; }
 .report-block.active .widget-block { box-shadow: none; } /* avoid double frame */
-.widget-head { display: flex; align-items: center; gap: 10px; }
-.widget-title { font-family: var(--font-serif); font-weight: 500; color: var(--serif-ink); font-size: 17px; }
+.widget-head { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; }
+.widget-title { font-family: var(--font-serif); font-weight: 500; color: var(--serif-ink); font-size: 17px; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .widget-title-edit {
   font: 500 17px var(--font-serif); background: var(--surface); color: var(--text);
   border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 2px 6px;
 }
-.widget-datasets { display: flex; gap: 4px; }
+.widget-datasets { display: flex; flex-wrap: wrap; gap: 4px; }
 .ds-pill { font-size: 11px; background: var(--surface); color: var(--text-dim); border-radius: 0; padding: 1px 7px; font-family: var(--font-mono); }
 .widget-sql-toggle, .widget-controls button { background: none; border: none; color: var(--text-dim); cursor: pointer; }
 .widget-controls { margin-left: auto; display: flex; gap: 6px; }
@@ -420,7 +426,7 @@ body {
 .widget-view-toggle { align-self: flex-start; }
 .widget-error { display: flex; flex-direction: column; gap: 4px; }
 .widget-sources-hint { color: var(--warn); font-size: 12px; }
-.widget-truncated { color: #999; font-style: italic; font-size: 12px; margin: 6px 0 0; }
+.widget-truncated { color: var(--text-dim); font-style: italic; font-size: 12px; margin: 6px 0 0; }
 .widget-caption { background: transparent; border: none; border-bottom: 1px dashed var(--border); color: var(--text-dim); padding: 4px 2px; font: inherit; }
 .widget-caption:focus { outline: none; border-bottom-color: var(--border); }
 
@@ -433,6 +439,7 @@ body {
 .report-toolbar button, .mart-create, .mart-cancel, .profbtn,
 .view-toggle button, .mart-kind button {
   font-family: var(--font-mono); text-transform: uppercase; letter-spacing: .05em;
+  white-space: nowrap;
 }
 
 .toast { position: fixed; bottom: 22px; left: 50%; transform: translateX(-50%); background: var(--surface-2); color: var(--text); border: 1px solid var(--border); border-radius: 0; padding: 8px 16px; z-index: 50; }
@@ -483,7 +490,7 @@ body {
 .about-btn { width: 26px; height: 26px; border-radius: 0; border: 1px solid var(--border); background: transparent; color: var(--text-dim); cursor: pointer; font-size: 14px; line-height: 1; }
 .about-btn:hover { background: transparent; border-color: var(--accent); color: var(--accent); }
 .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.55); display: grid; place-items: center; z-index: 60; padding: 24px; }
-.modal { position: relative; max-width: 480px; width: 100%; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 22px 24px; box-shadow: var(--shadow-card); color: var(--text-dim); line-height: 1.55; }
+.modal { position: relative; max-width: 480px; width: 100%; max-height: calc(100vh - 48px); overflow-y: auto; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 22px 24px; box-shadow: var(--shadow-card); color: var(--text-dim); line-height: 1.55; }
 .modal h2 { font-family: var(--font-serif); font-weight: 600; color: var(--text); font-size: 20px; margin-bottom: 6px; }
 .modal h3 { color: var(--text); font-size: 13px; text-transform: uppercase; letter-spacing: .04em; margin: 16px 0 4px; }
 .modal ul { padding-left: 18px; display: flex; flex-direction: column; gap: 2px; }
@@ -493,8 +500,8 @@ body {
 .modal-foot { margin-top: 16px; font-size: 12.5px; color: var(--text-faint); }
 
 /* --- M6 result export --- */
-.export-group { display: inline-flex; align-items: center; gap: 6px; }
-.export-label { font-size: 10.5px; text-transform: uppercase; letter-spacing: .05em; color: var(--text-faint); }
+.export-group { display: inline-flex; align-items: center; gap: 6px; flex: none; }
+.export-label { font-size: 10.5px; text-transform: uppercase; letter-spacing: .05em; color: var(--text-faint); white-space: nowrap; }
 .export-btn { background: transparent; color: var(--text-dim); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 3px 9px; cursor: pointer; font-size: 12px; }
 .export-btn:hover { background: transparent; border-color: var(--accent); color: var(--accent); }
 /* Uniform control height across the result toolbar so tops/bottoms line up. */
@@ -526,8 +533,8 @@ body {
 .mart-act:hover { color: var(--text); background: var(--surface); }
 .mart-del:hover { color: var(--danger); }
 .mart-cols { list-style: none; margin: 2px 0 0; padding: 0 0 0 6px; }
-.mart-col { display: flex; justify-content: space-between; padding: 1px 4px; }
-.mart-col .col-name { color: var(--text-dim); font-size: 11.5px; }
+.mart-col { display: flex; justify-content: space-between; gap: 8px; padding: 1px 4px; }
+.mart-col .col-name { color: var(--text-dim); font-size: 11.5px; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .mart-col .col-type { color: var(--text-faint); font-size: 10.5px; }
 
 /* --- M8 T4: sortable grid headers --- */
@@ -548,9 +555,12 @@ body {
 .pager-jump { width: 56px; background: var(--bg); color: var(--text); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 1px 4px; font-family: var(--font-mono); }
 
 /* --- M8 T6: global search + filter chips --- */
-.result-search { background: var(--bg); color: var(--text); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 3px 8px; font-size: 12px; min-width: 200px; }
+/* Flexes into leftover toolbar space; on its own wrapped row stretches full width. */
+.result-search { background: var(--bg); color: var(--text); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 3px 8px; font-size: 12px; flex: 1 1 200px; min-width: 0; }
 .filter-chips { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0; }
-.chip { display: inline-flex; align-items: center; gap: 4px; background: var(--surface-2); color: var(--text-dim); border: 1px solid var(--border); border-radius: 0; padding: 2px 4px 2px 9px; font-size: 11.5px; }
+.chip { display: inline-flex; align-items: center; gap: 4px; background: var(--surface-2); color: var(--text-dim); border: 1px solid var(--border); border-radius: 0; padding: 2px 4px 2px 9px; font-size: 11.5px; max-width: 100%; }
+/* One giant set-filter chip ellipsizes instead of overflowing the panel; × stays visible. */
+.chip .chip-label { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .chip button { border: 0; background: transparent; color: var(--text-faint); cursor: pointer; }
 .chip button:hover { color: var(--danger); }
 .chip-clear { border: 0; background: transparent; color: var(--accent); cursor: pointer; font-size: 11.5px; }

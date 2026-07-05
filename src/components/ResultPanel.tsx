@@ -282,13 +282,13 @@ export function ResultPanel({ meta, error, tabId, sql, client }: Props) {
         <div className="filter-chips">
           {resultView.search && (
             <span className="chip">
-              поиск: «{resultView.search}»
+              <span className="chip-label">поиск: «{resultView.search}»</span>
               <button onClick={() => patchView(tabId, { search: '', page: 1 })}>×</button>
             </span>
           )}
           {resultView.filters.map((f, i) => (
             <span className="chip" key={f.col + i}>
-              {filterLabel(f)}
+              <span className="chip-label" title={filterLabel(f)}>{filterLabel(f)}</span>
               <button onClick={() => patchView(tabId, { filters: resultView.filters.filter((_, j) => j !== i), page: 1 })}>×</button>
             </span>
           ))}

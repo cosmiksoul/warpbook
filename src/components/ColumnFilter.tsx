@@ -45,7 +45,13 @@ export function ColumnFilter({
   return (
     <>
       <div className="popover-backdrop" onClick={onClose} />
-      <div className="col-filter" style={{ top: rect.bottom + 4, left: Math.min(rect.left, window.innerWidth - 260) }}>
+      {/* top клэмпится, чтобы поповер (max-height 320) целиком влезал в вьюпорт;
+          на совсем низких окнах maxHeight ужимается и поповер скроллится внутри. */}
+      <div className="col-filter" style={{
+        top: Math.max(8, Math.min(rect.bottom + 4, window.innerHeight - 328)),
+        left: Math.min(rect.left, window.innerWidth - 260),
+        maxHeight: Math.min(320, window.innerHeight - 16),
+      }}>
         {distinct ? (
           <>
             <div className="cf-list">
