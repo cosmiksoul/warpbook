@@ -52,14 +52,15 @@ export function Shell({ client }: { client: DuckDBClient }) {
         <span className="logo"><Icon name="logo" size={18} /> warpbook</span>
         <nav className="mode-toggle">
           <button className={mode === 'explore' ? 'on' : ''} onClick={() => setMode('explore')}>
-            <Icon name="explore" /> исследование
+            исследование
           </button>
           <button className={mode === 'report' ? 'on' : ''} onClick={() => setMode('report')}>
-            <Icon name="report" /> отчёт
+            отчёт
           </button>
         </nav>
         <div className="topbar-right">
           <button className="about-btn" title="о warpbook" aria-label="о warpbook" onClick={() => setAboutOpen(true)}>?</button>
+          <span className="engine-tag">duckdb-wasm 1.5.4</span>
           <span className="pill-local">● local</span>
           <button className="reset-btn" onClick={handleReset}>
             Reset
@@ -81,6 +82,10 @@ export function Shell({ client }: { client: DuckDBClient }) {
           )}
         </main>
       </div>
+      <footer className="statusline">
+        <span>engine <b className="sl-ok">ready</b></span>
+        <span className="sl-right">MIT · v1</span>
+      </footer>
       <Toast />
       {aboutOpen && <AboutModal onClose={() => setAboutOpen(false)} />}
     </div>
