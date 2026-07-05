@@ -389,9 +389,13 @@ body {
   border-radius: 0; min-height: 4px; opacity: .9;
 }
 .pstats {
-  display: flex; justify-content: space-between; font-family: var(--font-mono);
+  display: flex; justify-content: space-between; flex-wrap: wrap; gap: 3px 12px;
+  font-family: var(--font-mono);
   font-size: 10.5px; color: var(--text-dim); border-top: 1px solid var(--border-soft); padding-top: 9px;
 }
+/* Пара «лейбл значение» неразрывна: длинный TIMESTAMP переносит ЦЕЛУЮ пару
+   на свою строку, а не ломается посреди значения (min/median/max в кашу). */
+.pstats > span { white-space: nowrap; }
 .pstats .k { color: var(--text-faint); }
 
 /* --- M4 report (notebook) --- */
