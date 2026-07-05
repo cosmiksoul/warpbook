@@ -6,12 +6,14 @@ export interface BootProgress {
 
 /**
  * Percentage 0..100 of the engine download, or null when the total is unknown
- * (no Content-Length yet / not started) — the boot screen then shows an
- * indeterminate bar instead of a bogus number.
+ * or unreliable — the boot screen then shows an indeterminate bar instead of a
+ * bogus number. Unreliable = loaded > total: on compressed transfer (GitHub
+ * Pages brotli/gzip) Content-Length is the ENCODED size while the stream
+ * counts DECODED bytes, so «34.2 МБ из 7.8 МБ» is a units mismatch, not 100%.
  */
 export function bootPercent(p: BootProgress | null): number | null {
-  if (!p || p.total <= 0) return null
-  return Math.min(100, Math.max(0, Math.round((p.loaded / p.total) * 100)))
+  if (!p || p.total <= 0 || p.loaded > p.total) return null
+  return Math.max(0, Math.round((p.loaded / p.total) * 100))
 }
 
 /** Decimal megabytes, one decimal (e.g. "34.2 МБ"). */

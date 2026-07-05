@@ -15,8 +15,14 @@ describe('bootPercent', () => {
     expect(bootPercent({ loaded: 33, total: 100 })).toBe(33)
     expect(bootPercent({ loaded: 1, total: 3 })).toBe(33)
   })
-  it('clamps an overshoot to 100', () => {
-    expect(bootPercent({ loaded: 250, total: 100 })).toBe(100)
+  it('100 exactly at the boundary', () => {
+    expect(bootPercent({ loaded: 100, total: 100 })).toBe(100)
+  })
+  it('null (unreliable total) when loaded exceeds total — compressed transfer: Content-Length is the ENCODED size, stream bytes are DECODED', () => {
+    // Реальный кейс GitHub Pages: wasm ~39 МБ отдаётся brotli ~7.8 МБ →
+    // прогресс показывал «34.2 МБ из 7.8 МБ · 100%».
+    expect(bootPercent({ loaded: 34_200_000, total: 7_800_000 })).toBeNull()
+    expect(bootPercent({ loaded: 250, total: 100 })).toBeNull()
   })
 })
 

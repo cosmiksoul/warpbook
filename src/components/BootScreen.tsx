@@ -39,12 +39,12 @@ export function BootScreen({ progress }: { progress: BootProgress | null }) {
         <div className="boot-detail">
           {pct === null
             ? progress && progress.loaded > 0
-              ? `загружено ${formatMb(progress.loaded)}…`
+              ? `распаковано ${formatMb(progress.loaded)}…`
               : 'подготовка…'
             : `${pct}%${progress ? ` · ${formatMb(progress.loaded)} из ${formatMb(progress.total)}` : ''}`}
         </div>
         <div className="boot-note">
-          Первый запуск скачивает движок (~35&nbsp;МБ) — дальше он берётся из кэша браузера.
+          Первый запуск скачивает движок (~8&nbsp;МБ по&nbsp;сети) — дальше он берётся из кэша браузера.
         </div>
       </div>
     </div>
