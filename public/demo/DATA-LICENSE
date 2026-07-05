@@ -2,3 +2,18 @@ Demo datasets (payments.csv, users.parquet) are derived from
 "SQL 101: Рецепты продуктового аналитика" by cosmiksoul.
 Source: https://github.com/cosmiksoul/sql-product-analytics-cookbook
 License: MIT. users.parquet is a typed Parquet conversion of the original users.csv.
+
+--- ../samples/ (витрина M9) ---
+
+public/samples/penguins.csv
+Palmer Penguins (Horst, Hill, Gorman) — CC0 1.0.
+https://github.com/allisonhorst/palmerpenguins (NA заменены на пустые поля).
+
+public/samples/titanic.csv
+Классический Titanic-набор (public domain), зеркало:
+https://github.com/datasciencedojo/datasets
+
+public/samples/taxi.parquet
+NYC TLC Yellow Taxi Trip Records, январь 2024 — открытые данные NYC.
+https://www.nyc.gov/site/tlc/about/tlc-trip-record-data.page
+Срез: 8 колонок, reservoir-сэмпл 20 000 строк (сид 42), см. scripts/prepSamples.mjs.

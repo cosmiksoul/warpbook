@@ -11,6 +11,8 @@ node_modules/.tmp
 !fixtures/metrics.parquet
 # …and the bundled demo dataset (loaded at runtime by the onboarding screen).
 !public/demo/users.parquet
+# …and the M9 sample gallery slice (built by scripts/prepSamples.mjs).
+!public/samples/taxi.parquet
 
 # The export round-trip test runs DuckDB `COPY TO`, which writes a real file into
 # CWD (qb-export.parquet is caught by *.parquet above; these two are not).
