@@ -123,7 +123,7 @@ export function Report({ client }: { client: DuckDBClient }) {
               {block.type === 'text' ? (
                 <TextBlockView block={block} />
               ) : (
-                <WidgetBlockView key={block.sql} block={block} client={client} />
+                <WidgetBlockView block={block} client={client} />
               )}
             </div>
           ))}

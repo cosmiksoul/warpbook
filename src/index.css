@@ -671,3 +671,15 @@ a:hover { color: var(--accent-2); }
   0% { box-shadow: 0 0 0 0 rgba(34,211,238,.5); }
   100% { box-shadow: 0 0 0 14px rgba(34,211,238,0); }
 }
+
+/* Ячейка отчёта (M7b) */
+.cell-chip { font-family: var(--font-mono); font-size: 10px; letter-spacing: .08em; text-transform: uppercase; color: var(--text-faint); border: 1px solid var(--border); padding: 1px 6px; border-radius: 3px; white-space: nowrap; }
+.cell-chip.dirty { color: var(--accent-2); border-color: var(--accent-2); }
+.cell-chip.err { color: var(--warn-bright); border-color: var(--warn-bright); }
+.cell-editor { margin: 8px 0; border: 1px dashed var(--border); border-radius: var(--radius-sm); padding: 6px; }
+.cell-editor:focus-within { border-color: var(--accent); }
+.cell-actions { display: flex; gap: 8px; margin-top: 6px; }
+.cell-actions button { border: 1px solid var(--border); background: transparent; color: var(--text-dim); padding: 3px 10px; border-radius: var(--radius-sm); cursor: pointer; font-size: 12px; }
+.cell-actions .cell-run:not(:disabled) { border-color: var(--accent); color: var(--accent); }
+.cell-actions button:hover:not(:disabled) { border-color: var(--accent-2); color: var(--accent-2); }
+.cell-actions button:disabled { opacity: .45; cursor: default; }

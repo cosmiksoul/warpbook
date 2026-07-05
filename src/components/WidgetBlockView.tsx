@@ -1,10 +1,14 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import type { WidgetBlock } from '../core/report'
 import type { DuckDBClient } from '../db/duckdbClient'
 import { arrowToRows, type QueryResult } from '../core/arrowToRows'
 import { buildChartSpec } from '../core/chartSpec'
 import { buildWidgetSql, WIDGET_ROW_CAP } from '../core/resultQuery'
 import { useSession } from '../state/session'
+import { buildSqlSchema } from '../core/sqlSchema'
+import { extractDatasetNames } from '../core/cellSql'
+import { isInternalTable } from '../core/sql'
+import { SqlEditor } from './SqlEditor'
 import { ResultGrid } from './ResultGrid'
 import { Chart } from './Chart'
 
@@ -14,6 +18,7 @@ interface Props {
 }
 
 type WidgetState =
+  | { kind: 'idle' } // пустой sql — ячейка ждёт первый запрос
   | { kind: 'loading' }
   | { kind: 'ok'; result: QueryResult; truncated: boolean }
   | { kind: 'error'; message: string }
@@ -37,16 +42,38 @@ export function WidgetBlockView({ block, client }: Props) {
       .join('|'),
   )
 
-  const [state, setState] = useState<WidgetState>({ kind: 'loading' })
-  const [sqlOpen, setSqlOpen] = useState(false)
+  const updateWidgetSql = useSession((s) => s.updateWidgetSql)
+  const runAllSeq = useSession((s) => s.runAllSeq)
+  const datasets = useSession((s) => s.datasets)
+  const schema = useMemo(() => buildSqlSchema(datasets), [datasets])
+
+  const [state, setState] = useState<WidgetState>(
+    block.sql.trim() === '' ? { kind: 'idle' } : { kind: 'loading' },
+  )
+  // Редактор раскрыт сразу у свежей пустой ячейки («+ запрос»).
+  const [sqlOpen, setSqlOpen] = useState(block.sql === '')
+  // Черновик SQL — runtime-only (спека): живёт, пока блок смонтирован.
+  const [draft, setDraft] = useState(block.sql)
+  const [runSeq, setRunSeq] = useState(0)
+  const dirty = draft !== block.sql
   const [editingTitle, setEditingTitle] = useState(false)
   const [titleDraft, setTitleDraft] = useState(block.title)
+
+  // После commitDraft block.sql === draft (no-op). Внешняя загрузка отчёта с
+  // совпадающими id обновляет незакоммиченный черновик — принято (runtime-only).
+  // eslint-disable-next-line react-hooks/set-state-in-effect
+  useEffect(() => { setDraft(block.sql) }, [block.sql])
 
   // Lazy rerun: each widget runs its own SQL against the in-memory tables on
   // mount (and when its sql/client change). Result lives in local state — it is
   // NEVER serialized (spec decision 4). Mirrors Explore.run.
   useEffect(() => {
+    if (block.sql.trim() === '') {
+      setState({ kind: 'idle' }) // eslint-disable-line react-hooks/set-state-in-effect
+      return
+    }
     let cancelled = false
+    setState({ kind: 'loading' })
     client
       .query(buildWidgetSql(block.sql))
       .then((table) => {
@@ -65,7 +92,17 @@ export function WidgetBlockView({ block, client }: Props) {
     return () => {
       cancelled = true
     }
-  }, [block.sql, client, loadedKey])
+  }, [block.sql, client, loadedKey, runSeq, runAllSeq])
+
+  function commitDraft() {
+    if (draft.trim() === '') return
+    if (draft === block.sql) {
+      setRunSeq((n) => n + 1) // без правки — просто пересчитать
+      return
+    }
+    const known = datasets.filter((d) => !isInternalTable(d.table)).map((d) => d.table)
+    updateWidgetSql(block.id, draft, extractDatasetNames(draft, known))
+  }
 
   const result = state.kind === 'ok' ? state.result : null
   const error = state.kind === 'error' ? state.message : null
@@ -103,6 +140,9 @@ export function WidgetBlockView({ block, client }: Props) {
             {block.title}
           </span>
         )}
+        {loading && <span className="cell-chip">…</span>}
+        {error !== null && <span className="cell-chip err">ошибка</span>}
+        {dirty && <span className="cell-chip dirty">правка не выполнена</span>}
         <span className="widget-datasets">
           {block.datasetNames.map((t) => (
             <span className="ds-pill" key={t}>
@@ -136,7 +176,35 @@ export function WidgetBlockView({ block, client }: Props) {
         </span>
       </div>
 
-      {sqlOpen && <pre className="widget-sql">{block.sql}</pre>}
+      {sqlOpen && (
+        <div className="cell-editor">
+          <SqlEditor
+            compact
+            value={draft}
+            onChange={setDraft}
+            onRun={() => commitDraft()}
+            schema={schema}
+          />
+          <div className="cell-actions">
+            <button className="cell-run" disabled={draft.trim() === ''} onClick={commitDraft}>
+              ▸ выполнить
+            </button>
+            <button
+              className="cell-rerun"
+              title="пере-исполнить сохранённый SQL"
+              disabled={block.sql.trim() === ''}
+              onClick={() => setRunSeq((n) => n + 1)}
+            >
+              ⟳
+            </button>
+            {dirty && (
+              <button className="cell-cancel" onClick={() => setDraft(block.sql)}>
+                отменить
+              </button>
+            )}
+          </div>
+        </div>
+      )}
 
       <div className="view-toggle widget-view-toggle">
         <button
@@ -165,6 +233,9 @@ export function WidgetBlockView({ block, client }: Props) {
             </p>
           )}
         </div>
+      )}
+      {state.kind === 'idle' && (
+        <p className="result-empty">напиши запрос и нажми ▸ выполнить</p>
       )}
       {!error && loading && <p className="result-empty">пересчитываю…</p>}
       {!error && !loading && showChart && (
