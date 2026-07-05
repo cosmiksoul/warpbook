@@ -248,6 +248,9 @@ body {
   border: 1px solid var(--border); border-radius: var(--radius-sm);
   box-shadow: var(--shadow-card);
 }
+/* Ячейка отчёта: результат — компактный сниппет (~10 строк) со своим скроллом,
+   не простыня на весь документ; данные под графиком/экспортом не режем. */
+.report-block .grid-scroll { flex: none; max-height: 320px; min-height: 0; }
 .grid-head {
   position: sticky; top: 0; z-index: 1; display: flex; background: var(--surface-2);
 }
