@@ -179,9 +179,10 @@ body {
   border: 0; background: transparent; color: var(--text-dim); cursor: pointer;
   padding: 7px 4px 7px 9px; border-radius: 0; text-align: left; font-size: 13px;
 }
+/* Тот же глиф ×, кегль и ховер, что у .tab-close — крестики выглядят одинаково. */
 .source-del {
   border: 0; background: transparent; color: var(--text-faint); cursor: pointer;
-  padding: 0 8px; font-size: 12px;
+  padding: 0 8px; font-size: 14px; line-height: 1;
 }
 .source-del:hover { color: var(--accent-2); }
 .source-kind { font-size: 9px; text-transform: uppercase; color: var(--text-faint); background: var(--surface-2); border-radius: 0; padding: 1px 5px; }
@@ -601,7 +602,7 @@ body {
 .mart-actions { margin-left: auto; display: inline-flex; gap: 2px; }
 .mart-act { border: 0; background: transparent; color: var(--text-faint); cursor: pointer; padding: 1px 5px; font-size: 12px; border-radius: 0; }
 .mart-act:hover { color: var(--text); background: var(--surface); }
-.mart-del:hover { color: var(--danger); }
+.mart-del:hover { color: var(--accent-2); }
 .mart-cols { list-style: none; margin: 2px 0 0; padding: 0 0 0 6px; }
 .mart-col { display: flex; justify-content: space-between; gap: 8px; padding: 1px 4px; }
 .mart-col .col-name { color: var(--text-dim); font-size: 11.5px; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }

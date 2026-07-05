@@ -138,7 +138,7 @@ export function Rail({
               title={`удалить источник ${d.fileName}`}
               onClick={() => void removeSource(d)}
             >
-              ✕
+              ×
             </button>
           </li>
         ))}
@@ -171,7 +171,7 @@ export function Rail({
                     {m.kind === 'table' && (
                       <button className="mart-act" title="обновить снапшот" onClick={() => void refreshMart(m.table)}>↻</button>
                     )}
-                    <button className="mart-act mart-del" title="удалить витрину" onClick={() => void dropMart(m.table)}>✕</button>
+                    <button className="mart-act mart-del" title="удалить витрину" onClick={() => void dropMart(m.table)}>×</button>
                   </div>
                 </div>
                 <ul className="mart-cols">
