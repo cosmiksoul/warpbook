@@ -1,6 +1,6 @@
 import type { Dataset } from '../state/session'
 import type { QueryResult } from './arrowToRows'
-import { isInternalTable } from './sql'
+import { isInternalTable, stripTrailingSemicolon } from './sql'
 
 export type DotCommand =
   | { kind: 'tables' }
@@ -14,9 +14,11 @@ export type DotCommand =
  * кривая точка-команда → unknown (исполнитель покажет подсказку про .help).
  */
 export function parseDotCommand(input: string): DotCommand | null {
-  const s = input.trim()
-  if (!s.startsWith('.')) return null
-  if (/[\r\n]/.test(s)) return null
+  const raw = input.trim()
+  if (!raw.startsWith('.')) return null
+  if (/[\r\n]/.test(raw)) return null
+  // SQL-рефлекс: одна хвостовая «;» не превращает команду в unknown.
+  const s = stripTrailingSemicolon(raw)
   const m = /^\.(\S*)(?:\s+(.*))?$/.exec(s)
   if (!m) return null
   const cmd = (m[1] ?? '').toLowerCase()

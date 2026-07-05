@@ -35,7 +35,7 @@ export const SAMPLES: Sample[] = [
     id: 'penguins',
     title: 'пингвины Палмера',
     blurb: 'три вида: клювы, ласты, масса — и честные NULL’ы для профиля',
-    sizeLabel: '~13 КБ',
+    sizeLabel: '~15 КБ',
     files: [{ path: 'samples/penguins.csv', name: 'demo_penguins.csv' }],
     seedTabs: [
       {

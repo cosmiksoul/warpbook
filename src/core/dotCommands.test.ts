@@ -22,6 +22,11 @@ describe('parseDotCommand', () => {
   it('.schema с одним аргументом', () => {
     expect(parseDotCommand('.schema demo_users')).toEqual({ kind: 'schema', table: 'demo_users' })
   })
+  it('хвостовая «;» (SQL-рефлекс) срезается, команда остаётся командой', () => {
+    expect(parseDotCommand('.tables;')).toEqual({ kind: 'tables' })
+    expect(parseDotCommand('.schema demo_users;')).toEqual({ kind: 'schema', table: 'demo_users' })
+    expect(parseDotCommand('.wat;')).toMatchObject({ kind: 'unknown', raw: '.wat' })
+  })
   it('.schema без аргумента / с двумя, .tables с аргументом, мусор → unknown', () => {
     expect(parseDotCommand('.schema')).toMatchObject({ kind: 'unknown' })
     expect(parseDotCommand('.schema a b')).toMatchObject({ kind: 'unknown' })

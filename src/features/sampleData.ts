@@ -9,8 +9,13 @@ const BASE = import.meta.env.BASE_URL
 
 export const cookbookSample: Sample = SAMPLES.find((s) => s.id === 'cookbook')!
 
+// Конкурентные вызовы возможны (галерея и «пример отчёта» — независимые
+// busy-стейты), а check-then-await не атомарен: имя таблицы столбится
+// синхронно ДО первого await, второй вызов скипает файл в полёте.
+const inflight = new Set<string>()
+
 /** Загрузить файлы сэмпла штатным пайплайном. Идемпотентно: таблица уже
- *  в сторе → файл скипается. CSV получает инференс типов. */
+ *  в сторе или грузится → файл скипается. CSV получает инференс типов. */
 export async function loadSample(
   client: DuckDBClient,
   applyInferred: (table: string) => Promise<void>,
@@ -18,15 +23,20 @@ export async function loadSample(
 ): Promise<void> {
   for (const f of sample.files) {
     const table = tableNameFromFilename(f.name)
-    if (useSession.getState().datasets.some((d) => d.table === table)) continue
-    const res = await fetch(`${BASE}${f.path}`)
-    if (!res.ok) throw new Error(`${f.path}: HTTP ${res.status}`)
-    const bytes = new Uint8Array(await res.arrayBuffer())
-    const file = new File([bytes], f.name)
-    const taken = useSession.getState().datasets.map((d) => d.table)
-    const ds = await loadOneFile(client, file, taken)
-    useSession.getState().addDataset(ds)
-    if (ds.kind === 'csv') await applyInferred(ds.table)
+    if (inflight.has(table) || useSession.getState().datasets.some((d) => d.table === table)) continue
+    inflight.add(table)
+    try {
+      const res = await fetch(`${BASE}${f.path}`)
+      if (!res.ok) throw new Error(`${f.path}: HTTP ${res.status}`)
+      const bytes = new Uint8Array(await res.arrayBuffer())
+      const file = new File([bytes], f.name)
+      const taken = useSession.getState().datasets.map((d) => d.table)
+      const ds = await loadOneFile(client, file, taken)
+      useSession.getState().addDataset(ds)
+      if (ds.kind === 'csv') await applyInferred(ds.table)
+    } finally {
+      inflight.delete(table)
+    }
   }
 }
 
