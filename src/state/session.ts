@@ -10,6 +10,12 @@ import {
   type WidgetBlock,
 } from '../core/report'
 import { type ResultView, DEFAULT_VIEW } from '../core/resultQuery'
+import {
+  pushHistory as corePushHistory,
+  serializeHistory,
+  deserializeHistory,
+  HISTORY_KEY,
+} from '../core/queryHistory'
 
 export interface Dataset {
   table: string
@@ -59,6 +65,7 @@ export type ProfileTarget =
   | null
 
 interface SessionState {
+  history: string[]
   datasets: Dataset[]
   tabs: Tab[]
   activeTabId: string | null
@@ -71,6 +78,7 @@ interface SessionState {
   activeBlockId: string | null
   toast: string | null
   // actions
+  pushHistory: (sql: string) => void
   addDataset: (dataset: Dataset) => void
   removeDataset: (table: string) => void
   setMode: (mode: 'explore' | 'report') => void
@@ -151,8 +159,32 @@ function loadPersistedReport(): ReportDoc | null {
   }
 }
 
+/** История запросов из localStorage (guard для node-окружения vitest). */
+function loadPersistedHistory(): string[] {
+  if (typeof localStorage === 'undefined') return []
+  try {
+    return deserializeHistory(localStorage.getItem(HISTORY_KEY))
+  } catch {
+    return []
+  }
+}
+
 export const useSession = create<SessionState>((set, get) => ({
   ...initial,
+  history: loadPersistedHistory(),
+  pushHistory: (sql) =>
+    set((s) => {
+      const next = corePushHistory(s.history, sql)
+      if (next === s.history) return {}
+      if (typeof localStorage !== 'undefined') {
+        try {
+          localStorage.setItem(HISTORY_KEY, serializeHistory(next))
+        } catch {
+          // ignore — storage может быть недоступен/полон
+        }
+      }
+      return { history: next }
+    }),
   addDataset: (dataset) =>
     set((s) => ({ datasets: [...s.datasets, dataset] })),
   removeDataset: (table) =>
