@@ -44,7 +44,9 @@
   --glow-cyan: 0 0 0 1px rgba(34,211,238,.45), 0 0 18px rgba(34,211,238,.28);
   --text: #d6ecf1;
   --text-dim: #6f97a2;
-  --text-faint: #3f5b63;
+  /* #3f5b63 из спеки давал ~2.77:1 на must-read местах (grid-th, col-type,
+     секционные лейблы) — осветлён до ≈4.8:1 решением 2026-07-05; тон тот же. */
+  --text-faint: #5d818b;
   --serif-ink: #eaf7fb;
   --danger: #ff5c72;
   --track: #0e222a;

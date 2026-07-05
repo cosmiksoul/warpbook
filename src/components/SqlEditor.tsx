@@ -20,7 +20,7 @@ const qbHighlight = HighlightStyle.define([
   { tag: [t.number, t.integer, t.float], color: '#e849c4' },
   { tag: [t.bool, t.null, t.atom], color: '#ff5c72' },
   { tag: t.function(t.variableName), color: '#8ad6ff' },
-  { tag: [t.comment, t.lineComment, t.blockComment], color: '#3f5b63', fontStyle: 'italic' },
+  { tag: [t.comment, t.lineComment, t.blockComment], color: '#5d818b', fontStyle: 'italic' },
   { tag: [t.operator, t.compareOperator, t.logicOperator, t.arithmeticOperator], color: '#6f97a2' },
   { tag: [t.punctuation, t.separator, t.paren, t.bracket], color: '#6f97a2' },
 ])

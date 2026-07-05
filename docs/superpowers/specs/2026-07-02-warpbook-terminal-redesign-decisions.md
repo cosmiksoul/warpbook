@@ -65,11 +65,13 @@ Confirmed 2026-07-02: the aesthetic we imitate (Nous psyche) and the environment
 --warm      #e0b64a   (semantic --warn; also SQL strings)
 --text      #d6ecf1
 --dim       #6f97a2
---faint     #3f5b63
+--faint     #5d818b   (amended 2026-07-05: was #3f5b63 ≈2.77:1 — fails AA/3:1 on must-read
+                       spots (grid headers, rail type badges, section labels); lightened to
+                       ≈4.8:1 per the «muted-but-READABLE fades» north star. Same hue.)
 --serif-ink #eaf7fb   (IBM Plex Serif headings)
 ```
 
-SQL highlight (terminal): keyword `#22d3ee` (cyan, 500) · function `#8ad6ff` · string `#e0b64a` (warm) · **number `#e849c4` (magenta)** · comment `#3f5b63` italic · operator/punct `#6f97a2`.
+SQL highlight (terminal): keyword `#22d3ee` (cyan, 500) · function `#8ad6ff` · string `#e0b64a` (warm) · **number `#e849c4` (magenta)** · comment `#5d818b` italic (== faint, amended 2026-07-05) · operator/punct `#6f97a2`.
 Chart: series-1 cyan `#22d3ee` (bars) · series-2 magenta `#e849c4` (line/second series).
 
 ## Explored variants (for the record)
