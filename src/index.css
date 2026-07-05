@@ -193,6 +193,10 @@ body {
 .query-panel .sql-editor-wrap {
   border: 1px solid var(--border); border-radius: var(--radius-sm); overflow: hidden;
 }
+/* Курсор в редакторе — пунктирная циановая рамка, тот же «редактируется»-язык,
+   что у dotted-фокуса текстовых полей (и text-block-edit в отчёте). */
+.query-panel .sql-editor-wrap:focus-within { outline: 1px dotted var(--accent); outline-offset: 2px; }
+.query-panel .sql-editor .cm-editor.cm-focused { outline: none; } /* глушим дефолтный outline CM — рамку рисует wrap */
 /* Height is set inline from state; drag-resized via the .sql-resize bar below. */
 .query-panel .sql-editor { min-height: 84px; overflow: hidden; }
 .query-panel .sql-editor .cm-editor { height: 100%; }
@@ -410,7 +414,9 @@ body {
 .text-block h1 { font-size: 26px; font-weight: 600; }
 .text-block h2 { font-size: 20px; font-weight: 600; }
 .text-block h3 { font-size: 16px; font-weight: 500; }
-.text-block-edit { width: 100%; min-height: 96px; background: var(--surface); color: var(--text); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 8px; font: inherit; resize: vertical; }
+/* border-box: иначе width:100% + паддинги вылезают на рамку активного блока
+   (глобального border-box-резета в этом файле нет). */
+.text-block-edit { width: 100%; box-sizing: border-box; min-height: 96px; background: var(--surface); color: var(--text); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 8px; font: inherit; resize: vertical; }
 
 .widget-block { display: flex; flex-direction: column; gap: 8px; background: var(--surface-2); border: 1px solid var(--border);
   border-radius: var(--radius); box-shadow: var(--shadow-card); padding: 12px 14px; }
