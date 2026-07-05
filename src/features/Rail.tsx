@@ -5,6 +5,7 @@ import { isInternalTable } from '../core/sql'
 import type { DuckDBClient } from '../db/duckdbClient'
 import { SchemaColumnEditor } from '../components/SchemaColumnEditor'
 import { CsvDropzone } from '../components/CsvDropzone'
+import { SamplesModal } from '../components/SamplesModal'
 import { useSchemaActions } from './useSchemaActions'
 import { useProfileActions } from './useProfileActions'
 import { useMartActions } from './useMartActions'
@@ -44,6 +45,7 @@ export function Rail({
   const resetColumn = useSession((s) => s.resetColumn)
   const setColumnConfig = useSession((s) => s.setColumnConfig)
   const [editing, setEditing] = useState<{ table: string; origName: string } | null>(null)
+  const [samplesOpen, setSamplesOpen] = useState(false)
 
   // Драг-ширина рейла (session-local, как высота SQL-редактора). Хэндл — флекс-сосед
   // <aside>, не потомок: внутри overflow:auto он уезжал бы вместе со скроллом.
@@ -107,6 +109,7 @@ export function Rail({
     <>
       <aside className="rail" style={{ '--rail-w': `${railW}px` } as CSSProperties}>
         <CsvDropzone onFiles={onFiles} />
+        <button className="rail-samples" onClick={() => setSamplesOpen(true)}>▸ сэмплы</button>
       <div className="rail-section-label">Источники</div>
       <ul className="sources">
         {sources.map((d) => (
@@ -307,6 +310,7 @@ export function Rail({
         onDoubleClick={() => setRailW(RAIL_DEFAULT)}
         title="тяни, чтобы менять ширину; двойной клик — сброс"
       />
+      {samplesOpen && <SamplesModal client={client} onClose={() => setSamplesOpen(false)} />}
     </>
   )
 }
