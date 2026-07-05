@@ -37,13 +37,13 @@ export function SampleGallery({ client }: { client: DuckDBClient }) {
             disabled={busyId !== null || loaded}
             onClick={() => void onPick(s)}
           >
-            <span className="sample-head">
-              <span className="sample-title">{s.title}</span>
+            <span className="sample-meta">
               {fmts.map((f) => (
                 <span className="sample-badge" key={f}>{f}</span>
               ))}
               <span className="sample-size">{s.sizeLabel}</span>
             </span>
+            <span className="sample-title">{s.title}</span>
             <span className="sample-blurb">{s.blurb}</span>
             {s.credit && <span className="sample-credit">{s.credit}</span>}
             <span className="sample-state">

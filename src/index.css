@@ -538,16 +538,18 @@ body {
 }
 .welcome-gallery-label + .sample-grid { margin-top: 8px; }
 .sample-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 18px 0 14px; text-align: left; }
-.sample-card { display: flex; flex-direction: column; gap: 6px; padding: 12px 14px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-sm); cursor: pointer; font: inherit; color: var(--text); }
+/* Однородные карточки: мета (плашки+размер) -> тайтл -> блёрб -> кредит ->
+   состояние, прибитое к низу; текст влево (у кнопки UA-дефолт center). */
+.sample-card { display: flex; flex-direction: column; gap: 6px; padding: 12px 14px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-sm); cursor: pointer; font: inherit; color: var(--text); text-align: left; }
 .sample-card:hover:not(:disabled) { border-color: var(--accent); }
 .sample-card.loaded { opacity: .6; cursor: default; }
-.sample-head { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+.sample-meta { display: flex; align-items: center; gap: 6px; }
 .sample-title { font-weight: 600; }
 .sample-badge { font-family: var(--font-mono); font-size: 10px; letter-spacing: .08em; color: var(--accent); border: 1px solid var(--border); padding: 1px 5px; border-radius: 3px; }
 .sample-size { margin-left: auto; color: var(--text-faint); font-size: 12px; white-space: nowrap; }
 .sample-blurb { color: var(--text-dim); font-size: 13px; }
 .sample-credit { color: var(--text-faint); font-size: 11px; }
-.sample-state { font-family: var(--font-mono); font-size: 12px; color: var(--accent); }
+.sample-state { font-family: var(--font-mono); font-size: 12px; color: var(--accent); margin-top: auto; padding-top: 4px; }
 .sample-card.loaded .sample-state { color: var(--text-faint); }
 @media (max-width: 720px) { .sample-grid, .welcome-actions { grid-template-columns: 1fr; } }
 
