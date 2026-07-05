@@ -1,6 +1,8 @@
-# quackbook
+# warpbook
 
 Браузерный аналитический ноутбук на DuckDB-WASM: исследуй CSV/Parquet → закрепляй результаты виджетами → собирай нарративный отчёт. Без бэкенда, всё в браузере, статика на GitHub Pages.
+
+> Кодовое имя проекта в доках и внутренних идентификаторах — `quackbook` (`docs/scope-quackbook-v1.md`, ключ localStorage, `_qb_`-префиксы); отображаемый бренд и имя репозитория — **warpbook**.
 
 Референс: BigQuery (исследование + профиль) × Colab (ноутбук-нарратив) × Sublime (быстрый редактор с табами).
 
@@ -23,4 +25,4 @@ npm run lint      # ESLint
 
 **Деплой:** push в `main` → GitHub Actions собирает и публикует на Pages.
 Однократно вручную: **Settings → Pages → Source = GitHub Actions**.
-Базовый путь в `vite.config.ts` (`/quackbook/`) должен совпадать с именем репозитория.
+Базовый путь в `vite.config.ts` (`/warpbook/`) должен совпадать с именем репозитория.

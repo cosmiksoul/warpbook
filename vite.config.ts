@@ -2,10 +2,11 @@ import { defineConfig } from 'vitest/config'
 import { createLogger } from 'vite'
 import react from '@vitejs/plugin-react'
 
-// GitHub Pages PROJECT page is served under https://<user>.github.io/quackbook/
-// so the production base must be '/quackbook/'. The dev server stays at '/'.
+// GitHub Pages PROJECT page is served under https://<user>.github.io/warpbook/
+// so the production base must be '/warpbook/'. The dev server stays at '/'.
 // Change REPO if the GitHub repository has a different name.
-const REPO = 'quackbook'
+// (Repo renamed quackbook -> warpbook 2026-07-05; keep in sync with og:* URLs in index.html.)
+const REPO = 'warpbook'
 
 const logger = createLogger()
 const origWarn = logger.warn.bind(logger)

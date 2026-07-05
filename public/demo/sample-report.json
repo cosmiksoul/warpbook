@@ -1,7 +1,7 @@
 {
   "version": 1,
   "blocks": [
-    { "type": "text", "id": "blk-1", "markdown": "# Демо: продуктовая аналитика\n\nПример нарративного отчёта в quackbook на данных учебника «SQL 101: Рецепты продуктового аналитика». Виджеты ниже пересчитываются по загруженным таблицам `demo_users` и `demo_payments`." },
+    { "type": "text", "id": "blk-1", "markdown": "# Демо: продуктовая аналитика\n\nПример нарративного отчёта в warpbook на данных учебника «SQL 101: Рецепты продуктового аналитика». Виджеты ниже пересчитываются по загруженным таблицам `demo_users` и `demo_payments`." },
     { "type": "widget", "id": "blk-2", "title": "Дневная аудитория (DAU)", "sql": "SELECT CAST(DateUTC AS DATE) AS day, count(DISTINCT UserID) AS dau FROM demo_users GROUP BY 1 ORDER BY 1;", "datasetNames": ["demo_users"], "vizType": "chart", "caption": "Уникальные пользователи по дням." },
     { "type": "text", "id": "blk-3", "markdown": "## Выручка\n\nНакопительная выручка по дням (платежи)." },
     { "type": "widget", "id": "blk-4", "title": "Накопительная выручка", "sql": "SELECT day, sum(daily_revenue) OVER (ORDER BY day) AS cumulative_revenue, daily_revenue FROM (SELECT CAST(DateUTC AS DATE) AS day, sum(CAST(RevenueUSD AS DOUBLE)) AS daily_revenue FROM demo_payments GROUP BY 1) ORDER BY day;", "datasetNames": ["demo_payments"], "vizType": "chart", "caption": "" },
