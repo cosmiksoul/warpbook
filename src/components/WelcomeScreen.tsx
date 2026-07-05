@@ -53,8 +53,8 @@ export function WelcomeScreen({ client }: { client: DuckDBClient }) {
           <button className="welcome-cta ghost" disabled={busy} onClick={onReport}>
             {busy ? 'Грузим…' : 'Открыть пример отчёта'}
           </button>
-          <button className="welcome-skip" disabled={busy} onClick={dismissWelcome}>
-            Пропустить
+          <button className="welcome-cta ghost" disabled={busy} onClick={dismissWelcome}>
+            Сразу в редактор
           </button>
         </div>
       </div>
