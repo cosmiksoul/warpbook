@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, type CSSProperties, type PointerEvent as ReactPointerEvent } from 'react'
 import { useSession, type Dataset } from '../state/session'
 import { detectReferencedTables, detectUsedColumns } from '../core/pruning'
 import { isInternalTable } from '../core/sql'
@@ -15,6 +15,10 @@ function formatBytes(n: number): string {
   if (n < 1024 * 1024) return `${Math.round(n / 1024)}K`
   return `${(n / (1024 * 1024)).toFixed(1)}M`
 }
+
+const RAIL_MIN = 200
+const RAIL_MAX = 520
+const RAIL_DEFAULT = 260
 
 export function Rail({
   client,
@@ -40,6 +44,26 @@ export function Rail({
   const resetColumn = useSession((s) => s.resetColumn)
   const setColumnConfig = useSession((s) => s.setColumnConfig)
   const [editing, setEditing] = useState<{ table: string; origName: string } | null>(null)
+
+  // Драг-ширина рейла (session-local, как высота SQL-редактора). Хэндл — флекс-сосед
+  // <aside>, не потомок: внутри overflow:auto он уезжал бы вместе со скроллом.
+  const [railW, setRailW] = useState(RAIL_DEFAULT)
+  function startResize(e: ReactPointerEvent<HTMLDivElement>) {
+    e.preventDefault()
+    const bar = e.currentTarget
+    const startX = e.clientX
+    const startW = railW
+    bar.setPointerCapture(e.pointerId)
+    const onMove = (ev: PointerEvent) =>
+      setRailW(Math.min(RAIL_MAX, Math.max(RAIL_MIN, startW + (ev.clientX - startX))))
+    const onUp = () => {
+      bar.releasePointerCapture(e.pointerId)
+      bar.removeEventListener('pointermove', onMove)
+      bar.removeEventListener('pointerup', onUp)
+    }
+    bar.addEventListener('pointermove', onMove)
+    bar.addEventListener('pointerup', onUp)
+  }
 
   const mode = useSession((s) => s.mode)
   const report = useSession((s) => s.report)
@@ -80,8 +104,9 @@ export function Rail({
   const shown = new Set(shownDatasets.map((d) => d.table))
 
   return (
-    <aside className="rail">
-      <CsvDropzone onFiles={onFiles} />
+    <>
+      <aside className="rail" style={{ '--rail-w': `${railW}px` } as CSSProperties}>
+        <CsvDropzone onFiles={onFiles} />
       <div className="rail-section-label">Источники</div>
       <ul className="sources">
         {sources.map((d) => (
@@ -275,6 +300,13 @@ export function Rail({
       {shownDatasets.length > 0 && (
         <p className="rail-note">▸ подсвечены колонки, которые читает запрос</p>
       )}
-    </aside>
+      </aside>
+      <div
+        className="rail-resize"
+        onPointerDown={startResize}
+        onDoubleClick={() => setRailW(RAIL_DEFAULT)}
+        title="тяни, чтобы менять ширину; двойной клик — сброс"
+      />
+    </>
   )
 }

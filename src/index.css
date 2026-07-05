@@ -145,9 +145,21 @@ body {
 .statusline .sl-ok { color: var(--accent); font-weight: 500; }
 .statusline .sl-right { margin-left: auto; }
 .rail {
-  width: 260px; flex: 0 0 260px; border-right: 1px solid var(--border);
+  /* --rail-w ставится инлайном из Rail (драг-ресайз); дефолт — прежние 260. */
+  width: var(--rail-w, 260px); flex: 0 0 var(--rail-w, 260px); border-right: 1px solid var(--border);
   padding: 14px; overflow: auto; background: transparent;
 }
+/* Вертикальный драг-хэндл между рейлом и воркспейсом — зеркало .sql-resize. */
+.rail-resize {
+  flex: 0 0 7px; cursor: col-resize; touch-action: none;
+  background: var(--surface); border-right: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: center;
+}
+.rail-resize::before {
+  content: ''; width: 3px; height: 34px;
+  background: var(--text-faint); transition: background .15s ease;
+}
+.rail-resize:hover::before, .rail-resize:active::before { background: var(--accent); }
 .rail-section-label {
   text-transform: uppercase; font-size: 10.5px; letter-spacing: .16em;
   color: var(--text-faint); margin: 14px 0 8px;
@@ -470,6 +482,7 @@ body {
 @media (max-width: 720px) {
   .body { flex-direction: column; }
   .rail { width: auto; flex: none; border-right: 0; border-bottom: 1px solid var(--border); }
+  .rail-resize { display: none; }
 }
 
 /* --- M6 welcome (terminal) --- */
