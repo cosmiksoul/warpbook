@@ -294,7 +294,9 @@ body {
 .tab-close, .tab-add {
   border: 0; background: transparent; color: var(--text-faint); cursor: pointer; font-size: 14px;
 }
-.tab-close { flex: 0 0 auto; width: 18px; height: 18px; border-radius: 0; display: inline-flex; align-items: center; justify-content: center; line-height: 1; }
+/* -4px съедает внутренний зазор 18px-бокса: визуальный отступ глифа от правого
+   края таба равен левому паддингу. */
+.tab-close { flex: 0 0 auto; width: 18px; height: 18px; border-radius: 0; display: inline-flex; align-items: center; justify-content: center; line-height: 1; margin-right: -4px; }
 .tab .tab-close { opacity: 0; }
 .tab:hover .tab-close, .tab.on .tab-close { opacity: 1; }
 .tab-close:hover { color: var(--accent-2); background: var(--bg); }
