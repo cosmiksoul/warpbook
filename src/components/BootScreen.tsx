@@ -1,23 +1,39 @@
 import { Icon } from './Icon'
-import { WarpShader } from './WarpShader'
-import { bootPercent, formatMb, type BootProgress } from '../core/bootProgress'
+import { DitherSwirl } from './DitherSwirl'
+import { bootPercent, bootSegments, formatMb, type BootProgress } from '../core/bootProgress'
+
+const SEG_COUNT = 10
 
 /**
  * First-run boot screen shown while the DuckDB-WASM engine downloads and
- * instantiates. Shows a real percentage when the download reports a total size,
- * otherwise an animated indeterminate bar — so a slow first (uncached) load
- * never looks like a frozen tab.
+ * instantiates. Терминальный TUI-бокс поверх свирла: сегментированный ▮-бар
+ * с реальным процентом, при неизвестном total — индетерминантная пульсация,
+ * чтобы медленная первая (некэшированная) загрузка не выглядела зависшей.
  */
 export function BootScreen({ progress }: { progress: BootProgress | null }) {
   const pct = bootPercent(progress)
+  const lit = bootSegments(pct, SEG_COUNT)
   return (
     <div className="boot-screen">
-      <WarpShader intensity={1} />
-      <div className="boot-card">
+      <DitherSwirl />
+      <div className="stage-veil" aria-hidden="true" />
+      <div className="boot-terminal">
         <span className="logo boot-logo"><Icon name="logo" size={22} /> warpbook</span>
-        <div className="boot-title">Запуск движка DuckDB-WASM…</div>
-        <div className={'boot-bar' + (pct === null ? ' indeterminate' : '')}>
-          <div className="boot-bar-fill" style={pct === null ? undefined : { width: `${pct}%` }} />
+        <div className="boot-line">Запуск движка DuckDB-WASM</div>
+        <div
+          className={'boot-segs' + (lit === null ? ' indeterminate' : '')}
+          role="progressbar"
+          aria-valuemin={0}
+          aria-valuemax={100}
+          aria-valuenow={pct ?? undefined}
+        >
+          {Array.from({ length: SEG_COUNT }, (_, i) => (
+            <i
+              key={i}
+              className={lit !== null && i < lit ? 'on' : ''}
+              style={lit === null ? { animationDelay: `${i * 0.1}s` } : undefined}
+            />
+          ))}
         </div>
         <div className="boot-detail">
           {pct === null

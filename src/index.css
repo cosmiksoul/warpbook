@@ -48,7 +48,6 @@
   --text-faint: #3f5b63;
   --serif-ink: #eaf7fb;
   --danger: #ff5c72;
-  --accent-muted: #164e5a;
   --track: #0e222a;
   --warn: #e0b64a;
   --warn-bright: #f4d98a;
@@ -88,25 +87,24 @@ body {
   color: var(--danger);
 }
 
-/* --- first-run boot screen (WASM engine download) --- */
+/* --- first-run boot screen (terminal TUI box over the swirl) --- */
 .boot-screen { position: relative; display: flex; align-items: center; justify-content: center; height: 100vh; padding: 24px; overflow: hidden; }
-.boot-card {
-  position: relative; z-index: 1;
-  display: flex; flex-direction: column; gap: 13px; width: min(420px, 100%);
-  padding: 26px 26px 22px; background: rgba(13,16,24,.72); backdrop-filter: blur(8px);
-  border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow-card);
+.boot-terminal {
+  position: relative; z-index: 2;
+  display: flex; flex-direction: column; gap: 13px; width: min(440px, 100%);
+  padding: 24px 26px; border: 1px solid var(--border);
 }
 .boot-logo { font-size: 18px; }
-.boot-title { font-size: 13px; color: var(--text-dim); }
-.boot-bar { position: relative; height: 8px; border-radius: 999px; background: var(--track); overflow: hidden; }
-.boot-bar-fill {
-  height: 100%; width: 0; border-radius: 999px;
-  background: var(--accent);
-  transition: width 0.2s ease;
+.boot-line { font-size: 11.5px; letter-spacing: .1em; text-transform: uppercase; color: var(--text-dim); }
+.boot-segs { display: flex; gap: 4px; }
+.boot-segs i { width: 14px; height: 12px; border: 1px solid var(--border); }
+.boot-segs i.on { background: var(--accent); border-color: var(--accent); }
+.boot-segs.indeterminate i { animation: seg-pulse 1.2s ease-in-out infinite; }
+@keyframes seg-pulse {
+  0%, 100% { background: transparent; }
+  50% { background: rgba(34,211,238,.45); border-color: var(--accent); }
 }
-.boot-bar.indeterminate .boot-bar-fill { width: 38%; animation: boot-slide 1.1s ease-in-out infinite; }
-@keyframes boot-slide { 0% { transform: translateX(-120%); } 100% { transform: translateX(330%); } }
-.boot-detail { font-family: var(--font-mono); font-size: 12px; color: var(--text); }
+.boot-detail { font-size: 12px; color: var(--text); }
 .boot-note { font-size: 11.5px; color: var(--text-faint); line-height: 1.45; }
 
 /* --- M1 shell layout --- */
@@ -573,11 +571,6 @@ body {
 
 /* --- M8 T8: chart cap note --- */
 .chart-cap-note { color: var(--text-faint); font-size: 11.5px; margin-top: 6px; }
-
-/* --- warp-drive shader background --- */
-.warp-shader, .warp-fallback { position: absolute; inset: 0; width: 100%; height: 100%; display: block; z-index: 0; }
-.warp-fallback { background: radial-gradient(circle at 50% 50%, #16324a 0%, #2a0f33 45%, var(--bg) 80%); }
-@media (prefers-reduced-motion: reduce) { .warp-shader { /* один статичный кадр рисуется в компоненте */ } }
 
 /* --- dithered dot-swirl hero (boot/welcome) + full-width veil --- */
 .dither-swirl { position: absolute; inset: 0; width: 100%; height: 100%; display: block; z-index: 0; }
