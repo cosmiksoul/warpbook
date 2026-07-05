@@ -1,31 +1,20 @@
 import { useState } from 'react'
 import type { DuckDBClient } from '../db/duckdbClient'
-import { useSchemaActions } from '../features/useSchemaActions'
-import { loadSample, seedSampleTabs, loadSampleReport, confirmReplaceReport, cookbookSample } from '../features/sampleData'
+import { loadSample, loadSampleReport, confirmReplaceReport, cookbookSample } from '../features/sampleData'
 import { useSession } from '../state/session'
 import { DitherSwirl } from './DitherSwirl'
+import { SampleGallery } from './SampleGallery'
+import { useSchemaActions } from '../features/useSchemaActions'
 
 export function WelcomeScreen({ client }: { client: DuckDBClient }) {
   const { applyInferred } = useSchemaActions(client)
   const setMode = useSession((s) => s.setMode)
-  const [busy, setBusy] = useState<null | 'data' | 'report'>(null)
-
-  async function onData() {
-    setBusy('data')
-    try {
-      await loadSample(client, applyInferred, cookbookSample)
-      seedSampleTabs(cookbookSample)
-    } catch (e) {
-      alert('Не удалось загрузить демо-данные: ' + String(e))
-    } finally {
-      setBusy(null)
-    }
-  }
+  const [busy, setBusy] = useState(false)
 
   async function onReport() {
     // A returning user may already have a hydrated report; don't clobber it silently.
     if (!confirmReplaceReport()) return
-    setBusy('report')
+    setBusy(true)
     // Switch to the report surface up front so the Explore screen doesn't flash
     // while the demo data fetches. (This unmounts WelcomeScreen — the awaited
     // loaders below run off useSession.getState(), so they finish regardless.)
@@ -36,7 +25,7 @@ export function WelcomeScreen({ client }: { client: DuckDBClient }) {
     } catch (e) {
       alert('Не удалось открыть пример отчёта: ' + String(e))
     } finally {
-      setBusy(null)
+      setBusy(false)
     }
   }
 
@@ -57,21 +46,12 @@ export function WelcomeScreen({ client }: { client: DuckDBClient }) {
           <li className="step-row"><span className="step-n">02</span><span><b>Исследование.</b> SQL → таблица, график, профиль значений.</span></li>
           <li className="step-row"><span className="step-n">03</span><span><b>Отчёт.</b> Закрепи виджеты, впиши текст, выгрузи в HTML/PDF.</span></li>
         </ol>
+        <SampleGallery client={client} />
         <div className="welcome-actions">
-          <button className="welcome-cta" disabled={busy !== null} onClick={onData}>
-            {busy === 'data' ? 'Грузим…' : '▸ Загрузить демо-данные'}
-          </button>
-          <button className="welcome-cta ghost" disabled={busy !== null} onClick={onReport}>
-            {busy === 'report' ? 'Грузим…' : 'Открыть пример отчёта'}
+          <button className="welcome-cta ghost" disabled={busy} onClick={onReport}>
+            {busy ? 'Грузим…' : 'Открыть пример отчёта'}
           </button>
         </div>
-        <p className="welcome-credit">
-          Демо-данные из учебника{' '}
-          <a href="https://github.com/cosmiksoul/sql-product-analytics-cookbook" target="_blank" rel="noopener noreferrer">
-            «SQL 101: Рецепты продуктового аналитика»
-          </a>{' '}
-          · MIT. Запросы в книге на BigQuery — примеры в демо адаптированы под DuckDB.
-        </p>
       </div>
     </div>
   )
