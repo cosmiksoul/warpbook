@@ -77,7 +77,6 @@ export function Report({ client }: { client: DuckDBClient }) {
       <div className="report-toolbar">
         <div className="toolbar-left">
           <button onClick={() => addTextBlock()}>+ текст</button>
-          <button onClick={() => addTextBlock('```sql\n-- код\n```')}>+ код</button>
           <button onClick={addQueryBlock}>+ запрос</button>
         </div>
         <div className="toolbar-right">
