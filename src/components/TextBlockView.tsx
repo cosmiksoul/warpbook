@@ -7,6 +7,8 @@ const PLACEHOLDER = '_пустой текст — кликни, чтобы ре�
 
 export function TextBlockView({ block }: { block: TextBlock }) {
   const updateTextBlock = useSession((s) => s.updateTextBlock)
+  const moveBlock = useSession((s) => s.moveBlock)
+  const removeBlock = useSession((s) => s.removeBlock)
   const [editing, setEditing] = useState(false)
   const [draft, setDraft] = useState(block.markdown)
 
@@ -28,13 +30,32 @@ export function TextBlockView({ block }: { block: TextBlock }) {
   // Markdown может прийти из импортированного .json-отчёта — сырой HTML экранируется (renderMarkdown).
   const html = renderMarkdown(block.markdown || PLACEHOLDER)
   return (
-    <div
-      className="text-block"
-      onClick={() => {
-        setDraft(block.markdown)
-        setEditing(true)
-      }}
-      dangerouslySetInnerHTML={{ __html: html }}
-    />
+    <>
+      <span className="widget-controls text-block-controls">
+        <button onClick={() => moveBlock(block.id, 'up')} title="вверх">
+          ↑
+        </button>
+        <button onClick={() => moveBlock(block.id, 'down')} title="вниз">
+          ↓
+        </button>
+        <button
+          onClick={(e) => {
+            e.stopPropagation()
+            removeBlock(block.id)
+          }}
+          title="удалить"
+        >
+          ✕
+        </button>
+      </span>
+      <div
+        className="text-block"
+        onClick={() => {
+          setDraft(block.markdown)
+          setEditing(true)
+        }}
+        dangerouslySetInnerHTML={{ __html: html }}
+      />
+    </>
   )
 }

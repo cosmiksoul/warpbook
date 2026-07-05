@@ -399,7 +399,11 @@ body {
 .report-toolbar .report-clear:hover { background: rgba(224,182,74,.08); color: var(--warn-bright); }
 
 .report-stack { display: flex; flex-direction: column; gap: 14px; max-width: 920px; }
-.report-block { border: 1px solid transparent; border-radius: var(--radius); padding: 12px 14px; cursor: pointer; transition: box-shadow .15s, border-color .15s; }
+.report-block { position: relative; border: 1px solid transparent; border-radius: var(--radius); padding: 12px 14px; cursor: pointer; transition: box-shadow .15s, border-color .15s; }
+/* ↑↓✕ текст-блока — поверх правого верхнего угла, только на hover/active
+   (у виджета контролы живут в widget-head; у текста своей шапки нет). */
+.text-block-controls { position: absolute; top: 8px; right: 10px; opacity: 0; transition: opacity .14s ease; background: var(--bg); padding: 0 2px; }
+.report-block:hover .text-block-controls, .report-block.active .text-block-controls { opacity: 1; }
 .report-block.active {
   border-color: var(--accent);
   background: color-mix(in srgb, var(--accent) 6%, transparent);
