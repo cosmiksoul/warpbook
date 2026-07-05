@@ -18,7 +18,7 @@ beforeAll(async () => {
   db = await createNodeDuckDB()
   client = createClient(db)
   const demo = resolve(import.meta.dirname, '../../public/demo')
-  // Mirror the app's loadDemoData exactly: payments.csv is loaded AND typed via
+  // Mirror the app's loadSample (cookbook) exactly: payments.csv is loaded AND typed via
   // inference (DateUTC -> TIMESTAMP, RevenueUSD -> DOUBLE, ...), users.parquet is
   // native. The recipes must run against the TYPED tables the app actually shows —
   // loading all-VARCHAR here would test a scenario the demo never produces.

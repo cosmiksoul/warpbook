@@ -518,8 +518,6 @@ body {
 .welcome-cta:disabled { opacity: .55; cursor: default; box-shadow: none; }
 .welcome-cta.ghost { border-color: var(--border); color: var(--text-dim); box-shadow: none; }
 .welcome-cta.ghost:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); box-shadow: 0 0 12px rgba(34,211,238,.2); }
-.welcome-credit { color: var(--text-faint); font-size: 11.5px; line-height: 1.5; }
-.welcome-credit a { color: var(--accent); }
 
 /* Витрина сэмплов (welcome + модал) */
 .sample-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 18px 0 14px; text-align: left; }
