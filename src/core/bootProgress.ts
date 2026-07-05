@@ -18,3 +18,12 @@ export function bootPercent(p: BootProgress | null): number | null {
 export function formatMb(bytes: number): string {
   return (bytes / 1_000_000).toFixed(1) + ' МБ'
 }
+
+/**
+ * Сколько сегментов ▮ из total подсветить для процента загрузки.
+ * null (total неизвестен) → null: сегменты пульсируют индетерминацией.
+ */
+export function bootSegments(pct: number | null, total: number): number | null {
+  if (pct === null) return null
+  return Math.max(0, Math.min(total, Math.round((pct / 100) * total)))
+}

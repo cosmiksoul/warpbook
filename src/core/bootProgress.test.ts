@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { bootPercent, formatMb } from './bootProgress'
+import { bootPercent, bootSegments, formatMb } from './bootProgress'
 
 describe('bootPercent', () => {
   it('null when no progress yet', () => {
@@ -24,5 +24,24 @@ describe('formatMb', () => {
   it('one decimal, decimal megabytes', () => {
     expect(formatMb(34_242_580)).toBe('34.2 МБ')
     expect(formatMb(0)).toBe('0.0 МБ')
+  })
+})
+
+describe('bootSegments', () => {
+  it('null (индетерминация) → null', () => {
+    expect(bootSegments(null, 10)).toBeNull()
+  })
+  it('0% → 0 сегментов', () => {
+    expect(bootSegments(0, 10)).toBe(0)
+  })
+  it('округляет к ближайшему сегменту', () => {
+    expect(bootSegments(47, 10)).toBe(5)
+    expect(bootSegments(4, 10)).toBe(0)
+  })
+  it('100% → все сегменты', () => {
+    expect(bootSegments(100, 10)).toBe(10)
+  })
+  it('клампит выход за 100', () => {
+    expect(bootSegments(140, 10)).toBe(10)
   })
 })
