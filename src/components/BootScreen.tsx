@@ -23,6 +23,7 @@ export function BootScreen({ progress }: { progress: BootProgress | null }) {
         <div
           className={'boot-segs' + (lit === null ? ' indeterminate' : '')}
           role="progressbar"
+          aria-label="Загрузка движка DuckDB-WASM"
           aria-valuemin={0}
           aria-valuemax={100}
           aria-valuenow={pct ?? undefined}

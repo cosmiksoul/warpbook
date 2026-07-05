@@ -484,7 +484,7 @@ body {
 .about-btn:hover { background: transparent; border-color: var(--accent); color: var(--accent); }
 .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.55); display: grid; place-items: center; z-index: 60; padding: 24px; }
 .modal { position: relative; max-width: 480px; width: 100%; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 22px 24px; box-shadow: var(--shadow-card); color: var(--text-dim); line-height: 1.55; }
-.modal h2 { font-family: var(--font-serif); color: var(--text); font-size: 20px; margin-bottom: 6px; }
+.modal h2 { font-family: var(--font-serif); font-weight: 600; color: var(--text); font-size: 20px; margin-bottom: 6px; }
 .modal h3 { color: var(--text); font-size: 13px; text-transform: uppercase; letter-spacing: .04em; margin: 16px 0 4px; }
 .modal ul { padding-left: 18px; display: flex; flex-direction: column; gap: 2px; }
 .modal a { color: var(--accent); }
@@ -585,8 +585,4 @@ a:hover { color: var(--accent-2); }
 @keyframes run-pulse {
   0% { box-shadow: 0 0 0 0 rgba(34,211,238,.5); }
   100% { box-shadow: 0 0 0 14px rgba(34,211,238,0); }
-}
-@media (prefers-reduced-motion: reduce) {
-  button, a, .source, .tab { transition: none; }
-  .run-btn:active { animation: none; }
 }

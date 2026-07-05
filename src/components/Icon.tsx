@@ -3,7 +3,7 @@ import type { ReactNode } from 'react'
 type IconName =
   | 'logo' | 'explore' | 'report' | 'play' | 'pin' | 'types' | 'profile' | 'table'
 
-// logo is rendered separately (warp-portal concentric rings); these are stroke glyphs.
+// logo is rendered separately (dithered ring, MARK_DOTS below); these are stroke glyphs.
 const PATHS: Record<Exclude<IconName, 'logo'>, ReactNode> = {
   // simple, recognizable stroke glyphs (Lucide-ish), 24x24 viewBox
   explore: <><circle cx="11" cy="11" r="7" /><path d="m21 21-4.3-4.3" /></>,
