@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import type { DuckDBClient } from '../db/duckdbClient'
 import { useSchemaActions } from '../features/useSchemaActions'
-import { loadDemoData, seedExampleTabs, loadSampleReport } from '../features/demoData'
+import { loadSample, seedSampleTabs, loadSampleReport, confirmReplaceReport, cookbookSample } from '../features/sampleData'
 import { useSession } from '../state/session'
 import { DitherSwirl } from './DitherSwirl'
 
@@ -13,8 +13,8 @@ export function WelcomeScreen({ client }: { client: DuckDBClient }) {
   async function onData() {
     setBusy('data')
     try {
-      await loadDemoData(client, applyInferred)
-      seedExampleTabs()
+      await loadSample(client, applyInferred, cookbookSample)
+      seedSampleTabs(cookbookSample)
     } catch (e) {
       alert('Не удалось загрузить демо-данные: ' + String(e))
     } finally {
@@ -24,19 +24,14 @@ export function WelcomeScreen({ client }: { client: DuckDBClient }) {
 
   async function onReport() {
     // A returning user may already have a hydrated report; don't clobber it silently.
-    if (
-      useSession.getState().report.blocks.length > 0 &&
-      !confirm('Открыть пример отчёта? Текущий отчёт будет заменён — сохрани его в JSON, если он нужен.')
-    ) {
-      return
-    }
+    if (!confirmReplaceReport()) return
     setBusy('report')
     // Switch to the report surface up front so the Explore screen doesn't flash
     // while the demo data fetches. (This unmounts WelcomeScreen — the awaited
     // loaders below run off useSession.getState(), so they finish regardless.)
     setMode('report')
     try {
-      await loadDemoData(client, applyInferred)
+      await loadSample(client, applyInferred, cookbookSample)
       await loadSampleReport()
     } catch (e) {
       alert('Не удалось открыть пример отчёта: ' + String(e))
