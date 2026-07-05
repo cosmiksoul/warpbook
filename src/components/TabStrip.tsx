@@ -63,7 +63,7 @@ export function TabStrip() {
             }}
             aria-label="закрыть таб"
           >
-            ×
+            ✕
           </button>
         </div>
       ))}

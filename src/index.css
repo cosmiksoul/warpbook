@@ -179,7 +179,7 @@ body {
   border: 0; background: transparent; color: var(--text-dim); cursor: pointer;
   padding: 7px 4px 7px 9px; border-radius: 0; text-align: left; font-size: 13px;
 }
-/* Тот же глиф ×, кегль и ховер, что у .tab-close — крестики выглядят одинаково. */
+/* Тот же глиф ✕, кегль и ховер, что у .tab-close — крестики выглядят одинаково. */
 .source-del {
   border: 0; background: transparent; color: var(--text-faint); cursor: pointer;
   padding: 0 8px; font-size: 14px; line-height: 1;
