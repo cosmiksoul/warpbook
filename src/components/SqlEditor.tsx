@@ -47,9 +47,10 @@ interface Props {
   onRun: (sql: string) => void
   schema?: Record<string, string[]>
   history?: string[]
+  compact?: boolean
 }
 
-export function SqlEditor({ value, onChange, onRun, schema, history }: Props) {
+export function SqlEditor({ value, onChange, onRun, schema, history, compact }: Props) {
   const host = useRef<HTMLDivElement>(null)
   const view = useRef<EditorView | null>(null)
   // Keep latest callbacks in a ref so the mount-once extensions never go stale.
@@ -74,7 +75,7 @@ export function SqlEditor({ value, onChange, onRun, schema, history }: Props) {
   // Drag-resizable height via the bottom handle — a much bigger target than the
   // native 16px corner grip. Default 168px; per-tab (SqlEditor is keyed by tab
   // id in Explore, so it resets to default on tab switch).
-  const [height, setHeight] = useState(168)
+  const [height, setHeight] = useState(compact ? 120 : 168)
   function startResize(e: ReactPointerEvent<HTMLDivElement>) {
     e.preventDefault()
     const bar = e.currentTarget
@@ -195,11 +196,13 @@ export function SqlEditor({ value, onChange, onRun, schema, history }: Props) {
   return (
     <div className="sql-editor-wrap">
       <div className="sql-editor" ref={host} style={{ height }} />
-      <div
-        className="sql-resize"
-        onPointerDown={startResize}
-        title="потяни, чтобы изменить высоту редактора"
-      />
+      {!compact && (
+        <div
+          className="sql-resize"
+          onPointerDown={startResize}
+          title="потяни, чтобы изменить высоту редактора"
+        />
+      )}
     </div>
   )
 }
