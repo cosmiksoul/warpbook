@@ -434,7 +434,8 @@ body {
 .report-toolbar .run-all { border-color: var(--accent); color: var(--accent); }
 .report-toolbar .run-all:hover { border-color: var(--accent-2); color: var(--accent-2); }
 
-.report-stack { display: flex; flex-direction: column; gap: 14px; max-width: 920px; }
+/* Без max-width: отступ справа симметричен левому (паддинг .report), не колодец. */
+.report-stack { display: flex; flex-direction: column; gap: 14px; }
 .report-block { position: relative; border: 1px solid transparent; border-radius: var(--radius); padding: 12px 14px; cursor: pointer; transition: box-shadow .15s, border-color .15s; }
 /* ↑↓✕ текст-блока — поверх правого верхнего угла, только на hover/active
    (у виджета контролы живут в widget-head; у текста своей шапки нет). */
@@ -492,7 +493,7 @@ body {
 }
 
 .toast { position: fixed; bottom: 22px; left: 50%; transform: translateX(-50%); background: var(--surface-2); color: var(--text); border: 1px solid var(--border); border-radius: 0; padding: 8px 16px; z-index: 50; }
-.rehydration-banner { background: rgba(224,182,74,.07); color: var(--warn-bright); border: 1px solid rgba(224,182,74,.35); border-radius: 0; padding: 8px 12px; max-width: 920px; }
+.rehydration-banner { background: rgba(224,182,74,.07); color: var(--warn-bright); border: 1px solid rgba(224,182,74,.35); border-radius: 0; padding: 8px 12px; }
 
 /* --- M5 a11y / motion / responsive --- */
 :where(button, input, select, textarea, [tabindex], summary):focus-visible {
