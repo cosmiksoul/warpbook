@@ -127,17 +127,14 @@ export function Rail({
       <div className="rail-section-label">Источники</div>
       <ul className="sources">
         {sources.map((d) => (
-          <li className="source-row" key={d.table}>
-            <button
-              className={shown.has(d.table) ? 'source active' : 'source'}
-              onClick={() => openOrFocusTab(d.table)}
-            >
+          <li className={shown.has(d.table) ? 'source-row active' : 'source-row'} key={d.table}>
+            <button className="source" onClick={() => openOrFocusTab(d.table)}>
               <span className="source-kind">{d.kind === 'csv' ? 'csv' : 'pq'}</span>
               <span className="source-name">{d.fileName}</span>
               <span className="source-size">{formatBytes(d.bytes)}</span>
             </button>
             <button
-              className="mart-act mart-del"
+              className="source-del"
               title={`удалить источник ${d.fileName}`}
               onClick={() => void removeSource(d)}
             >

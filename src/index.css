@@ -169,15 +169,21 @@ body {
   color: var(--text-faint); margin: 14px 0 8px;
 }
 .sources { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 6px; }
-.source-row { display: flex; align-items: center; gap: 2px; }
-.source-row .source { flex: 1; min-width: 0; }
+/* Бокс — на строке (li), чтобы ✕ жил внутри рамки; кнопки внутри — без своих рамок. */
+.source-row { display: flex; align-items: stretch; border: 1px solid var(--border-soft); }
+.source-row:hover { background: rgba(232,73,196,.06); border-color: var(--accent-2); box-shadow: inset 2px 0 0 var(--accent-2); }
+.source-row.active { background: var(--surface); border-color: var(--accent); box-shadow: inset 2px 0 0 var(--accent); }
+.source-row:hover .source, .source-row.active .source { color: var(--text); }
 .source {
-  display: flex; align-items: center; gap: 8px; width: 100%;
-  border: 1px solid var(--border-soft); background: transparent; color: var(--text-dim); cursor: pointer;
-  padding: 7px 9px; border-radius: 0; text-align: left; font-size: 13px;
+  display: flex; align-items: center; gap: 8px; flex: 1; min-width: 0;
+  border: 0; background: transparent; color: var(--text-dim); cursor: pointer;
+  padding: 7px 4px 7px 9px; border-radius: 0; text-align: left; font-size: 13px;
 }
-.source:hover { background: rgba(232,73,196,.06); border-color: var(--accent-2); box-shadow: inset 2px 0 0 var(--accent-2); color: var(--text); }
-.source.active { background: var(--surface); border-color: var(--accent); box-shadow: inset 2px 0 0 var(--accent); color: var(--text); }
+.source-del {
+  border: 0; background: transparent; color: var(--text-faint); cursor: pointer;
+  padding: 0 8px; font-size: 12px;
+}
+.source-del:hover { color: var(--accent-2); }
 .source-kind { font-size: 9px; text-transform: uppercase; color: var(--text-faint); background: var(--surface-2); border-radius: 0; padding: 1px 5px; }
 .source-name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .source-size { color: var(--text-faint); font-size: 11px; }
@@ -290,7 +296,7 @@ body {
 .tab-close { flex: 0 0 auto; width: 18px; height: 18px; border-radius: 0; display: inline-flex; align-items: center; justify-content: center; line-height: 1; }
 .tab .tab-close { opacity: 0; }
 .tab:hover .tab-close, .tab.on .tab-close { opacity: 1; }
-.tab-close:hover { color: var(--danger); background: var(--bg); }
+.tab-close:hover { color: var(--accent-2); background: var(--bg); }
 /* Tab-shaped: same top radius as a tab, flat bottom + no bottom border so it
    merges into the editor card; same 1px side margin as tabs for even spacing. */
 .tab-add { border: 1px solid var(--border); border-bottom: 0; background: var(--surface); border-radius: var(--radius) var(--radius) 0 0; padding: 0 10px; margin: 0 1px; align-self: stretch; display: inline-flex; align-items: center; justify-content: center; }
