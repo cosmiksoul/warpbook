@@ -12,17 +12,17 @@ import { syntaxHighlighting, HighlightStyle } from '@codemirror/language'
 import { tags as t } from '@lezer/highlight'
 import { autocompletion, completionKeymap } from '@codemirror/autocomplete'
 
-// SQL token colors, tuned to the cyan/magenta terminal-neon palette (index.css tokens).
+// SQL token colors, tuned to the cyan-console terminal palette (index.css tokens).
 const qbHighlight = HighlightStyle.define([
-  { tag: t.keyword, color: '#22d3ee', fontWeight: '600' },
+  { tag: t.keyword, color: '#22d3ee', fontWeight: '500' },
   { tag: [t.typeName, t.typeOperator], color: '#5fe0ea' },
   { tag: [t.string, t.special(t.string)], color: '#e0b64a' },
   { tag: [t.number, t.integer, t.float], color: '#e849c4' },
   { tag: [t.bool, t.null, t.atom], color: '#ff5c72' },
   { tag: t.function(t.variableName), color: '#8ad6ff' },
-  { tag: [t.comment, t.lineComment, t.blockComment], color: '#4f6377', fontStyle: 'italic' },
-  { tag: [t.operator, t.compareOperator, t.logicOperator, t.arithmeticOperator], color: '#8aa0b5' },
-  { tag: [t.punctuation, t.separator, t.paren, t.bracket], color: '#6b7f9a' },
+  { tag: [t.comment, t.lineComment, t.blockComment], color: '#3f5b63', fontStyle: 'italic' },
+  { tag: [t.operator, t.compareOperator, t.logicOperator, t.arithmeticOperator], color: '#6f97a2' },
+  { tag: [t.punctuation, t.separator, t.paren, t.bracket], color: '#6f97a2' },
 ])
 
 // Dark editor chrome (gutter/cursor/selection/active line) matching the theme.

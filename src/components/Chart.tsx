@@ -12,7 +12,7 @@ export function Chart({ spec, rows }: Props) {
   useEffect(() => {
     const el = ref.current
     if (!el) return
-    const fig = plotFigure(spec, rows, { background: 'transparent', color: '#8aa0b5' })
+    const fig = plotFigure(spec, rows, { background: 'transparent', color: '#6f97a2' })
     el.replaceChildren(fig)
     return () => fig.remove() // avoid leaking SVG nodes
   }, [spec, rows])

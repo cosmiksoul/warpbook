@@ -15,18 +15,32 @@ const PATHS: Record<Exclude<IconName, 'logo'>, ReactNode> = {
   table: <><rect x="3" y="4" width="18" height="16" rx="1.5" /><path d="M3 9h18M10 9v11" /></>,
 }
 
+// Точки логотипа считаются один раз на модуль: дизеренное кольцо на решётке 3px.
+const MARK_DOTS: { x: number; y: number; o: number }[] = (() => {
+  const dots: { x: number; y: number; o: number }[] = []
+  for (let y = 0; y < 40; y += 3) {
+    for (let x = 0; x < 40; x += 3) {
+      const dx = (x - 20) / 18
+      const dy = (y - 20) / 18
+      const r = Math.hypot(dx, dy)
+      const ring = 0.5 + 0.5 * Math.sin(r * 10 - 1.2)
+      const mask = Math.max(0, Math.min(1, (r - 0.1) / 0.25)) * (1 - Math.max(0, Math.min(1, (r - 0.85) / 0.3)))
+      const inten = ring * ring * mask
+      if (inten > 0.35) dots.push({ x, y, o: 0.4 + inten * 0.6 })
+    }
+  }
+  return dots
+})()
+
 export function Icon({ name, size = 16 }: { name: IconName; size?: number }) {
   if (name === 'logo') {
-    // Warp-portal: концентрические кольца, сгущающиеся к центру (эхо тоннеля
-    // шейдера). Внешние — циан (--accent), внутренние — магента (--accent-2),
-    // яркая точка-колодец в центре. Двухтональность = намёк на chromatic split.
+    // Дизеренное кольцо (порт canvas.mark из терминального мокапа):
+    // детерминированная решётка 3px-ячеек 40×40, интенсивность кольца → альфа точки.
     return (
-      <svg width={size} height={size} viewBox="0 0 24 24" fill="none" aria-hidden="true" style={{ flex: '0 0 auto' }}>
-        <circle cx="12" cy="12" r="10.2" stroke="var(--accent)" strokeWidth="1.5" opacity="0.9" />
-        <circle cx="12" cy="12" r="7.4" stroke="var(--accent)" strokeWidth="1.5" opacity="0.8" />
-        <circle cx="12" cy="12" r="5" stroke="var(--accent-2)" strokeWidth="1.5" opacity="0.85" />
-        <circle cx="12" cy="12" r="3" stroke="var(--accent-2)" strokeWidth="1.5" />
-        <circle cx="12" cy="12" r="1.1" fill="var(--accent)" />
+      <svg width={size} height={size} viewBox="0 0 40 40" fill="none" aria-hidden="true" style={{ flex: '0 0 auto' }}>
+        {MARK_DOTS.map((d, i) => (
+          <rect key={i} x={d.x} y={d.y} width="2" height="2" fill="var(--accent)" opacity={d.o} />
+        ))}
       </svg>
     )
   }
