@@ -272,6 +272,7 @@ body {
 /* Tab-shaped: same top radius as a tab, flat bottom + no bottom border so it
    merges into the editor card; same 1px side margin as tabs for even spacing. */
 .tab-add { border: 1px solid var(--border); border-bottom: 0; background: var(--surface); border-radius: var(--radius) var(--radius) 0 0; padding: 0 10px; margin: 0 1px; align-self: stretch; display: inline-flex; align-items: center; justify-content: center; }
+.tab-add:hover { border-color: var(--accent-2); color: var(--accent-2); }
 .schema-col.used { opacity: 1; border-left-color: var(--accent); background: var(--surface); }
 .schema-col.used .col-name { color: var(--text); font-weight: 600; }
 .rail-note { color: var(--text-faint); font-size: 11px; margin-top: 10px; line-height: 1.4; }
@@ -280,6 +281,7 @@ body {
   border: 0; background: transparent; color: var(--text-dim); cursor: pointer;
   padding: 4px 10px; border-radius: 0; font-size: 12px;
 }
+.view-toggle button:not(.on):not(:disabled):hover { color: var(--accent); }
 .view-toggle button.on { background: var(--surface-2); color: var(--text); }
 .view-toggle button:disabled { opacity: .4; cursor: not-allowed; }
 .chart { padding: 8px 4px; }
@@ -542,7 +544,7 @@ body {
 /* --- M8 T4: sortable grid headers --- */
 .grid-th { display: flex; align-items: center; gap: 4px; justify-content: space-between; }
 .th-label { display: inline-flex; align-items: center; gap: 4px; cursor: pointer; user-select: none; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
-.th-label:hover { color: var(--text); }
+.th-label:hover { color: var(--accent); }
 .th-sort { color: var(--accent); font-size: 10px; }
 .th-filter { border: 0; background: transparent; color: var(--text-faint); cursor: pointer; font-size: 10px; padding: 0 2px; opacity: 0; }
 .grid-th:hover .th-filter, .th-filter.on { opacity: 1; }
