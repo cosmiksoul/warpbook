@@ -433,7 +433,7 @@ body {
 .widget-caption:focus { outline: none; border-bottom-color: var(--border); }
 
 .pin-btn { background: transparent; color: var(--text-dim); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 3px 9px; cursor: pointer; }
-.pin-btn:hover { background: transparent; border-color: var(--accent); color: var(--accent); }
+.pin-btn:hover { background: transparent; border-color: var(--accent-2); color: var(--accent-2); }
 .run-btn, .pin-btn, .report-toolbar button, .schema-btn {
   display: inline-flex; align-items: center; gap: 6px;
 }
