@@ -136,6 +136,10 @@ body {
   border-color: var(--accent); color: var(--accent); font-weight: 500;
   box-shadow: 0 0 15px rgba(34,211,238,.32), inset 0 0 18px rgba(34,211,238,.10);
 }
+.run-btn:hover {
+  border-color: var(--accent-2); color: var(--accent-2);
+  box-shadow: 0 0 15px rgba(232,73,196,.32), inset 0 0 18px rgba(232,73,196,.10);
+}
 .rail .dropzone { margin: 0 0 10px; padding: 12px 10px; font-size: 12px; }
 .body { display: flex; flex: 1; min-height: 0; }
 .statusline {
