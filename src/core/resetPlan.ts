@@ -20,10 +20,15 @@ export function buildDropDatasetStatements(d: ResetDataset): string[] {
 
 /**
  * Полная очистка каталога DuckDB на Reset: все датасеты + материализованные
- * снапшоты результатов всех открытых табов.
+ * снапшоты результатов всех открытых табов и ячеек отчёта (M7b).
  */
-export function buildResetStatements(datasets: ResetDataset[], tabIds: string[]): string[] {
+export function buildResetStatements(
+  datasets: ResetDataset[],
+  tabIds: string[],
+  blockIds: string[] = [],
+): string[] {
   const stmts = datasets.flatMap(buildDropDatasetStatements)
   for (const id of tabIds) stmts.push(buildDropTable(resultTempName(id)))
+  for (const id of blockIds) stmts.push(buildDropTable(resultTempName(id)))
   return stmts
 }

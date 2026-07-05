@@ -3,13 +3,14 @@ import type { WidgetBlock } from '../core/report'
 import type { DuckDBClient } from '../db/duckdbClient'
 import { arrowToRows, type QueryResult } from '../core/arrowToRows'
 import { buildChartSpec } from '../core/chartSpec'
-import { buildWidgetSql, WIDGET_ROW_CAP } from '../core/resultQuery'
+import { buildCountSql, buildWindowSql, CHART_CAP, DEFAULT_VIEW } from '../core/resultQuery'
 import { useSession } from '../state/session'
 import { buildSqlSchema } from '../core/sqlSchema'
 import { extractDatasetNames } from '../core/cellSql'
-import { isInternalTable } from '../core/sql'
+import { buildResultTempDDL, isInternalTable, resultTempName } from '../core/sql'
 import { SqlEditor } from './SqlEditor'
 import { ResultGrid } from './ResultGrid'
+import { ResultPager } from './ResultPager'
 import { Chart } from './Chart'
 
 interface Props {
@@ -20,7 +21,7 @@ interface Props {
 type WidgetState =
   | { kind: 'idle' } // пустой sql — ячейка ждёт первый запрос
   | { kind: 'loading' }
-  | { kind: 'ok'; result: QueryResult; truncated: boolean }
+  | { kind: 'ok'; rowCount: number } // строки живут в снапшоте DuckDB, не здесь
   | { kind: 'error'; message: string }
 
 export function WidgetBlockView({ block, client }: Props) {
@@ -56,6 +57,14 @@ export function WidgetBlockView({ block, client }: Props) {
   const [draft, setDraft] = useState(block.sql)
   const [runSeq, setRunSeq] = useState(0)
   const dirty = draft !== block.sql
+
+  // M8-механика в ячейке: результат материализован в _qb_result_<blockId>,
+  // в JS живёт ОДНА страница окна. matSeq будит window-эффект на свежий снапшот.
+  const [pageData, setPageData] = useState<QueryResult | null>(null)
+  const [page, setPage] = useState(1)
+  const [pageSize, setPageSize] = useState(10)
+  const [matSeq, setMatSeq] = useState(0)
+  const [chartData, setChartData] = useState<QueryResult | null>(null)
   const [editingTitle, setEditingTitle] = useState(false)
   const [titleDraft, setTitleDraft] = useState(block.title)
 
@@ -64,35 +73,74 @@ export function WidgetBlockView({ block, client }: Props) {
   // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => { setDraft(block.sql) }, [block.sql])
 
-  // Lazy rerun: each widget runs its own SQL against the in-memory tables on
-  // mount (and when its sql/client change). Result lives in local state — it is
-  // NEVER serialized (spec decision 4). Mirrors Explore.run.
+  // Lazy rerun: SQL ячейки материализуется в снапшот _qb_result_<blockId>
+  // (та же M8-механика, что у explore-табов) + count(*). Строки НЕ тянутся в
+  // JS целиком — страницы забирает отдельный window-эффект ниже. Результат
+  // никогда не сериализуется (spec decision 4).
   useEffect(() => {
     if (block.sql.trim() === '') {
       setState({ kind: 'idle' }) // eslint-disable-line react-hooks/set-state-in-effect
+      setPageData(null)
+      setChartData(null)
       return
     }
     let cancelled = false
     setState({ kind: 'loading' })
+    setChartData(null) // новый снапшот -> график перечитается лениво
+    ;(async () => {
+      await client.exec(buildResultTempDDL(block.id, block.sql))
+      const cnt = arrowToRows(
+        await client.query(buildCountSql(resultTempName(block.id), [], DEFAULT_VIEW)),
+      )
+      if (cancelled) return
+      setPage(1)
+      setState({ kind: 'ok', rowCount: Number(cnt.rows[0]?.n ?? 0) })
+      setMatSeq((n) => n + 1) // будит window-эффект (page=1 мог не измениться)
+    })().catch((e) => {
+      if (!cancelled) setState({ kind: 'error', message: String(e) })
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [block.sql, block.id, client, loadedKey, runSeq, runAllSeq])
+
+  // Окно страницы поверх снапшота: листание и новый снапшот (matSeq).
+  useEffect(() => {
+    if (state.kind !== 'ok') return
+    let cancelled = false
+    const view = { ...DEFAULT_VIEW, page, pageSize }
     client
-      .query(buildWidgetSql(block.sql))
-      .then((table) => {
-        if (cancelled) return
-        const full = arrowToRows(table)
-        const truncated = full.numRows > WIDGET_ROW_CAP
-        const result = truncated
-          ? { ...full, rows: full.rows.slice(0, WIDGET_ROW_CAP), numRows: WIDGET_ROW_CAP }
-          : full
-        setState({ kind: 'ok', result, truncated })
+      .query(buildWindowSql(resultTempName(block.id), [], view))
+      .then((t) => {
+        if (!cancelled) setPageData(arrowToRows(t))
       })
-      .catch((e) => {
-        if (cancelled) return
-        setState({ kind: 'error', message: String(e) })
+      .catch(() => {
+        // снапшот пересоздаётся под ногами — свежий matSeq перезапросит окно
       })
     return () => {
       cancelled = true
     }
-  }, [block.sql, client, loadedKey, runSeq, runAllSeq])
+  }, [state.kind, page, pageSize, matSeq, block.id, client])
+
+  // График рисуется по снапшоту с капом CHART_CAP (как chartSrc в explore),
+  // тянется лениво — только когда выбран вид «график».
+  useEffect(() => {
+    if (state.kind !== 'ok' || block.vizType !== 'chart' || chartData !== null) return
+    let cancelled = false
+    client
+      .query(
+        buildWindowSql(resultTempName(block.id), [], { ...DEFAULT_VIEW, page: 1, pageSize: CHART_CAP }),
+      )
+      .then((t) => {
+        if (!cancelled) setChartData(arrowToRows(t))
+      })
+      .catch(() => {
+        // снапшот в перестройке — после matSeq chartData снова null и заход повторится
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [state.kind, block.vizType, chartData, block.id, client])
 
   function commitDraft() {
     if (draft.trim() === '') return
@@ -104,12 +152,15 @@ export function WidgetBlockView({ block, client }: Props) {
     updateWidgetSql(block.id, draft, extractDatasetNames(draft, known))
   }
 
-  const result = state.kind === 'ok' ? state.result : null
   const error = state.kind === 'error' ? state.message : null
   const loading = state.kind === 'loading'
+  const ok = state.kind === 'ok'
+  const rowCount = state.kind === 'ok' ? state.rowCount : 0
 
-  const spec = result ? buildChartSpec(result.columns, result.rows[0]) : null
-  const showChart = block.vizType === 'chart' && spec && result
+  // spec — по странице окна (типы/temporal-детект по образцу строки);
+  // рисуем же график по chartData (до CHART_CAP строк из снапшота).
+  const spec = pageData ? buildChartSpec(pageData.columns, pageData.rows[0]) : null
+  const showChart = block.vizType === 'chart' && spec != null && ok
 
   return (
     <div className="widget-block">
@@ -239,10 +290,32 @@ export function WidgetBlockView({ block, client }: Props) {
       )}
       {!error && loading && <p className="result-empty">пересчитываю…</p>}
       {!error && !loading && showChart && (
-        <Chart spec={spec!} rows={result!.rows} />
+        chartData ? (
+          <Chart spec={spec!} rows={chartData.rows} />
+        ) : (
+          <p className="result-empty">строю график…</p>
+        )
       )}
-      {!error && !loading && result && block.vizType === 'table' && (
-        <ResultGrid result={result} sorts={[]} onToggleSort={() => {}} onOpenFilter={() => {}} />
+      {!error && !loading && ok && block.vizType === 'table' && pageData && (
+        <>
+          <ResultGrid
+            result={pageData}
+            rowOffset={(page - 1) * pageSize}
+            sorts={[]}
+            onToggleSort={() => {}}
+            onOpenFilter={() => {}}
+          />
+          <ResultPager
+            total={rowCount}
+            page={page}
+            pageSize={pageSize}
+            onPage={setPage}
+            onPageSize={(n) => {
+              setPageSize(n)
+              setPage(1)
+            }}
+          />
+        </>
       )}
       {/*
         Do NOT delete as "dead": this branch fires only for a loaded/rehydrated
@@ -251,11 +324,8 @@ export function WidgetBlockView({ block, client }: Props) {
         reach vizType==='chart' && !spec by clicking — only a JSON open / reload
         produces it. (Spec line 71: chart toggle disabled when no numeric col.)
       */}
-      {!error && !loading && result && block.vizType === 'chart' && !spec && (
+      {!error && !loading && ok && block.vizType === 'chart' && pageData && !spec && (
         <p className="result-empty">нет числовой колонки для графика</p>
-      )}
-      {state.kind === 'ok' && state.truncated && (
-        <p className="widget-truncated">показаны первые {WIDGET_ROW_CAP} строк</p>
       )}
 
       <input

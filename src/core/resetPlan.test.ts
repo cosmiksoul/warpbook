@@ -51,4 +51,12 @@ describe('buildResetStatements', () => {
   it('empty session -> no statements', () => {
     expect(buildResetStatements([], [])).toEqual([])
   })
+
+  it('чистит и снапшоты ячеек отчёта (blockIds)', () => {
+    expect(buildResetStatements([], ['tab-1'], ['blk-2', 'blk-5'])).toEqual([
+      'DROP TABLE IF EXISTS "_qb_result_tab-1"',
+      'DROP TABLE IF EXISTS "_qb_result_blk-2"',
+      'DROP TABLE IF EXISTS "_qb_result_blk-5"',
+    ])
+  })
 })

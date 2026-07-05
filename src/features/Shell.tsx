@@ -36,7 +36,11 @@ export function Shell({ client }: { client: DuckDBClient }) {
 
   async function handleReset() {
     const st = useSession.getState()
-    const stmts = buildResetStatements(st.datasets, st.tabs.map((t) => t.id))
+    const stmts = buildResetStatements(
+      st.datasets,
+      st.tabs.map((t) => t.id),
+      st.report.blocks.filter((b) => b.type === 'widget').map((b) => b.id),
+    )
     for (const sql of stmts) {
       try {
         await client.exec(sql)
