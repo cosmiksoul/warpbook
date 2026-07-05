@@ -6,11 +6,11 @@ import {
   lineNumbers,
   highlightActiveLine,
 } from '@codemirror/view'
-import { defaultKeymap, history, historyKeymap } from '@codemirror/commands'
+import { defaultKeymap, history as cmHistory, historyKeymap } from '@codemirror/commands'
 import { sql } from '@codemirror/lang-sql'
 import { syntaxHighlighting, HighlightStyle } from '@codemirror/language'
 import { tags as t } from '@lezer/highlight'
-import { autocompletion, completionKeymap } from '@codemirror/autocomplete'
+import { autocompletion, completionKeymap, completionStatus } from '@codemirror/autocomplete'
 
 // SQL token colors, tuned to the cyan-console terminal palette (index.css tokens).
 const qbHighlight = HighlightStyle.define([
@@ -46,9 +46,10 @@ interface Props {
   onChange: (value: string) => void
   onRun: (sql: string) => void
   schema?: Record<string, string[]>
+  history?: string[]
 }
 
-export function SqlEditor({ value, onChange, onRun, schema }: Props) {
+export function SqlEditor({ value, onChange, onRun, schema, history }: Props) {
   const host = useRef<HTMLDivElement>(null)
   const view = useRef<EditorView | null>(null)
   // Keep latest callbacks in a ref so the mount-once extensions never go stale.
@@ -60,6 +61,15 @@ export function SqlEditor({ value, onChange, onRun, schema }: Props) {
   const schemaRef = useRef(schema)
   // eslint-disable-next-line react-hooks/refs
   schemaRef.current = schema
+
+  // История запросов (psql-стиль). Указатель: null = не в истории; иначе
+  // смещение от свежего конца (0 = самый свежий). Черновик прячется при входе.
+  const histRef = useRef<string[]>(history ?? [])
+  // eslint-disable-next-line react-hooks/refs
+  histRef.current = history ?? []
+  const histPos = useRef<number | null>(null)
+  const draftStash = useRef('')
+  const navigating = useRef(false)
 
   // Drag-resizable height via the bottom handle — a much bigger target than the
   // native 16px corner grip. Default 168px; per-tab (SqlEditor is keyed by tab
@@ -81,6 +91,44 @@ export function SqlEditor({ value, onChange, onRun, schema }: Props) {
     bar.addEventListener('pointerup', onUp)
   }
 
+  function setDoc(v: EditorView, text: string) {
+    navigating.current = true
+    v.dispatch({
+      changes: { from: 0, to: v.state.doc.length, insert: text },
+      selection: { anchor: text.length },
+    })
+    navigating.current = false
+  }
+
+  function stepHistory(v: EditorView, dir: 1 | -1): boolean {
+    const list = histRef.current
+    if (list.length === 0) return false
+    if (completionStatus(v.state) !== null) return false // стрелки — автокомплиту
+    const sel = v.state.selection.main
+    if (!sel.empty) return false
+    const line = v.state.doc.lineAt(sel.head)
+    if (dir === 1 && line.number !== 1) return false // старее — только с первой строки
+    if (dir === -1 && line.number !== v.state.doc.lines) return false // новее — с последней
+    const pos = histPos.current
+    if (dir === 1) {
+      const next = pos === null ? 0 : pos + 1
+      if (next >= list.length) return true // упёрлись в самый старый — съесть нажатие
+      if (pos === null) draftStash.current = v.state.doc.toString()
+      histPos.current = next
+      setDoc(v, list[list.length - 1 - next])
+      return true
+    }
+    if (pos === null) return false // не в истории — обычный ArrowDown
+    if (pos === 0) {
+      histPos.current = null
+      setDoc(v, draftStash.current)
+      return true
+    }
+    histPos.current = pos - 1
+    setDoc(v, list[list.length - 1 - histPos.current])
+    return true
+  }
+
   // Mount once. Do NOT depend on `value` (would recreate the editor per keystroke).
   useEffect(() => {
     const runKey = Prec.high(
@@ -88,26 +136,33 @@ export function SqlEditor({ value, onChange, onRun, schema }: Props) {
         {
           key: 'Mod-Enter',
           run: (v) => {
+            histPos.current = null
             cb.current.onRun(v.state.doc.toString())
             return true // consume: no newline inserted
           },
         },
       ]),
     )
+    const histNav = keymap.of([
+      { key: 'ArrowUp', run: (v) => stepHistory(v, 1) },
+      { key: 'ArrowDown', run: (v) => stepHistory(v, -1) },
+    ])
     const listener = EditorView.updateListener.of((u) => {
       if (u.docChanged) cb.current.onChange(u.state.doc.toString())
+      if (u.docChanged && !navigating.current) histPos.current = null
     })
     const state = EditorState.create({
       doc: value,
       extensions: [
         lineNumbers(),
         highlightActiveLine(),
-        history(),
+        cmHistory(),
         qbEditorTheme,
         syntaxHighlighting(qbHighlight),
         schemaComp.current.of(sql({ schema: schemaRef.current ?? {} })),
         autocompletion(),
         runKey,
+        histNav,
         keymap.of([...defaultKeymap, ...historyKeymap, ...completionKeymap]),
         listener,
       ],

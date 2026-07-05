@@ -18,6 +18,7 @@ export function useResultActions(client: DuckDBClient) {
   // Materialize the result snapshot, count, load page 1. Non-SELECT -> raw fallback.
   async function runQuery(tabId: string, sql: string): Promise<void> {
     const st = useSession.getState()
+    st.pushHistory(sql) // история — при каждом RUN, включая упавшие (как shell)
     const seq = st.nextWindowSeq()
     st.stampWindowSeq(tabId, seq) // застолбить run ДО первого await
     const t0 = performance.now()

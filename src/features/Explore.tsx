@@ -16,6 +16,7 @@ export function Explore({ client }: { client: DuckDBClient }) {
   const exploreView = useSession((s) => s.exploreView)
   const profileTarget = useSession((s) => s.profileTarget)
   const datasets = useSession((s) => s.datasets)
+  const history = useSession((s) => s.history)
   const schema = useMemo(() => buildSqlSchema(datasets), [datasets])
 
   const tab = tabs.find((t) => t.id === activeTabId) ?? null
@@ -74,6 +75,7 @@ export function Explore({ client }: { client: DuckDBClient }) {
           onChange={(v) => updateTabSql(tab.id, v)}
           onRun={run}
           schema={schema}
+          history={history}
         />
       </section>
       <ResultPanel
