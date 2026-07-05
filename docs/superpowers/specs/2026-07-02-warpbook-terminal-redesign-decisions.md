@@ -1,6 +1,6 @@
 # warpbook — Terminal Redesign · Design Decisions (in progress)
 
-> **Status:** brainstorming converged, direction **LOCKED** by user. Next = write full spec → plan → SDD.
+> **Status:** IMPLEMENTED on `warp-redesign` per plan `docs/superpowers/plans/2026-07-05-warpbook-terminal-redesign.md` (2026-07-05). Awaiting user visual acceptance.
 > **Date:** 2026-07-02 · **Branch:** `warp-redesign` (unmerged) · **Resume from this file.**
 
 ## The pivot

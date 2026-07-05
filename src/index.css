@@ -42,7 +42,6 @@
   --accent: #22d3ee;
   --accent-2: #e849c4;
   --glow-cyan: 0 0 0 1px rgba(34,211,238,.45), 0 0 18px rgba(34,211,238,.28);
-  --glow-magenta: 0 0 0 1px rgba(232,73,196,.40), 0 0 18px rgba(232,73,196,.24);
   --text: #d6ecf1;
   --text-dim: #6f97a2;
   --text-faint: #3f5b63;
@@ -54,7 +53,6 @@
   --radius: 0px;
   --radius-sm: 0px;
   --shadow-card: none;
-  --font-ui: 'IBM Plex Mono', ui-monospace, monospace;
   --font-mono: 'IBM Plex Mono', ui-monospace, monospace;
   --font-serif: 'IBM Plex Serif', Georgia, serif;
 }
@@ -232,8 +230,7 @@ body {
 }
 .grid-th { color: var(--text-faint); text-transform: uppercase; font-size: 10.5px; }
 .grid-num { text-align: right; color: var(--accent); font-variant-numeric: tabular-nums; }
-.grid-th.grid-num { color: var(--text-faint); }
-.grid-th.grid-num { justify-content: flex-end; }
+.grid-th.grid-num { color: var(--text-faint); justify-content: flex-end; }
 /* Terminal tab strip: square tabs, active one raised to the panel surface
    (--surface-2), thin separators between inactive tabs, favicon slot. */
 /* margin-bottom cancels the .explore 16px flex gap so tabs sit flush on the editor card. */
