@@ -24,6 +24,12 @@ export async function renderReport(
 
   for (const b of doc.blocks) {
     if (b.type !== 'widget') continue
+    // Пустая «+ запрос»-ячейка (M7b): без запроса — не «виджет без данных»
+    // (не считаем в missingCount) и движок не дёргаем.
+    if (b.sql.trim() === '') {
+      rendered[b.id] = { kind: 'empty', missing: [] }
+      continue
+    }
     const missing = b.datasetNames.filter((t) => !loaded.has(t))
     try {
       const result = arrowToRows(await client.query(buildWidgetSql(b.sql, EXPORT_ROW_CAP)))

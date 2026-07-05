@@ -73,8 +73,8 @@ export function SqlEditor({ value, onChange, onRun, schema, history, compact }: 
   const navigating = useRef(false)
 
   // Drag-resizable height via the bottom handle — a much bigger target than the
-  // native 16px corner grip. Default 168px; per-tab (SqlEditor is keyed by tab
-  // id in Explore, so it resets to default on tab switch).
+  // native 16px corner grip. Default 168px (compact cells: fixed 120, no handle);
+  // per-tab (SqlEditor is keyed by tab id in Explore, so it resets on tab switch).
   const [height, setHeight] = useState(compact ? 120 : 168)
   function startResize(e: ReactPointerEvent<HTMLDivElement>) {
     e.preventDefault()
