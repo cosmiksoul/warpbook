@@ -510,7 +510,10 @@ body {
 }
 
 /* --- M6 welcome (terminal) --- */
-.welcome-stage { position: relative; flex: 1; min-height: 0; display: flex; overflow: hidden; }
+/* overflow-y: на низких вьюпортах hero скроллится (margin:auto у .welcome при
+   нехватке места схлопывается в 0 → верх не клипается). Свирл/вуаль (absolute
+   inset:0) покрывают первый экран — ниже фолда просто фон, принято. */
+.welcome-stage { position: relative; flex: 1; min-height: 0; display: flex; overflow-x: hidden; overflow-y: auto; }
 .welcome { max-width: 680px; margin: auto; padding: 32px; display: flex; flex-direction: column; gap: 20px; }
 .welcome-content { position: relative; z-index: 2; }
 .welcome-kicker { font-size: 11px; letter-spacing: .18em; text-transform: uppercase; color: var(--accent); display: flex; align-items: center; gap: 10px; }
