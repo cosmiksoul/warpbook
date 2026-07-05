@@ -194,7 +194,7 @@ body {
   display: flex; align-items: center; justify-content: center;
 }
 .query-panel .sql-resize::before {
-  content: ''; width: 34px; height: 3px; border-radius: 999px;
+  content: ''; width: 34px; height: 3px; border-radius: 0;
   background: var(--text-faint); transition: background .15s ease;
 }
 .query-panel .sql-resize:hover::before, .query-panel .sql-resize:active::before { background: var(--accent); }
@@ -506,7 +506,7 @@ body {
 .mart-head { display: flex; align-items: center; gap: 6px; }
 .mart-head .source-name { font-family: var(--font-mono); font-size: 12px; color: var(--text); }
 .mart-actions { margin-left: auto; display: inline-flex; gap: 2px; }
-.mart-act { border: 0; background: transparent; color: var(--text-faint); cursor: pointer; padding: 1px 5px; font-size: 12px; border-radius: 4px; }
+.mart-act { border: 0; background: transparent; color: var(--text-faint); cursor: pointer; padding: 1px 5px; font-size: 12px; border-radius: 0; }
 .mart-act:hover { color: var(--text); background: var(--surface); }
 .mart-del:hover { color: var(--danger); }
 .mart-cols { list-style: none; margin: 2px 0 0; padding: 0 0 0 6px; }
