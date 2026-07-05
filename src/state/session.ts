@@ -118,7 +118,11 @@ interface SessionState {
   setProfileTarget: (target: ProfileTarget) => void
   pinResult: (fields: Omit<WidgetBlock, 'type' | 'id'>) => void
   addTextBlock: (markdown?: string) => void
+  addQueryBlock: () => void
   updateTextBlock: (id: string, markdown: string) => void
+  updateWidgetSql: (id: string, sql: string, datasetNames: string[]) => void
+  runAllSeq: number
+  runAll: () => void
   updateWidgetTitle: (id: string, title: string) => void
   updateWidgetCaption: (id: string, caption: string) => void
   setWidgetVizType: (id: string, vizType: 'table' | 'chart') => void
@@ -142,6 +146,7 @@ const initial = {
   activeBlockId: null as string | null,
   toast: null as string | null,
   welcomeDismissed: false, // в initial: Reset возвращает welcome-экран
+  runAllSeq: 0,
 }
 
 const REPORT_KEY = 'quackbook.report'
@@ -450,6 +455,21 @@ export const useSession = create<SessionState>((set, get) => ({
       },
       seq: s.seq + 1,
     })),
+  addQueryBlock: () =>
+    set((s) => {
+      const id = `blk-${s.seq + 1}`
+      return {
+        report: {
+          version: 1,
+          blocks: [
+            ...s.report.blocks,
+            { type: 'widget', id, title: 'запрос', sql: '', datasetNames: [], vizType: 'table', caption: '' },
+          ],
+        },
+        activeBlockId: id,
+        seq: s.seq + 1,
+      }
+    }),
   updateTextBlock: (id, markdown) =>
     set((s) => ({
       report: {
@@ -459,6 +479,16 @@ export const useSession = create<SessionState>((set, get) => ({
         ),
       },
     })),
+  updateWidgetSql: (id, sql, datasetNames) =>
+    set((s) => ({
+      report: {
+        version: 1,
+        blocks: s.report.blocks.map((b) =>
+          b.id === id && b.type === 'widget' ? { ...b, sql, datasetNames } : b,
+        ),
+      },
+    })),
+  runAll: () => set((s) => ({ runAllSeq: s.runAllSeq + 1 })),
   updateWidgetTitle: (id, title) =>
     set((s) => ({
       report: {
