@@ -3,7 +3,7 @@ import type { DuckDBClient } from '../db/duckdbClient'
 import { useSchemaActions } from '../features/useSchemaActions'
 import { loadDemoData, seedExampleTabs, loadSampleReport } from '../features/demoData'
 import { useSession } from '../state/session'
-import { WarpShader } from './WarpShader'
+import { DitherSwirl } from './DitherSwirl'
 
 export function WelcomeScreen({ client }: { client: DuckDBClient }) {
   const { applyInferred } = useSchemaActions(client)
@@ -47,22 +47,24 @@ export function WelcomeScreen({ client }: { client: DuckDBClient }) {
 
   return (
     <div className="welcome-stage">
-      <WarpShader intensity={0.85} />
+      <DitherSwirl />
+      <div className="stage-veil" aria-hidden="true" />
       <div className="welcome welcome-content">
+        <div className="welcome-kicker">Browser analytical terminal</div>
         <h1 className="welcome-title">Аналитический ноутбук в браузере</h1>
         <p className="welcome-lead">
           Брось CSV или Parquet в панель слева — и работай: пиши SQL с JOIN/UNION,
           смотри профиль значений, закрепляй результаты виджетами и собирай
-          нарративный отчёт. Всё локально, без бэкенда.
+          нарративный отчёт. <b>Всё локально, без бэкенда.</b>
         </p>
-        <ol className="welcome-steps">
-          <li><b>Данные.</b> CSV/Parquet → схема и типы в рейле слева.</li>
-          <li><b>Исследование.</b> SQL → таблица, график, профиль значений.</li>
-          <li><b>Отчёт.</b> Закрепи виджеты, впиши текст, выгрузи в HTML/PDF.</li>
+        <ol className="steps-box">
+          <li className="step-row"><span className="step-n">01</span><span><b>Данные.</b> CSV/Parquet → схема и типы в рейле слева.</span></li>
+          <li className="step-row"><span className="step-n">02</span><span><b>Исследование.</b> SQL → таблица, график, профиль значений.</span></li>
+          <li className="step-row"><span className="step-n">03</span><span><b>Отчёт.</b> Закрепи виджеты, впиши текст, выгрузи в HTML/PDF.</span></li>
         </ol>
         <div className="welcome-actions">
           <button className="welcome-cta" disabled={busy !== null} onClick={onData}>
-            {busy === 'data' ? 'Грузим…' : 'Загрузить демо-данные'}
+            {busy === 'data' ? 'Грузим…' : '▸ Загрузить демо-данные'}
           </button>
           <button className="welcome-cta ghost" disabled={busy !== null} onClick={onReport}>
             {busy === 'report' ? 'Грузим…' : 'Открыть пример отчёта'}

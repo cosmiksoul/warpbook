@@ -456,18 +456,21 @@ body {
   .rail { width: auto; flex: none; border-right: 0; border-bottom: 1px solid var(--border); }
 }
 
-/* --- M6 welcome --- */
-.welcome { max-width: 640px; margin: 6vh auto 0; padding: 0 24px; display: flex; flex-direction: column; gap: 16px; }
-.welcome-title { font-size: 26px; font-weight: 700; color: var(--text); }
-.welcome-lead { color: var(--text-dim); line-height: 1.6; font-size: 15px; }
-.welcome-steps { color: var(--text-dim); line-height: 1.7; padding-left: 20px; display: flex; flex-direction: column; gap: 4px; }
-.welcome-steps b { color: var(--text); }
-.welcome-actions { display: flex; gap: 10px; margin-top: 6px; flex-wrap: wrap; }
+/* --- M6 welcome (terminal) --- */
 .welcome-stage { position: relative; flex: 1; min-height: 0; display: flex; overflow: hidden; }
-.welcome-content {
-  position: relative; z-index: 1; margin: auto; max-width: 620px; padding: 40px 32px;
-  background: rgba(7,8,15,.55); backdrop-filter: blur(6px); border-radius: var(--radius);
-}
+.welcome { max-width: 680px; margin: auto; padding: 32px; display: flex; flex-direction: column; gap: 20px; }
+.welcome-content { position: relative; z-index: 2; }
+.welcome-kicker { font-size: 11px; letter-spacing: .18em; text-transform: uppercase; color: var(--accent); display: flex; align-items: center; gap: 10px; }
+.welcome-kicker::before { content: ''; width: 26px; height: 1px; background: var(--accent); }
+.welcome-title { font-family: var(--font-serif); font-weight: 500; font-size: 38px; line-height: 1.1; letter-spacing: -.01em; color: var(--serif-ink); }
+.welcome-lead { color: var(--text-dim); line-height: 1.7; font-size: 14px; }
+.welcome-lead b { color: var(--text); font-weight: 500; }
+.steps-box { list-style: none; margin: 0; padding: 0; border: 1px solid var(--border); display: flex; flex-direction: column; }
+.step-row { display: flex; gap: 14px; padding: 11px 16px; border-bottom: 1px solid var(--border-soft); color: var(--text-dim); font-size: 13px; }
+.step-row:last-child { border-bottom: 0; }
+.step-row b { color: var(--text); font-weight: 500; }
+.step-n { color: var(--accent); font-weight: 500; }
+.welcome-actions { display: flex; gap: 12px; flex-wrap: wrap; }
 .welcome-cta {
   border: 1px solid var(--accent); background: transparent; color: var(--accent);
   padding: 10px 18px; cursor: pointer; font-weight: 500;
@@ -478,7 +481,7 @@ body {
 .welcome-cta:disabled { opacity: .55; cursor: default; box-shadow: none; }
 .welcome-cta.ghost { border-color: var(--border); color: var(--text-dim); box-shadow: none; }
 .welcome-cta.ghost:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); box-shadow: 0 0 12px rgba(34,211,238,.2); }
-.welcome-credit { color: var(--text-faint); font-size: 12.5px; line-height: 1.5; margin-top: 8px; }
+.welcome-credit { color: var(--text-faint); font-size: 11.5px; line-height: 1.5; }
 .welcome-credit a { color: var(--accent); }
 
 /* --- M6 about modal --- */
@@ -575,6 +578,14 @@ body {
 .warp-shader, .warp-fallback { position: absolute; inset: 0; width: 100%; height: 100%; display: block; z-index: 0; }
 .warp-fallback { background: radial-gradient(circle at 50% 50%, #16324a 0%, #2a0f33 45%, var(--bg) 80%); }
 @media (prefers-reduced-motion: reduce) { .warp-shader { /* один статичный кадр рисуется в компоненте */ } }
+
+/* --- dithered dot-swirl hero (boot/welcome) + full-width veil --- */
+.dither-swirl { position: absolute; inset: 0; width: 100%; height: 100%; display: block; z-index: 0; }
+/* тёмное ядро за текстом + боковое затемнение к краям; свирл «дышит» по краям.
+   #05070a = var(--bg) (в градиентах литерал — надёжнее для interpolation к прозрачному). */
+.stage-veil { position: absolute; inset: 0; z-index: 1; background:
+  radial-gradient(115% 85% at 50% 50%, rgba(0,0,0,.82) 0%, rgba(0,0,0,.6) 42%, rgba(0,0,0,.2) 72%, rgba(0,0,0,0) 100%),
+  linear-gradient(90deg, #05070a 0%, rgba(5,7,10,0) 24%, rgba(5,7,10,0) 76%, #05070a 100%); }
 
 /* --- terminal accents + motion --- */
 button, a, .source, .tab { transition: color .14s ease, background-color .14s ease, box-shadow .14s ease, border-color .14s ease; }
