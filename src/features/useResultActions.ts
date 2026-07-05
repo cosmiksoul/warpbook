@@ -1,6 +1,7 @@
 import { arrowToRows, type ResultColumn } from '../core/arrowToRows'
 import { buildResultTempDDL, buildDropTable, resultTempName } from '../core/sql'
 import { buildWindowSql, buildCountSql, DEFAULT_VIEW } from '../core/resultQuery'
+import { parseDotCommand, runDotCommand } from '../core/dotCommands'
 import type { DuckDBClient } from '../db/duckdbClient'
 import { useSession } from '../state/session'
 
@@ -22,6 +23,18 @@ export function useResultActions(client: DuckDBClient) {
     const seq = st.nextWindowSeq()
     st.stampWindowSeq(tabId, seq) // застолбить run ДО первого await
     const t0 = performance.now()
+    // Dot-команды (.tables/.schema/.help): исполняются из стора, синхронно,
+    // ДО движка. Вывод — через raw-путь; seq уже застолблен, так что более
+    // ранний медленный запрос этот вывод не перезапишет.
+    const dot = parseDotCommand(sql)
+    if (dot) {
+      const out = runDotCommand(dot, useSession.getState().datasets)
+      if (ownsRun(tabId, seq)) {
+        if (out.ok) useSession.getState().setRawResult(tabId, out.result, performance.now() - t0)
+        else useSession.getState().setTabError(tabId, out.error)
+      }
+      return
+    }
     const table = resultTempName(tabId)
     try {
       await client.exec(buildResultTempDDL(tabId, sql))
