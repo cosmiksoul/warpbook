@@ -59,8 +59,13 @@ export function Explore({ client }: { client: DuckDBClient }) {
     st.stampWindowSeq(tab.id, ownSeq)
     lastFetchKey.current.set(tab.id, { seq: ownSeq, key })
     void fetchWindow(tab.id, ownSeq)
+    // windowSeq в deps обязателен: re-run при НЕизменённом виде (дефолт) не меняет
+    // view-deps, эффект без него не проснётся, baseline в map протухнет на старом
+    // seq — и первое изменение вида после re-run проглотится веткой «чужой seq».
+    // На стамп нового run'а эффект будится и строка выше обновляет baseline без
+    // фетча; собственный стамп ре-триггерит его же в no-op (prev.key === key).
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [tab?.id, view?.page, view?.pageSize, JSON.stringify(view?.sorts), view?.search, JSON.stringify(view?.filters)])
+  }, [tab?.id, tab?.windowSeq, view?.page, view?.pageSize, JSON.stringify(view?.sorts), view?.search, JSON.stringify(view?.filters)])
 
   // Drop result tables for tabs that were closed.
   const knownTabs = useRef<Set<string>>(new Set())
