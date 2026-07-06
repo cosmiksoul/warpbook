@@ -8,6 +8,7 @@ import { SchemaColumnEditor } from '../components/SchemaColumnEditor'
 import { CsvDropzone } from '../components/CsvDropzone'
 import { useSchemaActions } from './useSchemaActions'
 import { useProfileActions } from './useProfileActions'
+import { useAutoprofile } from './useAutoprofile'
 import { useMartActions } from './useMartActions'
 import { Icon } from '../components/Icon'
 
@@ -41,6 +42,7 @@ export function Rail({
   const setExploreView = useSession((s) => s.setExploreView)
   const setProfileTarget = useSession((s) => s.setProfileTarget)
   const { profile } = useProfileActions(client)
+  const { profileToReport } = useAutoprofile(client)
   const stageColumn = useSession((s) => s.stageColumn)
   const resetColumn = useSession((s) => s.resetColumn)
   const setColumnConfig = useSession((s) => s.setColumnConfig)
@@ -307,17 +309,27 @@ export function Rail({
                 })
               })()}
             </ul>
-            <button
-              className="profbtn"
-              onClick={() => {
-                setProfileTarget({ kind: 'source', table: ds.table })
-                setExploreView('profile')
-                void profile(ds.table)
-              }}
-              title="посмотреть распределения колонок источника"
-            >
-              <Icon name="profile" /> профиль источника
-            </button>
+            <div className="profbtn-row">
+              <button
+                className="profbtn"
+                onClick={() => {
+                  setProfileTarget({ kind: 'source', table: ds.table })
+                  setExploreView('profile')
+                  void profile(ds.table)
+                }}
+                title="посмотреть распределения колонок источника"
+              >
+                <Icon name="profile" /> профиль источника
+              </button>
+              <button
+                className="profbtn"
+                disabled={!!ds.profiling}
+                onClick={() => void profileToReport(ds.table)}
+                title="черновик отчёта из профиля: null-карта, распределения, топ значений"
+              >
+                <Icon name="pin" /> в отчёт
+              </button>
+            </div>
           </div>
         )
       })}

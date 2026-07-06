@@ -121,6 +121,7 @@ export function Report({ client }: { client: DuckDBClient }) {
           {report.blocks.map((block) => (
             <div
               key={block.id}
+              id={block.id}
               className={
                 block.id === activeBlockId
                   ? 'report-block active'
