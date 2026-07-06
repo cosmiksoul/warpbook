@@ -12,8 +12,11 @@ export function quoteLiteral(value: string): string {
 export function tableNameFromFilename(fileName: string): string {
   const base = fileName.replace(/\.[^.]+$/, '') // strip last extension
   let ident = base.replace(/[^A-Za-z0-9_]/g, '_') // invalid chars -> _
-  if (ident === '') return 'table'
+  // Кириллица/эмодзи целиком → одни подчёркивания: честный fallback.
+  if (ident === '' || /^_+$/.test(ident)) return 'table'
   if (/^[0-9]/.test(ident)) ident = `_${ident}` // identifiers cannot start with a digit
+  // Файл не может клоберить внутренние _qb_-объекты (и прятаться из рейла).
+  if (isInternalTable(ident)) ident = `f_${ident}`
   return ident
 }
 
@@ -83,10 +86,16 @@ export function resultTempName(tabId: string): string {
   return `${RESULT_PREFIX}${tabId}`
 }
 
-/** Strip ONE trailing `;` (+ whitespace): wrapping `... AS <select>;` with the
- *  semicolon inside is invalid SQL. */
+/** Снять хвост запроса: повторные `;` и line-комментарий ПОСЛЕ `;`
+ *  (`SELECT 1; -- прим`). Комментарий без `;` не трогаем — резать хвост
+ *  внутри строкового литерала ('--') без парсера небезопасно. */
 export function stripTrailingSemicolon(sql: string): string {
-  return sql.trim().replace(/;\s*$/, '').trim()
+  let s = sql.trim()
+  for (;;) {
+    const next = s.replace(/;\s*(--[^\n]*)?$/, '').trim()
+    if (next === s) return s
+    s = next
+  }
 }
 
 /**

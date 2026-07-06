@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { useSession } from '../state/session'
 import type { DuckDBClient } from '../db/duckdbClient'
 import { buildResetStatements } from '../core/resetPlan'
@@ -20,16 +20,24 @@ export function Shell({ client }: { client: DuckDBClient }) {
   const addDataset = useSession((s) => s.addDataset)
   const reset = useSession((s) => s.reset)
 
+  const inflightFiles = useRef(new Set<string>())
+
   async function handleFiles(files: File[]) {
-    const taken = useSession.getState().datasets.map((d) => d.table)
     for (const file of files) {
+      const key = `${file.name}:${file.size}`
+      if (inflightFiles.current.has(key)) continue // двойной дроп той же пачки
+      inflightFiles.current.add(key)
       try {
+        // taken — из ЖИВОГО стора на каждый файл: параллельная пачка не
+        // проверяет коллизии против устаревшего списка.
+        const taken = useSession.getState().datasets.map((d) => d.table)
         const ds = await loadOneFile(client, file, taken)
-        taken.push(ds.table)
         addDataset(ds)
       } catch (e) {
         // Per-file failure: surface, keep loading the rest.
         alert(`Не удалось загрузить ${file.name}: ${String(e)}`)
+      } finally {
+        inflightFiles.current.delete(key)
       }
     }
   }

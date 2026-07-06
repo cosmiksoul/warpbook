@@ -37,13 +37,15 @@ export function formatCell(value: unknown, type?: string): string {
   return String(value)
 }
 
-/** Disambiguate duplicate column names: ['id','id'] -> ['id','id_1']. */
+/** Disambiguate duplicate column names: ['id','id'] -> ['id','id_1'].
+ *  seen — по УЖЕ ВЫДАННЫМ именам: ['id','id','id_1'] не даёт двух id_1. */
 export function dedupeColumnNames(names: string[]): string[] {
-  const seen = new Map<string, number>()
+  const used = new Set<string>()
   return names.map((name) => {
-    const count = seen.get(name) ?? 0
-    seen.set(name, count + 1)
-    return count === 0 ? name : `${name}_${count}`
+    let candidate = name
+    for (let i = 1; used.has(candidate); i++) candidate = `${name}_${i}`
+    used.add(candidate)
+    return candidate
   })
 }
 

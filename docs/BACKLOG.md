@@ -63,15 +63,15 @@
 - [ ] **Toast: таймер не перезапускается при повторе того же сообщения; нет `role="status"`/`aria-live`.** Оценка: XS.
 - [ ] **a11y: dropzone и табы недоступны с клавиатуры.** `CsvDropzone` — кликабельный div без role/tabIndex/key-хендлера; `TabStrip` — div-табы. (+ уже записанный focus-trap `AboutModal`.) Оценка: S.
 - [x] **`exportQuery`: фиксированное имя `qb-export.*` и нет `finally`-очистки.** Закрыто: уникальный суффикс (`qb-export-N.*`, счётчик в замыкании клиента) + `try/finally` с `dropFile` в finally.
-- [ ] **TOCTOU-гонка идемпотентности: `Shell.handleFiles`.** Двойной клик/дроп может продублировать датасет (проверка `datasets.some` до async-работы). Module-level in-flight promise / in-flight guard. `loadDemoData`-половина закрыта (M9, inflight Set в `sampleData.ts`). Оценка: XS.
+- [x] **TOCTOU-гонка идемпотентности: `Shell.handleFiles`.** Двойной клик/дроп может продублировать датасет (проверка `datasets.some` до async-работы). Module-level in-flight promise / in-flight guard. `loadDemoData`-половина закрыта (M9, inflight Set в `sampleData.ts`). Оценка: XS.
 - [ ] **pruning: `a * b` подсвечивает все колонки; ASCII-only токены.** Арифметическая `*` трактуется как `SELECT *`; кириллические/пробельные имена колонок никогда не подсвечиваются. Оценка: S.
-- [ ] **`dedupeColumnNames`: ['id','id','id_1'] → второй `id_1` затирает первый.** Вести seen-set по УЖЕ выданным именам. Оценка: XS.
-- [ ] **Нет guard на `_qb_`-префикс имён файлов.** Файл `_qb_raw_events.csv` клоберит внутреннюю raw-таблицу `events` и невидим в рейле. Один `isInternalTable`-чек в `loadOneFile` (переименовать с префиксом `f_`, например). Оценка: XS.
-- [ ] **Кириллическое имя файла → `________`.** `tableNameFromFilename('продажи.csv')` даёт подчёркивания; fallback `'table'` не срабатывает. Оценка: XS.
+- [x] **`dedupeColumnNames`: ['id','id','id_1'] → второй `id_1` затирает первый.** Вести seen-set по УЖЕ выданным именам. Оценка: XS.
+- [x] **Нет guard на `_qb_`-префикс имён файлов.** Файл `_qb_raw_events.csv` клоберит внутреннюю raw-таблицу `events` и невидим в рейле. Один `isInternalTable`-чек в `loadOneFile` (переименовать с префиксом `f_`, например). Оценка: XS.
+- [x] **Кириллическое имя файла → `________`.** `tableNameFromFilename('продажи.csv')` даёт подчёркивания; fallback `'table'` не срабатывает. Оценка: XS.
 - [ ] **`.th-filter.on` не вешается.** CSS-правило индикатора активного фильтра есть, класс в `ResultGrid` не ставится — колонка с фильтром не помечена. Довести или удалить правило. Оценка: XS.
 - [ ] **toggleSort-цикл в `ResultPanel` — логика вне core.** asc→desc→remove + additive multi-sort — тестируемая логика в компоненте (TDD-граница CLAUDE.md). Вынести `cycleSort()` в `core/resultQuery.ts` под тесты. Оценка: S.
 - [ ] **Инфра-спринт (отдельным решением):** `noUncheckedIndexedAccess` в tsconfig (шумно, но ловит `rows[0]` на пустых результатах); type-aware ESLint (`recommendedTypeChecked` + `no-floating-promises`); CI-workflow на PR/ветках (сейчас гейт только на push в main). Оценка: M.
-- [ ] **`stripTrailingSemicolon` снимает только один `;`.** `SELECT 1;;` или `SELECT 1; -- комм` по-прежнему ломают обёртки. Редко; при желании — срезать хвостовые комментарии/повторные `;`. Оценка: XS.
+- [x] **`stripTrailingSemicolon` снимает только один `;`.** `SELECT 1;;` или `SELECT 1; -- комм` по-прежнему ломают обёртки. Редко; при желании — срезать хвостовые комментарии/повторные `;`. Оценка: XS.
 
 ### Известные-принятые (минор, из финального review M5 — не баги, фиксируем чтоб не потерять)
 

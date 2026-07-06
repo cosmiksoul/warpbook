@@ -39,6 +39,9 @@ describe('dedupeColumnNames', () => {
       'id_2',
     ])
   })
+  it('коллизия с уже выданным суффиксом не затирает колонку', () => {
+    expect(dedupeColumnNames(['id', 'id', 'id_1'])).toEqual(['id', 'id_1', 'id_1_1'])
+  })
 })
 
 describe('scaleDecimalDigits', () => {

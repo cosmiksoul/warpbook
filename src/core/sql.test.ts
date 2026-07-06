@@ -37,6 +37,12 @@ describe('tableNameFromFilename', () => {
   it('handles names with multiple dots (only last extension stripped)', () => {
     expect(tableNameFromFilename('a.b.csv')).toBe('a_b')
   })
+  it('кириллическое имя файла → fallback "table", не подчёркивания', () => {
+    expect(tableNameFromFilename('продажи.csv')).toBe('table')
+  })
+  it('файл с внутренним префиксом _qb_ получает префикс f_', () => {
+    expect(tableNameFromFilename('_qb_raw_events.csv')).toBe('f__qb_raw_events')
+  })
 })
 
 describe('uniqueTableName', () => {
@@ -143,6 +149,15 @@ describe('stripTrailingSemicolon', () => {
   })
   it('leaves a clean query untouched', () => {
     expect(stripTrailingSemicolon('SELECT 1')).toBe('SELECT 1')
+  })
+  it('повторные хвостовые ; снимаются все', () => {
+    expect(stripTrailingSemicolon('SELECT 1;;')).toBe('SELECT 1')
+  })
+  it('хвостовой комментарий после ; снимается вместе с ним', () => {
+    expect(stripTrailingSemicolon('SELECT 1; -- прим')).toBe('SELECT 1')
+  })
+  it('строковый литерал с -- в конце не трогается', () => {
+    expect(stripTrailingSemicolon("SELECT '--'")).toBe("SELECT '--'")
   })
 })
 
