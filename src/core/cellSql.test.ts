@@ -23,4 +23,18 @@ describe('extractDatasetNames', () => {
     expect(extractDatasetNames('', ['demo_users'])).toEqual([])
     expect(extractDatasetNames('SELECT 1', [])).toEqual([])
   })
+  it('таблица-тёзка колонки не матчится вне FROM/JOIN', () => {
+    expect(extractDatasetNames('SELECT id FROM orders', ['id', 'orders'])).toEqual(['orders'])
+  })
+  it('строковый литерал и комментарии не дают ложный источник', () => {
+    expect(
+      extractDatasetNames("SELECT 'from users' AS s FROM t -- join ghosts", ['users', 'ghosts', 't']),
+    ).toEqual(['t'])
+  })
+  it('FROM-перечисление, JOIN и кавычки идентификаторов', () => {
+    expect(extractDatasetNames('SELECT * FROM "a", b JOIN c ON 1=1', ['a', 'b', 'c'])).toEqual(['a', 'b', 'c'])
+  })
+  it('подзапрос в FROM не ломает разбор', () => {
+    expect(extractDatasetNames('SELECT * FROM (SELECT x, y FROM inner_t) q', ['inner_t', 'q', 'x'])).toEqual(['inner_t'])
+  })
 })

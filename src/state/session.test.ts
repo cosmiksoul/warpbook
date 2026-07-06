@@ -278,6 +278,16 @@ describe('session: source profile state (M3)', () => {
     expect(d.profile).toBeUndefined()
     expect(d.rowCount).toBeUndefined()
   })
+
+  it('setApplied инкрементирует поколение материализации (gen)', () => {
+    useSession.getState().addDataset({
+      table: 't1', fileName: 't1.csv', bytes: 1, kind: 'csv', columns: [{ name: 'a', type: 'VARCHAR' }],
+    })
+    useSession.getState().setApplied('t1', [{ name: 'a', type: 'BIGINT' }], {})
+    expect(useSession.getState().datasets[0].gen).toBe(1)
+    useSession.getState().setApplied('t1', [{ name: 'a', type: 'BIGINT' }], {})
+    expect(useSession.getState().datasets[0].gen).toBe(2)
+  })
 })
 
 describe('session: explore view + profile target (M3, shared)', () => {

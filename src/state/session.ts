@@ -26,6 +26,9 @@ export interface Dataset {
   // --- M7a: a mart (kind 'view'|'table') is a saved query; martSql is its
   // source SELECT (used to refresh a snapshot TABLE). Files have no martSql.
   martSql?: string
+  // Поколение материализации: setApplied пересоздаёт таблицу с тем же именем —
+  // зависимые ячейки отчёта узнают об этом через loadedKey (M7b-минор).
+  gen?: number
   // --- M2, only for kind === 'csv' ---
   rawTable?: string
   suggested?: { name: string; type: ColumnConfig['type'] }[]
@@ -378,6 +381,7 @@ export const useSession = create<SessionState>((set, get) => ({
               schemaError: null,
               profile: undefined, // re-materialized table -> stale profile
               rowCount: undefined,
+              gen: (d.gen ?? 0) + 1,
               columns: columns.map((c) => ({
                 name: c.name,
                 type: c.type,

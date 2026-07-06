@@ -37,8 +37,8 @@ export function WidgetBlockView({ block, client }: Props) {
   // would stay stuck on its missing-table error (the headline rehydration flow).
   const loadedKey = useSession((s) =>
     s.datasets
-      .map((d) => d.table)
-      .filter((t) => block.datasetNames.includes(t))
+      .filter((d) => block.datasetNames.includes(d.table))
+      .map((d) => `${d.table}:${d.gen ?? 0}`) // gen: re-apply схемы перезапускает ячейку
       .sort()
       .join('|'),
   )
@@ -142,14 +142,14 @@ export function WidgetBlockView({ block, client }: Props) {
     }
   }, [state.kind, block.vizType, chartData, block.id, client])
 
-  function commitDraft() {
-    if (draft.trim() === '') return
-    if (draft === block.sql) {
+  function commitDraft(sqlText = draft) {
+    if (sqlText.trim() === '') return
+    if (sqlText === block.sql) {
       setRunSeq((n) => n + 1) // без правки — просто пересчитать
       return
     }
     const known = datasets.filter((d) => !isInternalTable(d.table)).map((d) => d.table)
-    updateWidgetSql(block.id, draft, extractDatasetNames(draft, known))
+    updateWidgetSql(block.id, sqlText, extractDatasetNames(sqlText, known))
   }
 
   const error = state.kind === 'error' ? state.message : null
@@ -233,11 +233,11 @@ export function WidgetBlockView({ block, client }: Props) {
             compact
             value={draft}
             onChange={setDraft}
-            onRun={() => commitDraft()}
+            onRun={(sql) => commitDraft(sql)}
             schema={schema}
           />
           <div className="cell-actions">
-            <button className="cell-run" disabled={draft.trim() === ''} onClick={commitDraft}>
+            <button className="cell-run" disabled={draft.trim() === ''} onClick={() => commitDraft()}>
               ▸ выполнить
             </button>
             <button
