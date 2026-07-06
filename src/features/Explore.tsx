@@ -33,20 +33,22 @@ export function Explore({ client }: { client: DuckDBClient }) {
     await runQuery(tab.id, sql)
   }
 
-  // Refetch по смене view; повторный fetch УЖЕ лежащего окна (первый запуск,
-  // переключение таба) пропускаем — runQuery/прошлый fetch его обслужили.
+  // Refetch по смене view; повторный fetch УЖЕ застолблённого run'а (первый
+  // запуск, переключение таба) пропускаем — гвардим по windowSeq (стамп ДО
+  // await в runQuery/fetchWindow), а не по tab.window — оно заполняется
+  // позже, и на первом run'е успевает проскочить лишний рендер с window ещё
+  // null, что даёт двойной fetch ровно в момент стампа windowSeq.
   const view = tab?.view
-  const lastFetchKey = useRef(new Map<string, string>())
+  const lastFetchKey = useRef(new Map<string, { seq: number; key: string }>())
   useEffect(() => {
     if (!tab || tab.mode !== 'paged') return
     const key = JSON.stringify([view?.page, view?.pageSize, view?.sorts, view?.search, view?.filters])
+    const seq = tab.windowSeq ?? 0
     const prev = lastFetchKey.current.get(tab.id)
-    if (prev === undefined && tab.window != null) {
-      lastFetchKey.current.set(tab.id, key) // окно уже есть — только запомнить вид
-      return
-    }
-    if (prev === key && tab.window != null) return
-    lastFetchKey.current.set(tab.id, key)
+    lastFetchKey.current.set(tab.id, { seq, key })
+    if (!prev) return // первое появление таба в paged-режиме — окно уже несёт владелец run'а
+    if (prev.seq !== seq) return // новый run/fetch уже застолбил свой собственный fetch
+    if (prev.key === key) return // тот же вид — рефетчить нечего
     void fetchWindow(tab.id)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tab?.id, view?.page, view?.pageSize, JSON.stringify(view?.sorts), view?.search, JSON.stringify(view?.filters)])
