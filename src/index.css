@@ -649,6 +649,9 @@ body {
 .grid-th { display: flex; align-items: center; gap: 4px; justify-content: space-between; }
 .th-label { display: inline-flex; align-items: center; gap: 4px; cursor: pointer; user-select: none; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
 .th-label:hover { color: var(--accent); }
+/* Виджет отчёта: без колбэков заголовок — не контрол. */
+.th-label.static { cursor: default; }
+.th-label.static:hover { color: inherit; }
 .th-sort { color: var(--accent); font-size: 10px; }
 .th-filter { border: 0; background: transparent; color: var(--text-faint); cursor: pointer; font-size: 10px; padding: 0 2px; opacity: 0; }
 .grid-th:hover .th-filter, .th-filter.on { opacity: 1; }

@@ -4,6 +4,7 @@ import type { DuckDBClient } from '../db/duckdbClient'
 import { arrowToRows, type QueryResult } from '../core/arrowToRows'
 import { buildChartSpec } from '../core/chartSpec'
 import { buildCountSql, buildWindowSql, CHART_CAP, DEFAULT_VIEW } from '../core/resultQuery'
+import type { SortSpec } from '../core/resultQuery'
 import { useSession } from '../state/session'
 import { buildSqlSchema } from '../core/sqlSchema'
 import { extractDatasetNames } from '../core/cellSql'
@@ -17,6 +18,8 @@ interface Props {
   block: WidgetBlock
   client: DuckDBClient
 }
+
+const NO_SORTS: SortSpec[] = []
 
 type WidgetState =
   | { kind: 'idle' } // пустой sql — ячейка ждёт первый запрос
@@ -159,7 +162,10 @@ export function WidgetBlockView({ block, client }: Props) {
 
   // spec — по странице окна (типы/temporal-детект по образцу строки);
   // рисуем же график по chartData (до CHART_CAP строк из снапшота).
-  const spec = pageData ? buildChartSpec(pageData.columns, pageData.rows[0]) : null
+  const spec = useMemo(
+    () => (pageData ? buildChartSpec(pageData.columns, pageData.rows[0]) : null),
+    [pageData],
+  )
   const showChart = block.vizType === 'chart' && spec != null && ok
 
   return (
@@ -298,13 +304,7 @@ export function WidgetBlockView({ block, client }: Props) {
       )}
       {!error && !loading && ok && block.vizType === 'table' && pageData && (
         <>
-          <ResultGrid
-            result={pageData}
-            rowOffset={(page - 1) * pageSize}
-            sorts={[]}
-            onToggleSort={() => {}}
-            onOpenFilter={() => {}}
-          />
+          <ResultGrid result={pageData} rowOffset={(page - 1) * pageSize} sorts={NO_SORTS} />
           <ResultPager
             total={rowCount}
             page={page}

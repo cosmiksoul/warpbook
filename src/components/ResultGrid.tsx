@@ -1,4 +1,4 @@
-import { useRef } from 'react'
+import { memo, useRef } from 'react'
 import { useVirtualizer } from '@tanstack/react-virtual'
 import type { QueryResult } from '../core/arrowToRows'
 import { formatCell } from '../core/arrowToRows'
@@ -8,23 +8,25 @@ const ROW_H = 28
 const COL_W = 160
 const NUM_W = 56
 
-export function ResultGrid({
+export const ResultGrid = memo(function ResultGrid({
   result,
   sorts,
   rowOffset = 0,
   onToggleSort,
   onOpenFilter,
+  filteredCols,
 }: {
   result: QueryResult
   sorts: SortSpec[]
   rowOffset?: number
-  onToggleSort: (col: string, additive: boolean) => void
-  onOpenFilter: (col: string, rect: DOMRect) => void
+  onToggleSort?: (col: string, additive: boolean) => void
+  onOpenFilter?: (col: string, rect: DOMRect) => void
+  filteredCols?: string[]
 }) {
   const parentRef = useRef<HTMLDivElement>(null)
   const { columns, rows } = result
+  const filtered = new Set(filteredCols ?? [])
   // TanStack Virtual returns non-memoized fns; the hook is stable here. (known, accepted)
-  // eslint-disable-next-line react-hooks/incompatible-library
   const rowVirtualizer = useVirtualizer({
     count: rows.length,
     getScrollElement: () => parentRef.current,
@@ -44,15 +46,20 @@ export function ResultGrid({
           const dir = si >= 0 ? sorts[si].dir : null
           return (
             <div className="grid-cell grid-th" key={c.name} style={{ width: COL_W }} title={`${c.name}: ${c.type}`}>
-              <span className="th-label" onClick={(e) => onToggleSort(c.name, e.shiftKey)}>
+              <span
+                className={onToggleSort ? 'th-label' : 'th-label static'}
+                onClick={onToggleSort ? (e) => onToggleSort(c.name, e.shiftKey) : undefined}
+              >
                 {c.name}
                 {dir && <span className="th-sort">{dir === 'asc' ? '▲' : '▼'}{sorts.length > 1 ? si + 1 : ''}</span>}
               </span>
-              <button
-                className="th-filter"
-                title="фильтр по колонке"
-                onClick={(e) => onOpenFilter(c.name, (e.currentTarget as HTMLElement).getBoundingClientRect())}
-              >⏷</button>
+              {onOpenFilter && (
+                <button
+                  className={filtered.has(c.name) ? 'th-filter on' : 'th-filter'}
+                  title="фильтр по колонке"
+                  onClick={(e) => onOpenFilter(c.name, (e.currentTarget as HTMLElement).getBoundingClientRect())}
+                >⏷</button>
+              )}
             </div>
           )
         })}
@@ -91,4 +98,4 @@ export function ResultGrid({
       </div>
     </div>
   )
-}
+})

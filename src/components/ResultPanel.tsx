@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo, useCallback } from 'react'
 import { downloadResult } from '../features/exportResult'
 import { buildChartSpec } from '../core/chartSpec'
 import type { DuckDBClient } from '../db/duckdbClient'
@@ -86,20 +86,31 @@ export function ResultPanel({ meta, error, tabId, sql, client }: Props) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [view, tabId, tab?.mode, tab?.rowCount, resultView.search, JSON.stringify(resultView.filters), JSON.stringify(resultView.sorts)])
 
-  const spec = display ? buildChartSpec(display.columns, display.rows[0]) : null
+  const spec = useMemo(
+    () => (display ? buildChartSpec(display.columns, display.rows[0]) : null),
+    [display],
+  )
   const showChart = view === 'chart' && spec && display
 
   // For chart rendering: paged → bounded fetch; raw → in-memory window (already the full small result)
   const chartSrc = tab?.mode === 'paged' ? chartData : display
-  const chartSpec = chartSrc ? buildChartSpec(chartSrc.columns, chartSrc.rows[0]) : null
+  const chartSpec = useMemo(
+    () => (chartSrc ? buildChartSpec(chartSrc.columns, chartSrc.rows[0]) : null),
+    [chartSrc],
+  )
 
-  function toggleSort(col: string, additive: boolean) {
-    patchView(tabId, { sorts: cycleSort(resultView.sorts, col, additive), page: 1 })
-  }
+  const toggleSort = useCallback(
+    (col: string, additive: boolean) => {
+      patchView(tabId, { sorts: cycleSort(resultView.sorts, col, additive), page: 1 })
+    },
+    [patchView, tabId, resultView.sorts],
+  )
 
-  function openFilter(col: string, rect: DOMRect) {
+  const openFilter = useCallback((col: string, rect: DOMRect) => {
     setFilterCol({ col, rect })
-  }
+  }, [])
+
+  const filteredCols = useMemo(() => resultView.filters.map((f) => f.col), [resultView.filters])
 
   async function exportResult(format: 'csv' | 'parquet') {
     try {
@@ -313,6 +324,7 @@ export function ResultPanel({ meta, error, tabId, sql, client }: Props) {
           rowOffset={tab?.mode === 'paged' ? (resultView.page - 1) * resultView.pageSize : 0}
           onToggleSort={toggleSort}
           onOpenFilter={openFilter}
+          filteredCols={filteredCols}
         />
       )}
       {view !== 'profile' && !error && tab?.mode === 'paged' && display && (
