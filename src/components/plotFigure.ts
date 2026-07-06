@@ -14,10 +14,18 @@ export function plotFigure(
   // (аккуратные тики по месяцам), а не ординал с тиком на каждую из N дат.
   const data = spec.xDates
     ? rows.map((r) => ({ ...r, [spec.x]: r[spec.x] == null ? null : new Date(String(r[spec.x])) }))
-    : rows
+    : spec.xNumericStrings
+      ? rows.map((r) => ({ ...r, [spec.x]: r[spec.x] == null ? null : Number(r[spec.x]) }))
+      : rows
   const mark =
     spec.kind === 'bar'
-      ? Plot.barY(data, { x: spec.x, y: spec.y, sort: { x: '-y' }, fill: seriesColor })
+      ? Plot.barY(data, {
+          x: spec.x,
+          y: spec.y,
+          // Гистограммы (числовые лейблы) — в порядке бакетов; категории — value-ranking.
+          ...(spec.xNumericStrings ? {} : { sort: { x: '-y' } }),
+          fill: seriesColor,
+        })
       : Plot.lineY(data, { x: spec.x, y: spec.y, stroke: seriesColor, strokeWidth: 2 })
   return Plot.plot({
     marks: [mark, Plot.ruleY([0])],

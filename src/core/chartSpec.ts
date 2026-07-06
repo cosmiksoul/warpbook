@@ -15,6 +15,11 @@ function isIsoDateString(v: unknown): boolean {
   return typeof v === 'string' && /^\d{4}-\d{2}-\d{2}/.test(v)
 }
 
+/** Non-empty string that parses to a finite number (histogram bucket labels). */
+function isNumericString(v: unknown): boolean {
+  return typeof v === 'string' && v.trim() !== '' && Number.isFinite(Number(v))
+}
+
 export interface ChartSpec {
   kind: 'bar' | 'line'
   x: string
@@ -23,6 +28,9 @@ export interface ChartSpec {
   // иначе Observable Plot строит ординальную point-шкалу (тик на каждое значение
   // + warning). Не ставится для настоящих Arrow-дат — те уже приходят как Date.
   xDates?: boolean
+  // X-значения — числовые СТРОКИ (напр. `bucket::VARCHAR` автопрофиля): plotFigure
+  // мапит их в Number и не сортирует бары по -y — порядок бакетов сохраняется.
+  xNumericStrings?: boolean
 }
 
 /**
@@ -40,8 +48,10 @@ export function buildChartSpec(
   const y = columns.find((c) => isNumericType(c.type))
   if (!x || !y) return null
   const dateString = isIsoDateString(sample?.[x.name])
+  const numericString = !dateString && isNumericString(sample?.[x.name])
   const temporal = isTemporalType(x.type) || dateString
   const spec: ChartSpec = { kind: temporal ? 'line' : 'bar', x: x.name, y: y.name }
   if (dateString) spec.xDates = true
+  if (numericString) spec.xNumericStrings = true
   return spec
 }

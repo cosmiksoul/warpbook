@@ -78,3 +78,28 @@ describe('buildChartSpec', () => {
     ).toBeNull()
   })
 })
+
+describe('xNumericStrings (M10)', () => {
+  const cols = [
+    { name: 'от', type: 'Utf8' },
+    { name: 'строк', type: 'Int64' },
+  ]
+  it('числовая строка в X — ставит xNumericStrings', () => {
+    const spec = buildChartSpec(cols, { от: '3400.25', строк: 10 })
+    expect(spec).toMatchObject({ kind: 'bar', x: 'от', y: 'строк', xNumericStrings: true })
+    expect(spec?.xDates).toBeUndefined()
+  })
+  it('обычная категория — БЕЗ xNumericStrings (value-ranking не задет)', () => {
+    const spec = buildChartSpec(cols, { от: 'Adelie', строк: 10 })
+    expect(spec?.xNumericStrings).toBeUndefined()
+  })
+  it('ISO-дата остаётся xDates, не xNumericStrings', () => {
+    const spec = buildChartSpec(cols, { от: '2025-04-09', строк: 10 })
+    expect(spec?.xDates).toBe(true)
+    expect(spec?.xNumericStrings).toBeUndefined()
+  })
+  it('пустая строка и мусор — не числовые', () => {
+    expect(buildChartSpec(cols, { от: '', строк: 1 })?.xNumericStrings).toBeUndefined()
+    expect(buildChartSpec(cols, { от: '12abc', строк: 1 })?.xNumericStrings).toBeUndefined()
+  })
+})
