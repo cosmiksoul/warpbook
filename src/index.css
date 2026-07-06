@@ -393,8 +393,9 @@ body {
   padding: 7px 10px; border-radius: var(--radius-sm); cursor: pointer; font-size: 12.5px;
 }
 .profbtn:hover { background: transparent; border-color: var(--accent); color: var(--accent); }
-.profbtn-row { display: flex; gap: 6px; }
-.profbtn-row .profbtn { flex: 1; min-width: 0; }
+/* Вертикальный стек: в ряд «профиль источника» (170px текста) не влезает в половину рейла. */
+.profbtn-row { display: flex; flex-direction: column; }
+.profbtn-row .profbtn { min-width: 0; }
 .view-profile { padding: 4px 0; }
 .psub { font-family: var(--font-mono); font-size: 11px; color: var(--text-faint); padding: 4px 2px 12px; }
 .pgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 14px; }

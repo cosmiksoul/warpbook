@@ -32,8 +32,11 @@ export function useAutoprofile(client: DuckDBClient) {
     st.setMode('report')
     st.setToast(`профиль ${ds.fileName} добавлен: ${draft.filter((b) => b.type === 'widget').length} ячеек`)
     if (firstId) {
-      // Report ещё монтируется — скроллим после коммита рендера.
-      setTimeout(() => document.getElementById(firstId)?.scrollIntoView({ block: 'start', behavior: 'smooth' }), 60)
+      // Report ещё монтируется, а виджеты выше растут по мере самоисполнения
+      // и сносят позицию — скроллим дважды: сразу и докоррекция после загрузки.
+      for (const delay of [60, 700]) {
+        setTimeout(() => document.getElementById(firstId)?.scrollIntoView({ block: 'start', behavior: 'smooth' }), delay)
+      }
     }
   }
 
