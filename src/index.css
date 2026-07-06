@@ -33,6 +33,10 @@
 :root {
   font-family: 'IBM Plex Mono', ui-monospace, monospace;
   color-scheme: dark;
+  /* Глушим font boosting мобильных WebView (Telegram и т.п.): раздутый текст
+     двигает min-content флекс/грид-детей → контент вылезает за вьюпорт. */
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
 
   --bg: #05070a;
   --surface: #0a0f14;
@@ -542,7 +546,10 @@ body {
    нехватке места схлопывается в 0 → верх не клипается). Свирл/вуаль (absolute
    inset:0) покрывают первый экран — ниже фолда просто фон, принято. */
 .welcome-stage { position: relative; flex: 1; min-height: 0; display: flex; overflow-x: hidden; overflow-y: auto; }
-.welcome { max-width: 680px; margin: auto; padding: 32px; display: flex; flex-direction: column; gap: 20px; }
+/* width+min-width: флекс-айтем обязан ужиматься до ширины стейджа и стоять
+   по центру — иначе min-content (раздутый заголовок) сдвигает его влево
+   с клипом справа на узких вьюпортах. */
+.welcome { width: 100%; max-width: 680px; min-width: 0; margin: auto; padding: 32px; display: flex; flex-direction: column; gap: 20px; overflow-wrap: break-word; }
 .welcome-content { position: relative; z-index: 2; }
 .welcome-kicker { font-size: 11px; letter-spacing: .18em; text-transform: uppercase; color: var(--accent); display: flex; align-items: center; gap: 10px; }
 .welcome-kicker::before { content: ''; width: 26px; height: 1px; background: var(--accent); }
@@ -573,10 +580,10 @@ body {
   color: var(--text-faint);
 }
 .welcome-gallery-label + .sample-grid { margin-top: 8px; }
-.sample-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 18px 0 14px; text-align: left; }
+.sample-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin: 18px 0 14px; text-align: left; }
 /* Однородные карточки: мета (плашки+размер) -> тайтл -> блёрб -> кредит ->
    состояние, прибитое к низу; текст влево (у кнопки UA-дефолт center). */
-.sample-card { display: flex; flex-direction: column; gap: 6px; padding: 12px 14px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-sm); cursor: pointer; font: inherit; color: var(--text); text-align: left; }
+.sample-card { display: flex; flex-direction: column; gap: 6px; padding: 12px 14px; min-width: 0; overflow-wrap: break-word; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-sm); cursor: pointer; font: inherit; color: var(--text); text-align: left; }
 .sample-card:hover:not(:disabled) { border-color: var(--accent); }
 .sample-card.loaded { opacity: .6; cursor: default; }
 .sample-meta { display: flex; align-items: center; gap: 6px; }
@@ -587,13 +594,15 @@ body {
 .sample-credit { color: var(--text-faint); font-size: 11px; }
 .sample-state { font-family: var(--font-mono); font-size: 12px; color: var(--accent); margin-top: auto; padding-top: 4px; }
 .sample-card.loaded .sample-state { color: var(--text-faint); }
-@media (max-width: 720px) { .sample-grid, .welcome-actions { grid-template-columns: 1fr; } }
+@media (max-width: 720px) { .sample-grid, .welcome-actions { grid-template-columns: minmax(0, 1fr); } }
 
 /* --- M6 about modal --- */
 .about-btn { width: 26px; height: 26px; border-radius: 0; border: 1px solid var(--border); background: transparent; color: var(--text-dim); cursor: pointer; font-size: 14px; line-height: 1; }
 .about-btn:hover { background: transparent; border-color: var(--accent); color: var(--accent); }
 .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.55); display: grid; place-items: center; z-index: 60; padding: 24px; }
-.modal { position: relative; max-width: 480px; width: 100%; max-height: calc(100vh - 48px); overflow-y: auto; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 22px 24px; box-shadow: var(--shadow-card); color: var(--text-dim); line-height: 1.55; }
+/* border-box: width:100% на узком вьюпорте иначе прибавляет паддинг и бордер
+   СВЕРХ доступной ширины — модалка вылезает за экран телефона. */
+.modal { position: relative; box-sizing: border-box; max-width: 480px; width: 100%; min-width: 0; max-height: calc(100vh - 48px); overflow-y: auto; overflow-wrap: break-word; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 22px 24px; box-shadow: var(--shadow-card); color: var(--text-dim); line-height: 1.55; }
 .modal h2 { font-family: var(--font-serif); font-weight: 600; color: var(--text); font-size: 20px; margin-bottom: 6px; }
 .modal h3 { color: var(--text); font-size: 13px; text-transform: uppercase; letter-spacing: .04em; margin: 16px 0 4px; }
 .modal ul { padding-left: 18px; display: flex; flex-direction: column; gap: 2px; }
@@ -603,7 +612,7 @@ body {
 .modal-foot { margin-top: 16px; font-size: 12.5px; color: var(--text-faint); }
 
 /* --- M9 samples modal --- */
-.samples-modal { width: min(600px, calc(100vw - 32px)); }
+.samples-modal { width: 100%; max-width: 600px; }
 .link-btn { background: none; border: none; padding: 0; font: inherit; color: var(--accent); cursor: pointer; }
 .link-btn:hover { color: var(--accent-2); }
 .samples-note { color: var(--text-dim); font-size: 13px; }
