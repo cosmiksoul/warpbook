@@ -41,6 +41,8 @@ const qbEditorTheme = EditorView.theme(
   { dark: true },
 )
 
+export interface SqlEditorHistoryCtl { step: (dir: 1 | -1) => void }
+
 interface Props {
   value: string
   onChange: (value: string) => void
@@ -48,15 +50,17 @@ interface Props {
   schema?: Record<string, string[]>
   history?: string[]
   compact?: boolean
+  historyCtl?: { current: SqlEditorHistoryCtl | null }
+  onHistoryPos?: (pos: number | null) => void
 }
 
-export function SqlEditor({ value, onChange, onRun, schema, history, compact }: Props) {
+export function SqlEditor({ value, onChange, onRun, schema, history, compact, historyCtl, onHistoryPos }: Props) {
   const host = useRef<HTMLDivElement>(null)
   const view = useRef<EditorView | null>(null)
   // Keep latest callbacks in a ref so the mount-once extensions never go stale.
-  const cb = useRef({ onChange, onRun })
+  const cb = useRef({ onChange, onRun, onHistoryPos })
   // eslint-disable-next-line react-hooks/refs
-  cb.current = { onChange, onRun }
+  cb.current = { onChange, onRun, onHistoryPos }
 
   const schemaComp = useRef(new Compartment())
   const schemaRef = useRef(schema)
@@ -101,15 +105,14 @@ export function SqlEditor({ value, onChange, onRun, schema, history, compact }: 
     navigating.current = false
   }
 
-  function stepHistory(v: EditorView, dir: 1 | -1): boolean {
+  function notifyPos() {
+    cb.current.onHistoryPos?.(histPos.current)
+  }
+
+  // Ядро шага — общее для клавиатуры и кнопок ↑/↓ у «запустить».
+  function stepHistoryCore(v: EditorView, dir: 1 | -1): boolean {
     const list = histRef.current
     if (list.length === 0) return false
-    if (completionStatus(v.state) !== null) return false // стрелки — автокомплиту
-    const sel = v.state.selection.main
-    if (!sel.empty) return false
-    const line = v.state.doc.lineAt(sel.head)
-    if (dir === 1 && line.number !== 1) return false // старее — только с первой строки
-    if (dir === -1 && line.number !== v.state.doc.lines) return false // новее — с последней
     const pos = histPos.current
     if (dir === 1) {
       const next = pos === null ? 0 : pos + 1
@@ -117,27 +120,42 @@ export function SqlEditor({ value, onChange, onRun, schema, history, compact }: 
       if (pos === null) draftStash.current = v.state.doc.toString()
       histPos.current = next
       setDoc(v, list[list.length - 1 - next])
+      notifyPos()
       return true
     }
     if (pos === null) return false // не в истории — обычный ArrowDown
     if (pos === 0) {
       histPos.current = null
       setDoc(v, draftStash.current)
+      notifyPos()
       return true
     }
     histPos.current = pos - 1
     setDoc(v, list[list.length - 1 - histPos.current])
+    notifyPos()
     return true
   }
 
+  // Клавиатурный путь: guard'ы курсора/автокомплита, потом ядро.
+  function stepHistory(v: EditorView, dir: 1 | -1): boolean {
+    if (completionStatus(v.state) !== null) return false // стрелки — автокомплиту
+    const sel = v.state.selection.main
+    if (!sel.empty) return false
+    const line = v.state.doc.lineAt(sel.head)
+    if (dir === 1 && line.number !== 1) return false // старее — только с первой строки
+    if (dir === -1 && line.number !== v.state.doc.lines) return false // новее — с последней
+    return stepHistoryCore(v, dir)
+  }
+
   // Mount once. Do NOT depend on `value` (would recreate the editor per keystroke).
+  // eslint-disable-next-line react-hooks/immutability -- historyCtl is a parent-owned imperative handle, not render state
   useEffect(() => {
     const runKey = Prec.high(
       keymap.of([
         {
           key: 'Mod-Enter',
           run: (v) => {
-            histPos.current = null
+            if (histPos.current !== null) { histPos.current = null; notifyPos() }
             cb.current.onRun(v.state.doc.toString())
             return true // consume: no newline inserted
           },
@@ -150,7 +168,10 @@ export function SqlEditor({ value, onChange, onRun, schema, history, compact }: 
     ])
     const listener = EditorView.updateListener.of((u) => {
       if (u.docChanged) cb.current.onChange(u.state.doc.toString())
-      if (u.docChanged && !navigating.current) histPos.current = null
+      if (u.docChanged && !navigating.current && histPos.current !== null) {
+        histPos.current = null
+        notifyPos() // ручная правка выводит из истории — гасим счётчик
+      }
     })
     const state = EditorState.create({
       doc: value,
@@ -170,9 +191,16 @@ export function SqlEditor({ value, onChange, onRun, schema, history, compact }: 
     })
     const v = new EditorView({ state, parent: host.current! })
     view.current = v
+    if (historyCtl) {
+      // eslint-disable-next-line react-hooks/immutability -- imperative handle exposed by design (SqlEditorHistoryCtl)
+      historyCtl.current = {
+        step: (dir) => { if (view.current) stepHistoryCore(view.current, dir) },
+      }
+    }
     return () => {
       v.destroy()
       view.current = null
+      if (historyCtl) historyCtl.current = null
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])

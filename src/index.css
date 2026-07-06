@@ -140,6 +140,15 @@ body {
   border-color: var(--accent-2); color: var(--accent-2);
   box-shadow: 0 0 15px rgba(232,73,196,.32), inset 0 0 18px rgba(232,73,196,.10);
 }
+/* История запросов у кнопки запуска: счётчик + мышиный путь к ↑/↓. */
+.hist-ctl { display: inline-flex; align-items: center; gap: 4px; }
+.hist-btn {
+  border: 1px solid var(--border); background: transparent; color: var(--text-dim);
+  border-radius: var(--radius-sm); padding: 2px 8px; font-size: 12px; cursor: pointer;
+}
+.hist-btn:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); }
+.hist-btn:disabled { opacity: .35; cursor: default; }
+.hist-count { font-family: var(--font-mono); font-size: 11px; color: var(--text-faint); min-width: 34px; text-align: center; }
 .rail .dropzone { margin: 0 0 10px; padding: 12px 10px; font-size: 12px; }
 .body { display: flex; flex: 1; min-height: 0; }
 .statusline {

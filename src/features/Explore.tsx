@@ -1,8 +1,8 @@
-import { useEffect, useMemo, useRef } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useSession } from '../state/session'
 import type { DuckDBClient } from '../db/duckdbClient'
 import { useResultActions } from './useResultActions'
-import { SqlEditor } from '../components/SqlEditor'
+import { SqlEditor, type SqlEditorHistoryCtl } from '../components/SqlEditor'
 import { buildSqlSchema } from '../core/sqlSchema'
 import { ResultPanel } from '../components/ResultPanel'
 import { ProfilePanel } from '../components/ProfilePanel'
@@ -21,6 +21,12 @@ export function Explore({ client }: { client: DuckDBClient }) {
 
   const tab = tabs.find((t) => t.id === activeTabId) ?? null
   const { runQuery, fetchWindow, dropResult } = useResultActions(client)
+  const histCtl = useRef<SqlEditorHistoryCtl | null>(null)
+  const [histPos, setHistPos] = useState<number | null>(null)
+
+  // Свежий редактор таба стартует вне истории — счётчик тоже.
+  // eslint-disable-next-line react-hooks/set-state-in-effect
+  useEffect(() => { setHistPos(null) }, [tab?.id])
 
   async function run(sql: string) {
     if (!tab) return
@@ -68,6 +74,25 @@ export function Explore({ client }: { client: DuckDBClient }) {
           <button className="run-btn" onClick={() => run(tab.sql)}>
             <Icon name="play" /> запустить
           </button>
+          {history.length > 0 && (
+            <span className="hist-ctl" title="история запросов (или ↑/↓ в редакторе)">
+              <button
+                className="hist-btn"
+                aria-label="раньше в истории"
+                disabled={histPos === history.length - 1}
+                onClick={() => histCtl.current?.step(1)}
+              >↑</button>
+              <span className="hist-count">
+                {histPos === null ? history.length : `${history.length - histPos}/${history.length}`}
+              </span>
+              <button
+                className="hist-btn"
+                aria-label="позже в истории"
+                disabled={histPos === null}
+                onClick={() => histCtl.current?.step(-1)}
+              >↓</button>
+            </span>
+          )}
         </header>
         <SqlEditor
           key={tab.id}
@@ -76,6 +101,8 @@ export function Explore({ client }: { client: DuckDBClient }) {
           onRun={run}
           schema={schema}
           history={history}
+          historyCtl={histCtl}
+          onHistoryPos={setHistPos}
         />
       </section>
       <ResultPanel
