@@ -1,4 +1,5 @@
 import type { AsyncDuckDB } from '@duckdb/duckdb-wasm'
+import { readdirSync, rmSync } from 'node:fs'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import { arrowToRows } from '../core/arrowToRows'
 import { createClient, type DuckDBClient } from './duckdbClient'
@@ -12,7 +13,14 @@ beforeAll(async () => {
   client = createClient(db)
   await client.exec(`CREATE OR REPLACE TABLE t AS SELECT * FROM (VALUES (1,'a'),(2,'b'),(3,'c')) v(n, label)`)
 })
-afterAll(async () => { await db.terminate() })
+afterAll(async () => {
+  await db.terminate()
+  // Node-воркер DuckDB пишет COPY-файлы в реальный cwd (в браузере — virtual FS);
+  // прибираем артефакты qb-export-*/tmp_qb-export-* за собой.
+  for (const f of readdirSync(process.cwd())) {
+    if (/^(tmp_)?qb-export-\d+\.(csv|parquet)$/.test(f)) rmSync(f)
+  }
+})
 
 describe('exportQuery', () => {
   it('exports CSV with header + rows (and tolerates a trailing semicolon)', async () => {
