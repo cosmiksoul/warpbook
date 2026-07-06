@@ -37,6 +37,18 @@ export function buildOrderBy(sorts: SortSpec[]): string {
   return 'ORDER BY ' + sorts.map((s) => `${quoteIdent(s.col)} ${s.dir === 'desc' ? 'DESC' : 'ASC'}`).join(', ')
 }
 
+/** Клик по заголовку: asc → desc → снять; additive (shift) сохраняет остальные. */
+export function cycleSort(sorts: SortSpec[], col: string, additive: boolean): SortSpec[] {
+  const i = sorts.findIndex((s) => s.col === col)
+  if (i < 0) return additive ? [...sorts, { col, dir: 'asc' }] : [{ col, dir: 'asc' }]
+  if (sorts[i].dir === 'asc') {
+    const next = [...sorts]
+    next[i] = { col, dir: 'desc' }
+    return additive ? next : [{ col, dir: 'desc' }]
+  }
+  return additive ? sorts.filter((s) => s.col !== col) : []
+}
+
 function globalSearch(columns: string[], search: string): string | null {
   const q = search.trim()
   if (q === '') return null

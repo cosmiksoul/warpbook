@@ -69,7 +69,7 @@
 - [x] **Нет guard на `_qb_`-префикс имён файлов.** Файл `_qb_raw_events.csv` клоберит внутреннюю raw-таблицу `events` и невидим в рейле. Один `isInternalTable`-чек в `loadOneFile` (переименовать с префиксом `f_`, например). Оценка: XS.
 - [x] **Кириллическое имя файла → `________`.** `tableNameFromFilename('продажи.csv')` даёт подчёркивания; fallback `'table'` не срабатывает. Оценка: XS.
 - [ ] **`.th-filter.on` не вешается.** CSS-правило индикатора активного фильтра есть, класс в `ResultGrid` не ставится — колонка с фильтром не помечена. Довести или удалить правило. Оценка: XS.
-- [ ] **toggleSort-цикл в `ResultPanel` — логика вне core.** asc→desc→remove + additive multi-sort — тестируемая логика в компоненте (TDD-граница CLAUDE.md). Вынести `cycleSort()` в `core/resultQuery.ts` под тесты. Оценка: S.
+- [x] **toggleSort-цикл в `ResultPanel` — логика вне core.** asc→desc→remove + additive multi-sort — тестируемая логика в компоненте (TDD-граница CLAUDE.md). Вынести `cycleSort()` в `core/resultQuery.ts` под тесты. Оценка: S.
 - [ ] **Инфра-спринт (отдельным решением):** `noUncheckedIndexedAccess` в tsconfig (шумно, но ловит `rows[0]` на пустых результатах); type-aware ESLint (`recommendedTypeChecked` + `no-floating-promises`); CI-workflow на PR/ветках (сейчас гейт только на push в main). Оценка: M.
 - [x] **`stripTrailingSemicolon` снимает только один `;`.** `SELECT 1;;` или `SELECT 1; -- комм` по-прежнему ломают обёртки. Редко; при желании — срезать хвостовые комментарии/повторные `;`. Оценка: XS.
 

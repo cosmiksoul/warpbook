@@ -13,8 +13,8 @@ import { Chart } from './Chart'
 import { ProfilePanel } from './ProfilePanel'
 import { Icon } from './Icon'
 import { ColumnFilter as ColumnFilterPopover } from './ColumnFilter'
-import type { SortSpec, ColumnFilter } from '../core/resultQuery'
-import { DEFAULT_VIEW, CHART_CAP, buildWhere, buildOrderBy, buildEffectiveSql } from '../core/resultQuery'
+import type { ColumnFilter } from '../core/resultQuery'
+import { DEFAULT_VIEW, CHART_CAP, buildWhere, buildOrderBy, buildEffectiveSql, cycleSort } from '../core/resultQuery'
 import { resultTempName, quoteIdent } from '../core/sql'
 import { arrowToRows, type QueryResult } from '../core/arrowToRows'
 
@@ -94,13 +94,7 @@ export function ResultPanel({ meta, error, tabId, sql, client }: Props) {
   const chartSpec = chartSrc ? buildChartSpec(chartSrc.columns, chartSrc.rows[0]) : null
 
   function toggleSort(col: string, additive: boolean) {
-    const cur = resultView.sorts
-    const i = cur.findIndex((s) => s.col === col)
-    let next: SortSpec[]
-    if (i < 0) next = additive ? [...cur, { col, dir: 'asc' }] : [{ col, dir: 'asc' }]
-    else if (cur[i].dir === 'asc') { const c = [...cur]; c[i] = { col, dir: 'desc' }; next = additive ? c : [{ col, dir: 'desc' }] }
-    else next = additive ? cur.filter((s) => s.col !== col) : []
-    patchView(tabId, { sorts: next, page: 1 })
+    patchView(tabId, { sorts: cycleSort(resultView.sorts, col, additive), page: 1 })
   }
 
   function openFilter(col: string, rect: DOMRect) {

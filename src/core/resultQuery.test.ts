@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import {
   DEFAULT_VIEW, buildOrderBy, buildWhere, buildWindowSql, buildCountSql, buildEffectiveSql,
-  buildWidgetSql, WIDGET_ROW_CAP,
+  buildWidgetSql, WIDGET_ROW_CAP, cycleSort,
   type ResultView, type ColumnFilter,
 } from './resultQuery'
 
@@ -127,5 +127,22 @@ describe('buildWidgetSql', () => {
   })
   it('defaults to WIDGET_ROW_CAP', () => {
     expect(buildWidgetSql('SELECT 1')).toContain(`LIMIT ${WIDGET_ROW_CAP + 1}`)
+  })
+})
+
+describe('cycleSort', () => {
+  it('цикл одиночной сортировки: asc → desc → снять', () => {
+    expect(cycleSort([], 'a', false)).toEqual([{ col: 'a', dir: 'asc' }])
+    expect(cycleSort([{ col: 'a', dir: 'asc' }], 'a', false)).toEqual([{ col: 'a', dir: 'desc' }])
+    expect(cycleSort([{ col: 'a', dir: 'desc' }], 'a', false)).toEqual([])
+  })
+  it('без additive другая колонка заменяет сортировку целиком', () => {
+    expect(cycleSort([{ col: 'a', dir: 'asc' }], 'b', false)).toEqual([{ col: 'b', dir: 'asc' }])
+  })
+  it('additive (shift) добавляет и снимает, не трогая остальные', () => {
+    const two = cycleSort([{ col: 'a', dir: 'asc' }], 'b', true)
+    expect(two).toEqual([{ col: 'a', dir: 'asc' }, { col: 'b', dir: 'asc' }])
+    expect(cycleSort([{ col: 'a', dir: 'desc' }, { col: 'b', dir: 'asc' }], 'a', true))
+      .toEqual([{ col: 'b', dir: 'asc' }])
   })
 })
