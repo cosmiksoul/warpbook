@@ -504,9 +504,24 @@ body {
   * { transition: none !important; animation: none !important; }
 }
 @media (max-width: 720px) {
-  .body { flex-direction: column; }
-  .rail { width: auto; flex: none; border-right: 0; border-bottom: 1px solid var(--border); }
+  /* Колоночный режим: страница скроллится ЦЕЛИКОМ (естественный поток),
+     а не вложенные скролл-клетки внутри 100vh-шелла. dvh — мобильный URL-бар. */
+  .shell { height: auto; min-height: 100dvh; }
+  /* Топбар в две строки: лого+режимы / topbar-right (правое выравнивание
+     держит его margin-left: auto). Иначе min-content ~650px распирает страницу. */
+  .topbar { flex-wrap: wrap; row-gap: 4px; }
+  .body { flex: none; flex-direction: column; }
+  .rail { width: auto; flex: none; border-right: 0; border-bottom: 1px solid var(--border); overflow: visible; }
   .rail-resize { display: none; }
+  .workspace { flex: none; overflow: visible; }
+  .explore { flex: none; }
+  .report { flex: none; overflow: visible; }
+  /* Виртуализатору нужен ограниченный скролл-контейнер: в потоке страницы
+     flex-потолок исчезает — даём явный. Отчётные 320px не задеты
+     (.report-block .grid-scroll специфичнее). */
+  .grid-scroll { max-height: 60vh; }
+  /* Hero welcome не схлопывается в полоску при потоке. */
+  .welcome-stage { flex: none; min-height: 75vh; }
 }
 
 /* --- M6 welcome (terminal) --- */
