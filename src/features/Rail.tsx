@@ -57,15 +57,19 @@ export function Rail({
     const startX = e.clientX
     const startW = railW
     bar.setPointerCapture(e.pointerId)
-    const onMove = (ev: PointerEvent) =>
+    const onMove = (ev: PointerEvent) => {
+      if (ev.buttons === 0) { onUp(); return } // драг оборван без pointerup (alt-tab)
       setRailW(Math.min(RAIL_MAX, Math.max(RAIL_MIN, startW + (ev.clientX - startX))))
+    }
     const onUp = () => {
       bar.releasePointerCapture(e.pointerId)
       bar.removeEventListener('pointermove', onMove)
       bar.removeEventListener('pointerup', onUp)
+      bar.removeEventListener('pointercancel', onUp)
     }
     bar.addEventListener('pointermove', onMove)
     bar.addEventListener('pointerup', onUp)
+    bar.addEventListener('pointercancel', onUp)
   }
 
   const mode = useSession((s) => s.mode)

@@ -86,14 +86,19 @@ export function SqlEditor({ value, onChange, onRun, schema, history, compact, hi
     const startY = e.clientY
     const startH = host.current?.offsetHeight ?? height
     bar.setPointerCapture(e.pointerId)
-    const onMove = (ev: PointerEvent) => setHeight(Math.max(84, startH + (ev.clientY - startY)))
+    const onMove = (ev: PointerEvent) => {
+      if (ev.buttons === 0) { onUp(); return } // драг оборван без pointerup (alt-tab)
+      setHeight(Math.max(84, startH + (ev.clientY - startY)))
+    }
     const onUp = () => {
       bar.releasePointerCapture(e.pointerId)
       bar.removeEventListener('pointermove', onMove)
       bar.removeEventListener('pointerup', onUp)
+      bar.removeEventListener('pointercancel', onUp)
     }
     bar.addEventListener('pointermove', onMove)
     bar.addEventListener('pointerup', onUp)
+    bar.addEventListener('pointercancel', onUp)
   }
 
   function setDoc(v: EditorView, text: string) {
