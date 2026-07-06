@@ -1,4 +1,6 @@
-import { HISTOGRAM_BINS, TOP_K } from './profile'
+import type { ColumnProfile } from './profile'
+import { HISTOGRAM_BINS, TOP_K, THRESHOLD_DISTINCT } from './profile'
+import type { TextBlock, WidgetBlock } from './report'
 import { quoteIdent, quoteLiteral } from './sql'
 
 /** Максимум пер-колоночных ячеек в черновике (null-карта не считается). */
@@ -45,4 +47,65 @@ export function buildTopKSql(table: string, col: string): string {
   const t = quoteIdent(table)
   const c = quoteIdent(col)
   return `SELECT ${c} AS "значение", count(*) AS "строк"\nFROM ${t}\nWHERE ${c} IS NOT NULL\nGROUP BY 1 ORDER BY 2 DESC, 1 LIMIT ${TOP_K}`
+}
+
+/** Блок без id: id минтит стор (appendBlocks) — генератор чистый. */
+export type DraftBlock = Omit<TextBlock, 'id'> | Omit<WidgetBlock, 'id'>
+
+function isEligible(c: ColumnProfile): boolean {
+  if (c.kind === 'numeric') return c.stats != null && c.stats.min < c.stats.max
+  if (c.kind === 'categorical') return c.distinct >= 2 && c.distinct <= THRESHOLD_DISTINCT
+  return false // range, highCardinality
+}
+
+function skipReason(c: ColumnProfile): string {
+  if (c.kind === 'highCardinality') return 'высокая кардинальность'
+  if (c.kind === 'range') return 'дата/время'
+  if (c.kind === 'numeric') return 'нет размаха значений'
+  return 'одно значение'
+}
+
+/**
+ * Черновик профиля: заголовок -> null-карта (всегда) -> по элигибельным колонкам
+ * (порядок схемы, ≤ PROFILE_CELL_CAP) гистограмма или top-K -> хвост «без своей
+ * ячейки» с причинами (за капом / причина неэлигибельности).
+ */
+export function buildProfileDraft(input: {
+  table: string
+  fileName: string
+  rowCount: number
+  columns: ColumnProfile[]
+}): DraftBlock[] {
+  const { table, fileName, rowCount, columns } = input
+  const blocks: DraftBlock[] = [
+    {
+      type: 'text',
+      markdown: `## Профиль: ${fileName}\n\n\`${table}\` · ${rowCount} строк · ${columns.length} колонок`,
+    },
+    {
+      type: 'widget',
+      title: 'null-карта',
+      sql: buildNullMapSql(table, columns.map((c) => c.name)),
+      datasetNames: [table],
+      vizType: 'table',
+      caption: '',
+    },
+  ]
+
+  const eligible = columns.filter(isEligible)
+  const picked = new Set(eligible.slice(0, PROFILE_CELL_CAP))
+  for (const c of picked) {
+    blocks.push(
+      c.kind === 'numeric'
+        ? { type: 'widget', title: `${c.name} — распределение`, sql: buildHistogramCellSql(table, c.name), datasetNames: [table], vizType: 'chart', caption: '' }
+        : { type: 'widget', title: `${c.name} — топ значений`, sql: buildTopKSql(table, c.name), datasetNames: [table], vizType: 'chart', caption: '' },
+    )
+  }
+
+  const left = columns.filter((c) => !picked.has(c))
+  if (left.length > 0) {
+    const items = left.map((c) => `\`${c.name}\` (${eligible.includes(c) ? 'за капом' : skipReason(c)})`)
+    blocks.push({ type: 'text', markdown: `Без своей ячейки остались: ${items.join(', ')}.` })
+  }
+  return blocks
 }
