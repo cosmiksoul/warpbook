@@ -177,6 +177,7 @@ body {
   text-transform: uppercase; font-size: 10.5px; letter-spacing: .16em;
   color: var(--text-faint); margin: 14px 0 8px;
 }
+.rail-label-note { text-transform: lowercase; letter-spacing: .04em; }
 .sources { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 6px; }
 /* Бокс — на строке (li), чтобы ✕ жил внутри рамки; кнопки внутри — без своих рамок. */
 .source-row { display: flex; align-items: stretch; border: 1px solid var(--border-soft); }

@@ -49,6 +49,7 @@ export function ResultPanel({ meta, error, tabId, sql, client }: Props) {
   const [martName, setMartName] = useState('')
   const [martKind, setMartKind] = useState<MartKind>('view')
   const [martErr, setMartErr] = useState<string | null>(null)
+  const [martBusy, setMartBusy] = useState(false)
   const [searchDraft, setSearchDraft] = useState('')
   const [filterCol, setFilterCol] = useState<{ col: string; rect: DOMRect } | null>(null)
   const [chartData, setChartData] = useState<QueryResult | null>(null)
@@ -115,15 +116,21 @@ export function ResultPanel({ meta, error, tabId, sql, client }: Props) {
   }
 
   async function submitMart() {
-    const err = await createMart(martName, sql, martKind)
-    if (err) {
-      setMartErr(err)
-      return
+    if (martBusy) return // key-repeat Enter: гонка двойного сабмита → дубликат в сторе
+    setMartBusy(true)
+    try {
+      const err = await createMart(martName, sql, martKind)
+      if (err) {
+        setMartErr(err)
+        return
+      }
+      setToast(`витрина «${martName.trim()}» создана`)
+      setMartOpen(false)
+      setMartName('')
+      setMartErr(null)
+    } finally {
+      setMartBusy(false)
     }
-    setToast(`витрина «${martName.trim()}» создана`)
-    setMartOpen(false)
-    setMartName('')
-    setMartErr(null)
   }
 
   return (
@@ -264,7 +271,7 @@ export function ResultPanel({ meta, error, tabId, sql, client }: Props) {
               TABLE
             </button>
           </div>
-          <button className="mart-create" onClick={() => void submitMart()}>создать</button>
+          <button className="mart-create" disabled={martBusy} onClick={() => void submitMart()}>создать</button>
           <button
             className="mart-cancel"
             onClick={() => {

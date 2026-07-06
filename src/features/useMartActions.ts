@@ -58,8 +58,10 @@ export function useMartActions(client: DuckDBClient) {
     if (!ds || (ds.kind !== 'view' && ds.kind !== 'table')) return
     try {
       await client.exec(buildDropMart(name, ds.kind))
-    } catch {
-      // DROP IF EXISTS is idempotent; remove from the store regardless.
+    } catch (e) {
+      // IF EXISTS гасит только «не существует»; реальную ошибку (зависимость) —
+      // тостим, как refreshMart. Запись из стора убираем всё равно: объект эфемерен.
+      useSession.getState().setToast('Витрина убрана из списка, но объект в каталоге остался: ' + String(e))
     }
     useSession.getState().removeDataset(name)
   }

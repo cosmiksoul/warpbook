@@ -149,7 +149,9 @@ export function Rail({
 
       {marts.length > 0 && (
         <>
-          <div className="rail-section-label">Витрины</div>
+          <div className="rail-section-label">
+            Витрины <span className="rail-label-note">· живут до перезагрузки</span>
+          </div>
           <ul className="sources marts">
             {marts.map((m) => (
               <li className="mart-row" key={m.table}>

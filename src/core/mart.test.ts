@@ -54,4 +54,9 @@ describe('validateMartName', () => {
   it('accepts a fresh simple identifier', () => {
     expect(validateMartName('rev_by_day', ['payments'])).toBeNull()
   })
+  it('reserved-слова SQL отклоняются (цель валидации — не кавычить руками)', () => {
+    expect(validateMartName('order', [])).toBe('Это зарезервированное слово SQL')
+    expect(validateMartName('SELECT', [])).toBe('Это зарезервированное слово SQL')
+    expect(validateMartName('orders', [])).toBeNull()
+  })
 })

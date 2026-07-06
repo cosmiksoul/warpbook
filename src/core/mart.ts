@@ -16,6 +16,16 @@ export function buildDropMart(name: string, kind: MartKind): string {
 
 const NAME_RE = /^[A-Za-z_][A-Za-z0-9_]*$/
 
+// В DDL работают через quoteIdent, но ломают заявленную цель валидации
+// («не кавычить в ручном SQL»): SELECT * FROM order — синтакс-ошибка.
+const RESERVED = new Set([
+  'all', 'and', 'as', 'by', 'case', 'create', 'delete', 'distinct', 'drop',
+  'else', 'end', 'false', 'from', 'group', 'having', 'insert', 'join',
+  'limit', 'not', 'null', 'offset', 'on', 'or', 'order', 'select', 'table',
+  'then', 'true', 'union', 'update', 'using', 'values', 'view', 'when',
+  'where', 'with',
+])
+
 /**
  * Validate a mart name. Returns an inline error message (Russian) or null when
  * valid. Rules: non-empty after trim; a simple identifier (latin/digit/_, not
@@ -27,6 +37,7 @@ export function validateMartName(name: string, taken: string[]): string | null {
   if (n === '') return 'Введите имя витрины'
   if (!NAME_RE.test(n)) return 'Только латиница, цифры и _ (не с цифры)'
   if (isInternalTable(n)) return 'Это имя зарезервировано'
+  if (RESERVED.has(n.toLowerCase())) return 'Это зарезервированное слово SQL'
   if (taken.some((t) => t.toLowerCase() === n.toLowerCase())) return `Имя «${n}» уже занято`
   return null
 }
