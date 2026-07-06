@@ -16,5 +16,7 @@ node_modules/.tmp
 
 # The export round-trip test runs DuckDB `COPY TO`, which writes a real file into
 # CWD (qb-export.parquet is caught by *.parquet above; these two are not).
-qb-export.csv
-tmp_qb-export.*
+# Suffixed variants too (qb-export-3.csv, tmp_qb-export-2.parquet, …).
+qb-export*.csv
+qb-export*.parquet
+tmp_qb-export*

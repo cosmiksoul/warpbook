@@ -41,7 +41,7 @@ const qbEditorTheme = EditorView.theme(
   { dark: true },
 )
 
-export interface SqlEditorHistoryCtl { step: (dir: 1 | -1) => void }
+export interface SqlEditorHistoryCtl { step: (dir: 1 | -1) => void; reset: () => void }
 
 interface Props {
   value: string
@@ -200,6 +200,7 @@ export function SqlEditor({ value, onChange, onRun, schema, history, compact, hi
       // eslint-disable-next-line react-hooks/immutability -- imperative handle exposed by design (SqlEditorHistoryCtl)
       historyCtl.current = {
         step: (dir) => { if (view.current) stepHistoryCore(view.current, dir) },
+        reset: () => { if (histPos.current !== null) { histPos.current = null; notifyPos() } },
       }
     }
     return () => {

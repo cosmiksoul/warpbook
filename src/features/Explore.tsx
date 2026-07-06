@@ -30,6 +30,7 @@ export function Explore({ client }: { client: DuckDBClient }) {
 
   async function run(sql: string) {
     if (!tab) return
+    histCtl.current?.reset() // header-кнопка «запустить» тоже сбрасывает курсор истории
     await runQuery(tab.id, sql)
   }
 
@@ -49,7 +50,15 @@ export function Explore({ client }: { client: DuckDBClient }) {
     if (!prev) return // первое появление таба в paged-режиме — окно уже несёт владелец run'а
     if (prev.seq !== seq) return // новый run/fetch уже застолбил свой собственный fetch
     if (prev.key === key) return // тот же вид — рефетчить нечего
-    void fetchWindow(tab.id)
+    // Минтим и штампуем seq САМИ здесь же, синхронно с записью в map — иначе
+    // map хранит seq, прочитанный ДО фетча, а standalone-ветка fetchWindow
+    // синхронно штампует НОВЫЙ seq в сторе → к следующей смене вида map
+    // отстаёт от стора и проверка выше ложно решает «чужой seq», глотая рефетч.
+    const st = useSession.getState()
+    const ownSeq = st.nextWindowSeq()
+    st.stampWindowSeq(tab.id, ownSeq)
+    lastFetchKey.current.set(tab.id, { seq: ownSeq, key })
+    void fetchWindow(tab.id, ownSeq)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tab?.id, view?.page, view?.pageSize, JSON.stringify(view?.sorts), view?.search, JSON.stringify(view?.filters)])
 

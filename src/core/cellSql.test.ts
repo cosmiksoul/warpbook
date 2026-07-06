@@ -37,4 +37,7 @@ describe('extractDatasetNames', () => {
   it('подзапрос в FROM не ломает разбор', () => {
     expect(extractDatasetNames('SELECT * FROM (SELECT x, y FROM inner_t) q', ['inner_t', 'q', 'x'])).toEqual(['inner_t'])
   })
+  it('апостроф в комментарии не заглатывает SQL до следующего литерала', () => {
+    expect(extractDatasetNames("SELECT * FROM t -- don't\nJOIN users ON 1=1 WHERE x = 'bob'", ['t', 'users'])).toEqual(['t', 'users'])
+  })
 })

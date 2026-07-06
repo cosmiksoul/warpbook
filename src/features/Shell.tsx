@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react'
+import { useCallback, useRef, useState } from 'react'
 import { useSession } from '../state/session'
 import type { DuckDBClient } from '../db/duckdbClient'
 import { buildResetStatements } from '../core/resetPlan'
@@ -13,6 +13,7 @@ import { AboutModal } from '../components/AboutModal'
 
 export function Shell({ client }: { client: DuckDBClient }) {
   const [aboutOpen, setAboutOpen] = useState(false)
+  const closeAbout = useCallback(() => setAboutOpen(false), [])
   const mode = useSession((s) => s.mode)
   const setMode = useSession((s) => s.setMode)
   const datasets = useSession((s) => s.datasets)
@@ -100,7 +101,7 @@ export function Shell({ client }: { client: DuckDBClient }) {
         <span className="sl-right">MIT · v1</span>
       </footer>
       <Toast />
-      {aboutOpen && <AboutModal onClose={() => setAboutOpen(false)} />}
+      {aboutOpen && <AboutModal onClose={closeAbout} />}
     </div>
   )
 }

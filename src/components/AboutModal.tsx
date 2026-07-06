@@ -6,7 +6,7 @@ export function AboutModal({ onClose }: { onClose: () => void }) {
   useEffect(() => {
     const opener = document.activeElement as HTMLElement | null
     const box = boxRef.current
-    box?.querySelector<HTMLElement>('button, a')?.focus()
+    box?.querySelector<HTMLElement>('button, a[href]')?.focus()
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') { onClose(); return }
       if (e.key !== 'Tab' || !box) return
