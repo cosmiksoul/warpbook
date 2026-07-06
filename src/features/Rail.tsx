@@ -327,7 +327,7 @@ export function Rail({
                 onClick={() => void profileToReport(ds.table)}
                 title="черновик отчёта из профиля: null-карта, распределения, топ значений"
               >
-                <Icon name="pin" /> в отчёт
+                <Icon name="pin" /> автопрофиль
               </button>
             </div>
           </div>
