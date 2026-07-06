@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react'
 
-export function AboutModal({ onClose }: { onClose: () => void }) {
+export function AboutModal({ onClose, onOpenSamples }: { onClose: () => void; onOpenSamples: () => void }) {
   const boxRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -47,6 +47,7 @@ export function AboutModal({ onClose }: { onClose: () => void }) {
         </ul>
         <h3>Данные демо</h3>
         <p>Из учебника «SQL 101: Рецепты продуктового аналитика» (MIT).</p>
+        <p><button className="link-btn" onClick={onOpenSamples}>учебные датасеты (сэмплы) →</button></p>
         <p className="modal-foot">
           MIT ·{' '}
           <a href="https://github.com/cosmiksoul/sql-product-analytics-cookbook" target="_blank" rel="noopener noreferrer">учебник</a>

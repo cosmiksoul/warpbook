@@ -10,10 +10,15 @@ import { Toast } from '../components/Toast'
 import { Icon } from '../components/Icon'
 import { WelcomeScreen } from '../components/WelcomeScreen'
 import { AboutModal } from '../components/AboutModal'
+import { SamplesModal } from '../components/SamplesModal'
 
 export function Shell({ client }: { client: DuckDBClient }) {
   const [aboutOpen, setAboutOpen] = useState(false)
+  const [samplesOpen, setSamplesOpen] = useState(false)
   const closeAbout = useCallback(() => setAboutOpen(false), [])
+  const closeSamples = useCallback(() => setSamplesOpen(false), [])
+  // Из хелпа в сэмплы: закрываем «?», открываем витрину — модалки не стекуются.
+  const openSamples = useCallback(() => { setAboutOpen(false); setSamplesOpen(true) }, [])
   const mode = useSession((s) => s.mode)
   const setMode = useSession((s) => s.setMode)
   const datasets = useSession((s) => s.datasets)
@@ -101,7 +106,8 @@ export function Shell({ client }: { client: DuckDBClient }) {
         <span className="sl-right">MIT · v1</span>
       </footer>
       <Toast />
-      {aboutOpen && <AboutModal onClose={closeAbout} />}
+      {aboutOpen && <AboutModal onClose={closeAbout} onOpenSamples={openSamples} />}
+      {samplesOpen && <SamplesModal client={client} onClose={closeSamples} />}
     </div>
   )
 }

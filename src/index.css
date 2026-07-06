@@ -403,7 +403,7 @@ body {
   border: 1px solid var(--border); border-radius: 0; padding: 1px 5px;
 }
 .pc-distinct { margin-left: auto; font-family: var(--font-mono); font-size: 10px; color: var(--text-dim); }
-.pc-distinct.pc-null { color: var(--danger); }
+.pc-distinct.pc-null { color: var(--accent-2); }
 .pc-rows { padding: 10px 13px; display: flex; flex-direction: column; gap: 8px; }
 .pc-row { display: grid; grid-template-columns: 70px 1fr 50px; align-items: center; gap: 9px; }
 .pc-row .pv {
@@ -603,8 +603,6 @@ body {
 .modal-foot { margin-top: 16px; font-size: 12.5px; color: var(--text-faint); }
 
 /* --- M9 samples modal --- */
-.rail-samples { display: block; width: 100%; margin: 6px 0 2px; padding: 4px 6px; background: none; border: none; text-align: left; font-family: var(--font-mono); font-size: 12px; color: var(--text-faint); cursor: pointer; }
-.rail-samples:hover { color: var(--accent); }
 .samples-modal { width: min(600px, calc(100vw - 32px)); }
 .link-btn { background: none; border: none; padding: 0; font: inherit; color: var(--accent); cursor: pointer; }
 .link-btn:hover { color: var(--accent-2); }
