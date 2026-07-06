@@ -172,7 +172,7 @@ export function ResultPanel({ meta, error, tabId, sql, client }: Props) {
               onClick={() => {
                 setProfileTarget({ kind: 'result', tabId })
                 setView('profile')
-                void profileResult(tabId, sql)
+                void profileResult(tabId)
               }}
             >
               профиль

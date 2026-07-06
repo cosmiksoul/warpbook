@@ -2,6 +2,7 @@ import { tableFromJSON } from 'apache-arrow'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { useProfileActions } from './useProfileActions'
 import { useSession, type Dataset } from '../state/session'
+import type { DuckDBClient } from '../db/duckdbClient'
 
 // vi.mock of this module can't intercept profileRelation's in-module call, so we
 // exercise the orchestrator guards (cache no-op, profiling flag, error routing)
@@ -91,78 +92,58 @@ describe('useProfileActions.profile (source orchestrator)', () => {
 // NOTE: the result orchestrator can't be tested by mocking profileRelation —
 // profileResult calls it via an in-module binding that vi.mock cannot rebind in
 // this ESM build (same reason the source tests use a stub client, see top). So we
-// exercise profileResult's guards against the same stub client: exec() captures
-// the materialize DDL, query() drives the real profileRelation over the result
-// table name. The stub's lone 'id' column stands in for whatever the SELECT yields.
+// exercise profileResult's guards against the same stub client: query() drives
+// the real profileRelation over the result table name (already materialized by
+// run() — profileResult itself never issues DDL anymore).
+function seedTab(id: string, mode: 'paged' | 'raw') {
+  useSession.setState({
+    tabs: [{
+      id, title: id, datasetTable: null, sql: 'SELECT 1', meta: null, error: null,
+      mode, columns: [{ name: 'x', type: 'BIGINT' }],
+    }],
+  })
+}
+
 describe('useProfileActions.profileResult (result orchestrator)', () => {
-  it('materializes the SQL into the result table then stores profiles + rowCount', async () => {
-    useSession.getState().openOrFocusTab('events')
-    const id = useSession.getState().tabs[0].id
+  it('paged-таб профилирует снапшот и НЕ материализует черновик редактора', async () => {
+    const calls: string[] = []
+    const stub = {
+      exec: async (sql: string) => { calls.push(sql) },
+      query: vi.fn(async (sql: string) => stubQuery(sql)),
+    } as unknown as DuckDBClient
+    seedTab('tab-1', 'paged')
+    await useProfileActions(stub).profileResult('tab-1')
+    expect(calls.filter((s) => s.startsWith('CREATE'))).toHaveLength(0) // снапшот уже есть
+    const t = useSession.getState().tabs.find((t) => t.id === 'tab-1')
+    expect(t?.resultProfile?.[0].name).toBe('id')
+    expect(t?.resultRowCount).toBe(42)
+    expect(t?.resultProfiling).toBe(false)
+    expect(t?.resultProfileError).toBeNull()
+  })
 
-    await useProfileActions(okClient).profileResult(id, 'SELECT 1 AS total')
-
-    // exec materialized the result table via buildResultTempDDL (regular TABLE).
-    const exec = okClient.exec as ReturnType<typeof vi.fn>
-    expect(exec).toHaveBeenCalledTimes(1)
-    expect(exec.mock.calls[0][0]).toContain('CREATE OR REPLACE TABLE "_qb_result_')
-    expect(exec.mock.calls[0][0]).not.toContain('TEMP')
-    // profileRelation then ran over the result table name (SUMMARIZE "_qb_result_<id>").
-    const query = okClient.query as ReturnType<typeof vi.fn>
-    expect(query.mock.calls[0][0]).toBe(`SUMMARIZE "_qb_result_${id}"`)
-    const t = useSession.getState().tabs[0]
-    expect(t.resultProfile?.[0].name).toBe('id')
-    expect(t.resultRowCount).toBe(42)
-    expect(t.resultProfiling).toBe(false)
-    expect(t.resultProfileError).toBeNull()
+  it('raw-таб честно говорит, что профилировать нечего', async () => {
+    const stub = { exec: async () => {}, query: async () => { throw new Error('unused') } } as unknown as DuckDBClient
+    seedTab('tab-2', 'raw')
+    await useProfileActions(stub).profileResult('tab-2')
+    expect(useSession.getState().tabs.find((t) => t.id === 'tab-2')?.resultProfileError)
+      .toContain('SELECT')
   })
 
   it('is a no-op when the tab already has a cached result profile', async () => {
-    useSession.getState().openOrFocusTab('events')
-    const id = useSession.getState().tabs[0].id
-    useSession.getState().setResultProfile(id, [], 0)
-    await useProfileActions(okClient).profileResult(id, 'SELECT 1')
+    seedTab('tab-3', 'paged')
+    useSession.getState().setResultProfile('tab-3', [], 0)
+    await useProfileActions(okClient).profileResult('tab-3')
     expect(okClient.exec).not.toHaveBeenCalled()
     expect(okClient.query).not.toHaveBeenCalled()
   })
 
-  it('is a no-op for empty/whitespace SQL', async () => {
-    useSession.getState().openOrFocusTab('events')
-    const id = useSession.getState().tabs[0].id
-    await useProfileActions(okClient).profileResult(id, '   \n  ')
-    expect(okClient.exec).not.toHaveBeenCalled()
-  })
-
-  it('routes a thrown exec error to setResultProfileError and does not throw', async () => {
-    const exec = vi.fn().mockRejectedValue(new Error('bad sql'))
-    const client = { exec } as unknown as Parameters<typeof useProfileActions>[0]
-    useSession.getState().openOrFocusTab('events')
-    const id = useSession.getState().tabs[0].id
+  it('routes a thrown query error to setResultProfileError and does not throw', async () => {
+    seedTab('tab-4', 'paged')
     await expect(
-      useProfileActions(client).profileResult(id, 'SELECT bogus'),
+      useProfileActions(boomClient).profileResult('tab-4'),
     ).resolves.toBeUndefined()
-    const t = useSession.getState().tabs[0]
-    expect(t.resultProfileError).toContain('bad sql')
-    expect(t.resultProfiling).toBe(false)
-  })
-
-  it('skips re-materialization when tab is already in paged mode (M8 warm path)', async () => {
-    useSession.getState().openOrFocusTab('events')
-    const id = useSession.getState().tabs[0].id
-    // Simulate run() having already materialized the snapshot table.
-    useSession.getState().setResultMeta(id, { columns: [{ name: 'id', type: 'BIGINT' }], rowCount: 42, ms: 1 })
-
-    await useProfileActions(okClient).profileResult(id, 'SELECT 1 AS total')
-
-    // exec must NOT be called — the snapshot table is already present.
-    expect(okClient.exec).not.toHaveBeenCalled()
-    // profileRelation must still have run: first query is SUMMARIZE over the result table.
-    const query = okClient.query as ReturnType<typeof vi.fn>
-    expect(query.mock.calls[0][0]).toBe(`SUMMARIZE "_qb_result_${id}"`)
-    // Profile and rowCount must land on the tab.
-    const t = useSession.getState().tabs[0]
-    expect(t.resultProfile?.[0].name).toBe('id')
-    expect(t.resultRowCount).toBe(42)
-    expect(t.resultProfiling).toBe(false)
-    expect(t.resultProfileError).toBeNull()
+    const t = useSession.getState().tabs.find((t) => t.id === 'tab-4')
+    expect(t?.resultProfileError).toContain('boom')
+    expect(t?.resultProfiling).toBe(false)
   })
 })

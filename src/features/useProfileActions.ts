@@ -13,7 +13,7 @@ import {
   THRESHOLD_DISTINCT,
   TOP_K,
 } from '../core/profile'
-import { buildResultTempDDL, quoteIdent, resultTempName } from '../core/sql'
+import { quoteIdent, resultTempName } from '../core/sql'
 import type { DuckDBClient } from '../db/duckdbClient'
 import { useSession } from '../state/session'
 
@@ -110,16 +110,23 @@ export function useProfileActions(client: DuckDBClient) {
     }
   }
 
-  async function profileResult(tabId: string, sql: string): Promise<void> {
+  /**
+   * Result-target: профиль ОТОБРАЖАЕМОГО результата. Paged-таб — это снапшот
+   * _qb_result_<tab> последнего запуска (run уже материализовал — DDL не нужен
+   * и НЕ берётся из черновика редактора, который мог не запускаться).
+   * Raw-результат (не-SELECT: PRAGMA/дот-команда) не материализован — честная
+   * ошибка вместо профиля черновика.
+   */
+  async function profileResult(tabId: string): Promise<void> {
     const st = useSession.getState()
     const tab = st.tabs.find((t) => t.id === tabId)
     if (!tab || tab.resultProfile) return // cached -> no-op
-    if (!sql.trim()) return // nothing to materialize
+    if (tab.mode !== 'paged') {
+      st.setResultProfileError(tabId, 'профиль доступен для результатов SELECT-запросов')
+      return
+    }
     st.setResultProfiling(tabId, true)
     try {
-      // run() (M8) already materializes _qb_result_<tab> for paged results — reuse it.
-      // Only materialize ourselves if the table isn't already present (raw mode / not yet run).
-      if (tab.mode !== 'paged') await client.exec(buildResultTempDDL(tabId, sql))
       const { profiles, rowCount } = await profileRelation(client, resultTempName(tabId))
       useSession.getState().setResultProfile(tabId, profiles, rowCount)
     } catch (e) {

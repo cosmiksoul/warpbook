@@ -47,8 +47,16 @@ export function ProfilePanel() {
   }
 
   if (error) return <pre className="result-error">{error}</pre>
-  if (profiling || !profiles) {
-    return <p className="result-empty">считаю профиль…</p>
+  if (profiling) return <p className="result-empty">считаю профиль…</p>
+  if (!profiles) {
+    // после re-apply схемы кэш сброшен, но никто не считает — не врём спиннером
+    return (
+      <p className="result-empty">
+        {target.kind === 'source'
+          ? 'профиль не посчитан — нажми «профиль источника» в рейле'
+          : 'профиль не посчитан — нажми «профиль» над результатом'}
+      </p>
+    )
   }
 
   const rowsLabel = rowCount != null ? `${fmt(rowCount)} строк` : ''
