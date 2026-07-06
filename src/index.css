@@ -393,6 +393,7 @@ body {
   padding: 7px 10px; border-radius: var(--radius-sm); cursor: pointer; font-size: 12.5px;
 }
 .profbtn:hover { background: transparent; border-color: var(--accent); color: var(--accent); }
+.profbtn-auto:hover { border-color: var(--accent-2); color: var(--accent-2); }
 /* Вертикальный стек: в ряд «профиль источника» (170px текста) не влезает в половину рейла. */
 .profbtn-row { display: flex; flex-direction: column; }
 .profbtn-row .profbtn { min-width: 0; }

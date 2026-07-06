@@ -322,12 +322,12 @@ export function Rail({
                 <Icon name="profile" /> профиль источника
               </button>
               <button
-                className="profbtn"
+                className="profbtn profbtn-auto"
                 disabled={!!ds.profiling}
                 onClick={() => void profileToReport(ds.table)}
                 title="черновик отчёта из профиля: null-карта, распределения, топ значений"
               >
-                <Icon name="pin" /> автопрофиль
+                <Icon name="pin" /> автопрофиль-отчёт
               </button>
             </div>
           </div>
