@@ -46,6 +46,8 @@ export function createClient(db: AsyncDuckDB): DuckDBClient {
     }
   }
 
+  let exportSeq = 0
+
   return {
     async registerFile(name, data) {
       await db.registerFileBuffer(name, data)
@@ -77,13 +79,17 @@ export function createClient(db: AsyncDuckDB): DuckDBClient {
     query: run,
     async exportQuery(sql, format) {
       const ext = format === 'parquet' ? 'parquet' : 'csv'
-      const fname = `qb-export.${ext}`
+      // Уникальный суффикс: параллельные экспорты не делят виртуальный файл.
+      const fname = `qb-export-${++exportSeq}.${ext}`
       const select = stripTrailingSemicolon(sql)
       const fmt = format === 'parquet' ? 'PARQUET' : 'CSV, HEADER'
-      await run(`COPY (${select}) TO '${fname}' (FORMAT ${fmt})`)
-      const buf = await db.copyFileToBuffer(fname)
-      await db.dropFile(fname)
-      return buf
+      try {
+        await run(`COPY (${select}) TO '${fname}' (FORMAT ${fmt})`)
+        return await db.copyFileToBuffer(fname)
+      } finally {
+        // Упавший COPY/copyFileToBuffer не должен течь пином буфера.
+        try { await db.dropFile(fname) } catch { /* файла может не быть */ }
+      }
     },
   }
 }

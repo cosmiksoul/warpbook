@@ -153,6 +153,15 @@ describe('buildReportHtml — chart / empty / sql / order', () => {
     expect(html).toContain('SELECT 1')
   })
 
+  it('chart-виджет без числовой колонки несёт ту же пометку, что живой', () => {
+    const doc: ReportDoc = {
+      version: 1,
+      blocks: [{ type: 'widget', id: 'w1', title: 'W', sql: 'SELECT 1', datasetNames: [], vizType: 'chart', caption: '' }],
+    }
+    const html = buildReportHtml(doc, { w1: { kind: 'nochart' } })
+    expect(html).toContain('нет числовой колонки для графика')
+  })
+
   it('preserves block order', () => {
     const d: ReportDoc = {
       version: 1,

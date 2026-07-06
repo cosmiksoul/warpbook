@@ -9,6 +9,7 @@ export type RenderedWidget =
   | { kind: 'table'; result: QueryResult }
   | { kind: 'chart'; svg: string }
   | { kind: 'empty'; missing: string[] }
+  | { kind: 'nochart' } // сохранённый vizType 'chart', но в пересчёте нет числовой колонки
 
 export const EXPORT_ROW_CAP = 5000
 
@@ -69,6 +70,7 @@ function renderResult(r: RenderedWidget | undefined): string {
       ? `<p class="qb-empty">нет данных: ${escapeHtml(r.missing.join(', '))} — подгрузи источник(и)</p>`
       : `<p class="qb-empty">нет данных</p>`
   }
+  if (r.kind === 'nochart') return `<p class="qb-empty">нет числовой колонки для графика</p>`
   return renderTable(r.result)
 }
 

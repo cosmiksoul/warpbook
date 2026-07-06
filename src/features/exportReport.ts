@@ -6,7 +6,7 @@ import { buildReportHtml, EXPORT_ROW_CAP, type RenderedWidget } from '../core/ex
 import { plotFigure } from '../components/plotFigure'
 import { buildWidgetSql } from '../core/resultQuery'
 
-const LIGHT = { background: '#ffffff', color: '#1a1a1a' }
+const LIGHT = { background: '#ffffff', color: '#1a1a1a', series: '#0e7490' }
 
 /**
  * Re-run every widget's SQL against the in-memory tables and bake the current
@@ -37,6 +37,9 @@ export async function renderReport(
       if (spec) {
         const fig = plotFigure(spec, result.rows, LIGHT)
         rendered[b.id] = { kind: 'chart', svg: fig.outerHTML }
+      } else if (b.vizType === 'chart') {
+        // Паритет live↔export: живой виджет показывает пометку, не таблицу.
+        rendered[b.id] = { kind: 'nochart' }
       } else {
         rendered[b.id] = { kind: 'table', result }
       }

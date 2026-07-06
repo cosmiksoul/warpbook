@@ -31,4 +31,13 @@ describe('exportQuery', () => {
     const c = arrowToRows(await client.query('SELECT count(*) AS c FROM rt')).rows[0].c
     expect(Number(c)).toBe(3)
   })
+
+  it('параллельные экспорты не коллидируют по виртуальному файлу', async () => {
+    const [a, b] = await Promise.all([
+      client.exportQuery('SELECT 1 AS x', 'csv'),
+      client.exportQuery('SELECT 2 AS x', 'csv'),
+    ])
+    expect(new TextDecoder().decode(a)).toContain('1')
+    expect(new TextDecoder().decode(b)).toContain('2')
+  })
 })

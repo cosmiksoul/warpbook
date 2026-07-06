@@ -28,7 +28,7 @@ export function Report({ client }: { client: DuckDBClient }) {
     a.href = url
     a.download = 'warpbook-report.json'
     a.click()
-    URL.revokeObjectURL(url)
+    setTimeout(() => URL.revokeObjectURL(url), 0)
   }
 
   async function open(e: ChangeEvent<HTMLInputElement>) {

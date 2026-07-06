@@ -5,8 +5,11 @@ import type { ChartSpec } from '../core/chartSpec'
 export function plotFigure(
   spec: ChartSpec,
   rows: Record<string, unknown>[],
-  style: { background: string; color: string },
+  style: { background: string; color: string; series?: string },
 ): HTMLElement | SVGSVGElement {
+  // Экспорт на белом: cyan #22d3ee даёт контраст ~1.55:1 — серии перекрашиваются
+  // в глубокий teal; живое приложение (тёмный фон) остаётся на дефолте.
+  const seriesColor = style.series ?? '#22d3ee'
   // X — дата-строки (strftime): парсим в Date, чтобы Plot дал временную ось
   // (аккуратные тики по месяцам), а не ординал с тиком на каждую из N дат.
   const data = spec.xDates
@@ -14,14 +17,14 @@ export function plotFigure(
     : rows
   const mark =
     spec.kind === 'bar'
-      ? Plot.barY(data, { x: spec.x, y: spec.y, sort: { x: '-y' }, fill: '#22d3ee' })
-      : Plot.lineY(data, { x: spec.x, y: spec.y, stroke: '#22d3ee', strokeWidth: 2 })
+      ? Plot.barY(data, { x: spec.x, y: spec.y, sort: { x: '-y' }, fill: seriesColor })
+      : Plot.lineY(data, { x: spec.x, y: spec.y, stroke: seriesColor, strokeWidth: 2 })
   return Plot.plot({
     marks: [mark, Plot.ruleY([0])],
     x: { label: spec.x },
     y: { label: spec.y, grid: true },
     height: 280,
     marginLeft: 56,
-    style,
+    style: { background: style.background, color: style.color },
   })
 }
