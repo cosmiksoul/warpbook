@@ -1,15 +1,33 @@
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
 
 export function AboutModal({ onClose }: { onClose: () => void }) {
+  const boxRef = useRef<HTMLDivElement>(null)
+
   useEffect(() => {
-    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }
+    const opener = document.activeElement as HTMLElement | null
+    const box = boxRef.current
+    box?.querySelector<HTMLElement>('button, a')?.focus()
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') { onClose(); return }
+      if (e.key !== 'Tab' || !box) return
+      // Трап: Tab с последнего — на первый, Shift+Tab с первого — на последний.
+      const items = box.querySelectorAll<HTMLElement>('button, a[href]')
+      if (items.length === 0) return
+      const first = items[0]
+      const last = items[items.length - 1]
+      if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus() }
+      else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus() }
+    }
     window.addEventListener('keydown', onKey)
-    return () => window.removeEventListener('keydown', onKey)
+    return () => {
+      window.removeEventListener('keydown', onKey)
+      opener?.focus() // фокус назад на «?»
+    }
   }, [onClose])
 
   return (
     <div className="modal-overlay" onClick={onClose}>
-      <div className="modal" role="dialog" aria-modal="true" aria-label="О warpbook" onClick={(e) => e.stopPropagation()}>
+      <div ref={boxRef} className="modal" role="dialog" aria-modal="true" aria-label="О warpbook" onClick={(e) => e.stopPropagation()}>
         <button className="modal-x" aria-label="закрыть" onClick={onClose}>✕</button>
         <h2>warpbook</h2>
         <p>Браузерный аналитический ноутбук: данные → SQL и профиль значений → нарративный отчёт с экспортом. Без бэкенда.</p>

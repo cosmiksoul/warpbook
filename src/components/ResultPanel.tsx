@@ -151,6 +151,7 @@ export function ResultPanel({ meta, error, tabId, sql, client }: Props) {
           <div className="view-toggle">
             <button
               className={view === 'table' ? 'on' : ''}
+              aria-pressed={view === 'table'}
               disabled={!display}
               title={display ? '' : 'нет результата — запусти запрос'}
               onClick={() => setView('table')}
@@ -159,6 +160,7 @@ export function ResultPanel({ meta, error, tabId, sql, client }: Props) {
             </button>
             <button
               className={view === 'chart' ? 'on' : ''}
+              aria-pressed={view === 'chart'}
               disabled={!display || !spec}
               title={!display ? 'нет результата — запусти запрос' : spec ? '' : 'нет числовой колонки для графика'}
               onClick={() => setView('chart')}
@@ -167,6 +169,7 @@ export function ResultPanel({ meta, error, tabId, sql, client }: Props) {
             </button>
             <button
               className={view === 'profile' ? 'on' : ''}
+              aria-pressed={view === 'profile'}
               disabled={!display}
               title={display ? '' : 'нет результата — запусти запрос'}
               onClick={() => {
@@ -263,6 +266,7 @@ export function ResultPanel({ meta, error, tabId, sql, client }: Props) {
           <div className="mart-kind">
             <button
               className={martKind === 'view' ? 'on' : ''}
+              aria-pressed={martKind === 'view'}
               onClick={() => setMartKind('view')}
               title="живая — пересчитывается при обращении"
             >
@@ -270,6 +274,7 @@ export function ResultPanel({ meta, error, tabId, sql, client }: Props) {
             </button>
             <button
               className={martKind === 'table' ? 'on' : ''}
+              aria-pressed={martKind === 'table'}
               onClick={() => setMartKind('table')}
               title="снапшот — фиксирует результат"
             >

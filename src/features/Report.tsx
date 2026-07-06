@@ -126,7 +126,12 @@ export function Report({ client }: { client: DuckDBClient }) {
                   ? 'report-block active'
                   : 'report-block'
               }
+              tabIndex={0}
               onClick={() => setActiveBlock(block.id)}
+              onKeyDown={(e) => {
+                if (e.target !== e.currentTarget) return // Enter в редакторе/инпутах — не сюда
+                if (e.key === 'Enter') setActiveBlock(block.id)
+              }}
             >
               {block.type === 'text' ? (
                 <TextBlockView block={block} />

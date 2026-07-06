@@ -191,8 +191,11 @@ export function WidgetBlockView({ block, client }: Props) {
         ) : (
           <span
             className="widget-title"
+            role="button"
+            tabIndex={0}
             title="кликни, чтобы переименовать"
             onClick={(e) => { e.stopPropagation(); setTitleDraft(block.title); setEditingTitle(true) }}
+            onKeyDown={(e) => { if (e.key === 'Enter') { e.stopPropagation(); setTitleDraft(block.title); setEditingTitle(true) } }}
           >
             {block.title}
           </span>
@@ -266,12 +269,14 @@ export function WidgetBlockView({ block, client }: Props) {
       <div className="view-toggle widget-view-toggle">
         <button
           className={block.vizType === 'table' ? 'on' : ''}
+          aria-pressed={block.vizType === 'table'}
           onClick={() => setWidgetVizType(block.id, 'table')}
         >
           таблица
         </button>
         <button
           className={block.vizType === 'chart' ? 'on' : ''}
+          aria-pressed={block.vizType === 'chart'}
           disabled={!spec}
           title={spec ? '' : 'нет числовой колонки для графика'}
           onClick={() => setWidgetVizType(block.id, 'chart')}

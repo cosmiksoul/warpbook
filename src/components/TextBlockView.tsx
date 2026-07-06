@@ -50,9 +50,15 @@ export function TextBlockView({ block }: { block: TextBlock }) {
       </span>
       <div
         className="text-block"
+        role="button"
+        tabIndex={0}
         onClick={() => {
           setDraft(block.markdown)
           setEditing(true)
+        }}
+        onKeyDown={(e) => {
+          if (e.target !== e.currentTarget) return
+          if (e.key === 'Enter') { setDraft(block.markdown); setEditing(true) }
         }}
         dangerouslySetInnerHTML={{ __html: html }}
       />

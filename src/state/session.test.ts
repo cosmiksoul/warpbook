@@ -527,6 +527,13 @@ describe('session: toast (M4)', () => {
     s.reset()
     expect(useSession.getState().toast).toBeNull()
   })
+
+  it('setToast инкрементирует toastSeq и на повторе того же сообщения', () => {
+    const before = useSession.getState().toastSeq
+    useSession.getState().setToast('готово')
+    useSession.getState().setToast('готово')
+    expect(useSession.getState().toastSeq).toBe(before + 2)
+  })
 })
 
 describe('session: M8 windowed result model', () => {

@@ -30,8 +30,14 @@ export function TabStrip() {
         <div
           key={t.id}
           className={t.id === activeTabId ? 'tab on' : 'tab'}
+          role="button"
+          tabIndex={0}
           onClick={() => setActiveTab(t.id)}
           onDoubleClick={() => startEdit(t.id, t.title)}
+          onKeyDown={(e) => {
+            if (e.target !== e.currentTarget) return // не перехватывать input переименования
+            if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setActiveTab(t.id) }
+          }}
         >
           <span className="tab-icon">
             <Icon name="table" size={13} />

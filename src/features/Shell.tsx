@@ -64,10 +64,10 @@ export function Shell({ client }: { client: DuckDBClient }) {
       <header className="topbar">
         <span className="logo"><Icon name="logo" size={18} /> warpbook</span>
         <nav className="mode-toggle">
-          <button className={mode === 'explore' ? 'on' : ''} onClick={() => setMode('explore')}>
+          <button className={mode === 'explore' ? 'on' : ''} aria-pressed={mode === 'explore'} onClick={() => setMode('explore')}>
             исследование
           </button>
-          <button className={mode === 'report' ? 'on' : ''} onClick={() => setMode('report')}>
+          <button className={mode === 'report' ? 'on' : ''} aria-pressed={mode === 'report'} onClick={() => setMode('report')}>
             отчёт
           </button>
         </nav>

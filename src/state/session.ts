@@ -80,6 +80,7 @@ interface SessionState {
   report: ReportDoc
   activeBlockId: string | null
   toast: string | null
+  toastSeq: number
   welcomeDismissed: boolean
   // actions
   pushHistory: (sql: string) => void
@@ -148,6 +149,7 @@ const initial = {
   report: { version: 1, blocks: [] } as ReportDoc,
   activeBlockId: null as string | null,
   toast: null as string | null,
+  toastSeq: 0,
   welcomeDismissed: false, // в initial: Reset возвращает welcome-экран
   runAllSeq: 0,
 }
@@ -540,7 +542,7 @@ export const useSession = create<SessionState>((set, get) => ({
       activeBlockId: s.activeBlockId === id ? null : s.activeBlockId,
     })),
   setActiveBlock: (id) => set({ activeBlockId: id }),
-  setToast: (toast) => set({ toast }),
+  setToast: (toast) => set((s) => ({ toast, toastSeq: s.toastSeq + 1 })),
   loadReport: (doc) =>
     set((s) => {
       let maxImported = 0

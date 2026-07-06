@@ -17,8 +17,17 @@ export function CsvDropzone({ onFiles, disabled }: Props) {
   return (
     <div
       className={over ? 'dropzone over' : 'dropzone'}
+      role="button"
+      tabIndex={disabled ? -1 : 0}
+      aria-label="загрузить CSV или Parquet"
       aria-disabled={disabled}
       onClick={() => !disabled && inputRef.current?.click()}
+      onKeyDown={(e) => {
+        if (!disabled && (e.key === 'Enter' || e.key === ' ')) {
+          e.preventDefault()
+          inputRef.current?.click()
+        }
+      }}
       onDragOver={(e) => {
         e.preventDefault()
         setOver(true)
