@@ -13,7 +13,7 @@ beforeAll(async () => {
   client = createClient(db)
   await client.exec(`CREATE TABLE prof AS SELECT * FROM (VALUES
     (1.5, 'a', 10), (2.5, 'a', NULL), (3.5, 'b', 30), (NULL, 'b', 40),
-    (5.0, 'b', 50), (6.5, 'c', 60), (8.0, NULL, 70), (9.5, 'a', 80)
+    (5.0, 'b', NULL), (6.5, 'c', 60), (8.0, NULL, 70), (9.5, 'a', 80)
   ) v(mass, species, "we""ird")`)
 })
 afterAll(async () => { await db.terminate() })
@@ -23,7 +23,9 @@ describe('autoprofile SQL на живом DuckDB', () => {
     const { rows } = arrowToRows(await client.query(buildNullMapSql('prof', ['mass', 'species', 'we"ird'])))
     expect(rows).toHaveLength(3)
     const byCol = Object.fromEntries(rows.map((r) => [r['колонка'], Number(r['null'])]))
-    expect(byCol).toEqual({ mass: 1, species: 1, 'we"ird': 1 })
+    expect(byCol).toEqual({ mass: 1, species: 1, 'we"ird': 2 })
+    // ORDER BY "null" DESC, "колонка": we"ird (2 null) сверху, дальше тай-брейк по имени
+    expect(rows.map((r) => r['колонка'])).toEqual(['we"ird', 'mass', 'species'])
   })
   it('гистограмма: исполняется, бакеты возрастают, сумма строк = не-null строкам', async () => {
     const { rows } = arrowToRows(await client.query(buildHistogramCellSql('prof', 'mass')))
@@ -39,6 +41,13 @@ describe('autoprofile SQL на живом DuckDB', () => {
     // по значению по возрастанию, поэтому 'a' раньше 'b'.
     expect(rows.map((r) => r['значение'])).toEqual(['a', 'b', 'c'])
     expect(Number(rows[0]['строк'])).toBeGreaterThanOrEqual(Number(rows[1]['строк']))
+  })
+  it('top-K режет по капу: 9 distinct -> ровно 7 строк, счётчики не возрастают', async () => {
+    await client.exec(`CREATE TABLE many AS SELECT 'v' || (i % 9) AS cat FROM range(30) t(i)`)
+    const { rows } = arrowToRows(await client.query(buildTopKSql('many', 'cat')))
+    expect(rows).toHaveLength(7) // TOP_K, при 9 значениях в данных
+    const counts = rows.map((r) => Number(r['строк']))
+    expect([...counts].sort((a, b) => b - a)).toEqual(counts)
   })
   it('гистограмма на константной колонке не падает (nullif-guard)', async () => {
     await client.exec(`CREATE TABLE flat AS SELECT 5 AS x FROM range(3)`)
