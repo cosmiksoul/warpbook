@@ -587,3 +587,25 @@ describe('session: M8 windowed result model', () => {
     expect(useSession.getState().tabs[0].resultProfileError).toBeUndefined()
   })
 })
+
+describe('appendBlocks (M10)', () => {
+  it('дописывает в конец, минтит уникальные id, возвращает первый', () => {
+    const st = useSession.getState()
+    st.addTextBlock('существующий')
+    const before = useSession.getState().report.blocks.length
+    const firstId = useSession.getState().appendBlocks([
+      { type: 'text', markdown: '## Профиль' },
+      { type: 'widget', title: 'null-карта', sql: 'SELECT 1', datasetNames: ['t'], vizType: 'table', caption: '' },
+    ])
+    const blocks = useSession.getState().report.blocks
+    expect(blocks).toHaveLength(before + 2)
+    expect(blocks[before].id).toBe(firstId)
+    expect(new Set(blocks.map((b) => b.id)).size).toBe(blocks.length) // все id уникальны
+    expect(blocks[before + 1]).toMatchObject({ type: 'widget', title: 'null-карта' })
+  })
+  it('пустой массив — no-op и null', () => {
+    const before = useSession.getState().report.blocks
+    expect(useSession.getState().appendBlocks([])).toBeNull()
+    expect(useSession.getState().report.blocks).toBe(before)
+  })
+})

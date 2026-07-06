@@ -9,6 +9,7 @@ import {
   type ReportDoc,
   type WidgetBlock,
 } from '../core/report'
+import type { DraftBlock } from '../core/autoprofile'
 import { type ResultView, DEFAULT_VIEW } from '../core/resultQuery'
 import {
   pushHistory as corePushHistory,
@@ -123,6 +124,7 @@ interface SessionState {
   pinResult: (fields: Omit<WidgetBlock, 'type' | 'id'>) => void
   addTextBlock: (markdown?: string) => void
   addQueryBlock: () => void
+  appendBlocks: (blocks: DraftBlock[]) => string | null
   updateTextBlock: (id: string, markdown: string) => void
   updateWidgetSql: (id: string, sql: string, datasetNames: string[]) => void
   runAllSeq: number
@@ -476,6 +478,19 @@ export const useSession = create<SessionState>((set, get) => ({
         seq: s.seq + 1,
       }
     }),
+  appendBlocks: (blocks) => {
+    if (blocks.length === 0) return null
+    let firstId: string | null = null
+    set((s) => {
+      const minted = blocks.map((b, i) => ({ ...b, id: `blk-${s.seq + 1 + i}` }))
+      firstId = minted[0].id
+      return {
+        seq: s.seq + blocks.length,
+        report: { version: 1, blocks: [...s.report.blocks, ...minted] },
+      }
+    })
+    return firstId
+  },
   updateTextBlock: (id, markdown) =>
     set((s) => ({
       report: {
