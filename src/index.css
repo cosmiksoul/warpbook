@@ -721,3 +721,15 @@ a:hover { color: var(--accent-2); }
 .cell-actions .cell-run:not(:disabled) { border-color: var(--accent); color: var(--accent); }
 .cell-actions button:hover:not(:disabled) { border-color: var(--accent-2); color: var(--accent-2); }
 .cell-actions button:disabled { opacity: .45; cursor: default; }
+
+/* --- Проба (ветка font-weight-clickable): вес шрифта кодирует кликабельность.
+   Все кликабельные надписи — 500 (шрифт уже забандлен: ibm-plex-mono-500),
+   некликабельный текст остаётся 400. Явные исключения — ниже. --- */
+.run-btn, .reset-btn, .welcome-cta, .schema-btn, .export-btn, .pin-btn,
+.report-toolbar button, .mart-create, .mart-cancel, .profbtn,
+.view-toggle button, .mart-kind button,
+.mode-toggle button, .tab, .source, .th-label,
+.pager-nav button, .link-btn, .col-editor-actions .link, a {
+  font-weight: 500;
+}
+.th-label.static { font-weight: 400; } /* некликабельный заголовок колонки */
